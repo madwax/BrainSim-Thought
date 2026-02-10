@@ -120,7 +120,7 @@ public partial class UKS
 		SetupNumbers();
 	}
 
-	public void SetupNumbers()
+	private void SetupNumbers()
 	{
 		return;
 		GetOrAddThought("number", "abstract");
@@ -161,6 +161,4 @@ public partial class UKS
 		GetOrAddThought("AvailableModule", "BrainSim");
 		GetOrAddThought("ActiveModule", "BrainSim");
 	}
-
-
 }

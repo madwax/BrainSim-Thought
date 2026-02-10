@@ -25,12 +25,11 @@ namespace UKS;
 /// return a list of zero elements if no Thoughts match the result of the method.
 /// A Thought may be referenced by its Label. You can write AddParent("color") [where a Thought is a required parameter.] The system sill automatically retreive a Thought
 /// with the given label.
-
 public partial class Thought
 {
     public static Thought IsA { get => ThoughtLabels.GetThought("is-a"); }  //this is a cache value shortcut for (Thought)"is-a"
-    private List<Thought> _linksTo = new List<Thought>(); //links to "has", "is", is-a, many others
-    private List<Thought> _linksFrom = new List<Thought>(); //links from
+    private readonly List<Thought> _linksTo = new List<Thought>(); //links to "has", "is", is-a, many others
+    private readonly List<Thought> _linksFrom = new List<Thought>(); //links from
 
     /// <summary>
     /// Get an "unsafe" writeable list of a Thought's Links.
@@ -56,18 +55,18 @@ public partial class Thought
     /// <summary>
     /// "Safe" list of direct descendants
     /// </summary>
-    public IReadOnlyList<Thought> Children {get {lock (_linksFrom) { return new List<Thought>(_linksFrom.Where(x => x.LinkType?.Label == "is-a").Select(x => x.From).ToList().AsReadOnly()); }}}
+    public IReadOnlyList<Thought> Children { get { lock (_linksFrom) { return new List<Thought>(_linksFrom.Where(x => x.LinkType?.Label == "is-a").Select(x => x.From).ToList().AsReadOnly()); } } }
 
     private string _label = "";
     /// <summary>
     /// Manages a Thought's label and maintais a hash table
-    //*Restrictions on Thought LabelsNames:
-    // * must be unique
-    // * cannot include ' ' (use a - instead)
-    // * cannot include '.' this is the flag for creating a subclass with following attributes
-    // * cannot include '*' this is the flag for auto-increment the label
-    // * case insensitive but initial input case is preserved for display
-    // * capitalized labels are never signularized even if "singularize=true"
+    /// *Restrictions on Thought LabelsNames:
+    ///  * must be unique
+    ///  * cannot include ' ' (use a - instead)
+    ///  * cannot include '.' this is the flag for creating a subclass with following attributes
+    ///  * cannot include '*' this is the flag for auto-increment the label
+    ///  * case insensitive but initial input case is preserved for display
+    ///  * capitalized labels are never signularized even if "singularize=true"
     /// </summary>
     public string Label
     {
@@ -80,11 +79,14 @@ public partial class Thought
         }
     }
 
-    //TODO: make this useful
+    /// <summary>
+    /// Last time this thought was fired; updated by <see cref="Fire"/>.
+    /// </summary>
     public DateTime LastFiredTime = DateTime.Now;
+
     private TimeSpan _timeToLive = TimeSpan.MaxValue;
     /// <summary>
-    /// When set, makes a Thought transient
+    /// When set, makes a Thought transient.
     /// </summary>
     public TimeSpan TimeToLive
     {
@@ -96,7 +98,6 @@ public partial class Thought
                 AddToTransientList();
         }
     }
-
 
     //////NEEDED for Link functionality 
     public Thought? _from;
@@ -118,26 +119,30 @@ public partial class Thought
         set { _linkType = value; }
     }
     private Thought? _to;
+    /// <summary>
+    /// Target of the link (if this Thought is a link).
+    /// </summary>
     public Thought? To
     {
         get { return _to; }
         set { _to = value; }
     }
 
-
-
-    object _value;
+    private object _value;
     /// <summary>
-    /// Any serializable object can be attached to a Thought
-    /// ONLY STRINGS are supported for save/restor to disk file
+    /// Any serializable object can be attached to a Thought.
+    /// ONLY STRINGS are supported for save/restore to disk file.
     /// </summary>
     public object V
     {
         get => _value;
-        set{this._value = value;}
+        set { this._value = value; }
     }
 
     private float _weight = 1;
+    /// <summary>
+    /// Weight of this Thought (link).
+    /// </summary>
     public float Weight
     {
         get { return _weight; }
@@ -156,16 +161,18 @@ public partial class Thought
         }
     }
 
-
     //The constructores
+    /// <summary>
+    /// Default constructor.
+    /// </summary>
     public Thought()
     {
     }
 
     /// <summary>
-    /// Copy Constructor
+    /// Copy Constructor.
     /// </summary>
-    /// <param name="r"></param>
+    /// <param name="r">Thought to copy.</param>
     public Thought(Thought r)
     {
         LinkType = r.LinkType;
@@ -176,10 +183,12 @@ public partial class Thought
     }
 
     /// <summary>
-    /// Returns a Thought's label.
-    /// Even though it shows zero references, don't delete this ToString() because the debugger uses it when mousing over a Thought
+    /// Returns a Thought's label OR a string represent a link or sequence.  
+    /// For a link, the format is "Label[From->LinkType->To]".  
+    /// For a sequence, the format is "^elem1elem2elem3".  
+    /// If there is a string Value associeted with this Thought, it is added to the end of the line as "_V:value".
     /// </summary>
-    /// <returns>the Thought's label</returns>
+    /// <returns>Formatted string representation.</returns>
     public override string ToString()
     {
         if (LinkType?.Label == "spelled")
@@ -214,12 +223,11 @@ public partial class Thought
         return retVal;
     }
 
-
     /// <summary>
-    /// This is the magic which allows for strings to be put in place of Thoughts for any method Paramter
+    /// Allows implicit conversion from string to Thought label lookup.
     /// </summary>
-    /// <param name="label"></param>
-    /// Throse 
+    /// <param name="label">Label to resolve.</param>
+    /// <returns>The Thought with that label or null.</returns>
     public static implicit operator Thought(string label)
     {
         Thought t = ThoughtLabels.GetThought(label);
@@ -229,8 +237,10 @@ public partial class Thought
         return t;
     }
 
-    //The following is used by several list operations
-    public override bool Equals(Object obj)
+    /// <summary>
+    /// Equality by label and links; treats atomic vs link appropriately.
+    /// </summary>
+    public override bool Equals(object obj)
     {
         if (obj is Thought t)
         {
@@ -256,6 +266,9 @@ public partial class Thought
         return false;
     }
 
+    /// <summary>
+    /// Reference-based equality helper.
+    /// </summary>
     public static bool operator ==(Thought? a, Thought? b)
     {
         //if (a is null && b is null)
@@ -268,6 +281,9 @@ public partial class Thought
                 return true;
         return false;
     }
+    /// <summary>
+    /// Reference-based inequality helper.
+    /// </summary>
     public static bool operator !=(Thought? a, Thought? b)
     {
         if (a is null && b is null)
@@ -282,6 +298,10 @@ public partial class Thought
         return true;
     }
 
+    /// <summary>
+    /// Assigns a default label for link Thoughts when missing.
+    /// </summary>
+    /// <returns>Current thought.</returns>
     public Thought AddDefaultLabel()
     {
         if (this.LinkType is null) return this;
@@ -290,7 +310,9 @@ public partial class Thought
         return this;
     }
 
-    //This is only used in certain Agent modules...  Refactor out
+    /// <summary>
+    /// Returns direct children plus any subclass children.
+    /// </summary>
     public IReadOnlyList<Thought> ChildrenWithSubclasses
     {
         get
@@ -311,24 +333,27 @@ public partial class Thought
         }
     }
 
-
-    /// ////////////////////////////////////////////////////////////////////////////
-    //Handle the ancestors and descendents of a Thought
-    //////////////////////////////////////////////////////////////
-    public IReadOnlyList<Thought> AncestorList()
+    /// <summary>
+    /// Ancestors including self (BFS).
+    /// </summary>
+    public IEnumerable<Thought> AncestorsWithSelf
     {
-        return Ancestors.ToList();
+        get
+        {
+            yield return this;
+            foreach (var ancestor in Ancestors)
+                yield return ancestor;
+        }
     }
 
+    /// <summary>
+    /// Breadth-first ancestors (excluding self).
+    /// </summary>
     public IEnumerable<Thought> Ancestors
     {
         get
         {
-            //TODO: examine ramifications of adding "this" to beginning of list
-            var queue = new Queue<Thought>();
-            queue.Enqueue(this);
-            foreach (var parent in Parents)
-                queue.Enqueue(parent);
+            var queue = new Queue<Thought>(Parents);
             var seen = new HashSet<Thought>();
 
             while (queue.Count > 0)
@@ -344,6 +369,9 @@ public partial class Thought
         }
     }
 
+    /// <summary>
+    /// Breadth-first descendants.
+    /// </summary>
     public IEnumerable<Thought> Descendants
     {
         get
@@ -364,32 +392,20 @@ public partial class Thought
         }
     }
 
-
     /// <summary>
-    /// Determines whether a Thought has a specific ancestor
+    /// Determines whether this thought has the specified ancestor (self-inclusive).
     /// </summary>
-    /// <param name="label"></param>
-    /// <returns></returns>
+    /// <param name="t">Ancestor to test.</param>
+    /// <returns>True if found; otherwise false.</returns>
     public bool HasAncestor(Thought t)
     {
-        foreach (var ancestor in Ancestors)
+        foreach (var ancestor in AncestorsWithSelf)
             if (ancestor == t) return true;
         return false;
     }
 
     /// <summary>
-    /// Returns a list of all of a thought's descendandants.
-    /// CAUTION: this may be large and time-consuming
-    /// </summary>
-    /// <returns></returns>
-    public IReadOnlyList<Thought> DescendantsList()
-    {
-        return Descendants.ToList();
-    }
-
-
-    /// <summary>
-    /// Updates the last-fired time on a Thought
+    /// Updates the last-fired time on a Thought.
     /// </summary>
     public void Fire()
     {
@@ -397,15 +413,14 @@ public partial class Thought
         //useCount++;
     }
 
-
     //LINKS
     //TODO reverse the parameters so it's type,target
     /// <summary>
-    /// Adds a link to a Thought if it does not already exist.  The Thought is the source of the link.
+    /// Adds a link to a Thought if it does not already exist. The Thought is the source of the link.
     /// </summary>
-    /// <param name="target">Target Thought</param>
-    /// <param name="linkType">RelatinoshipType Thought</param>
-    /// <returns>the new or existing Thought</returns>
+    /// <param name="target">Target Thought.</param>
+    /// <param name="linkType">Relationship type Thought.</param>
+    /// <returns>The new or existing link Thought.</returns>
     public Thought AddLink(Thought target, Thought linkType)
     {
         if (linkType is null)  //NULL link types could be allowed in search Thoughtys Parameter?
@@ -445,6 +460,10 @@ public partial class Thought
         return r;
     }
 
+    /// <summary>
+    /// Removes all links of a given type originating from this thought.
+    /// </summary>
+    /// <param name="linkType">Link type to remove.</param>
     public void RemoveLinks(Thought linkType)
     {
         for (int i = 0; i < _linksTo.Count; i++)
@@ -458,7 +477,12 @@ public partial class Thought
         }
     }
 
-    //TODO reverse the parameters so it's type,target
+    /// <summary>
+    /// Finds a link from this source to target with the specified type.
+    /// </summary>
+    /// <param name="target">Target thought.</param>
+    /// <param name="linkType">Link type.</param>
+    /// <returns>The matching link or null.</returns>
     private Thought HasLink(Thought target, Thought linkType)
     {
         foreach (Thought r in _linksTo)
@@ -470,9 +494,9 @@ public partial class Thought
     }
 
     /// <summary>
-    /// Removes a link. 
+    /// Removes a link.
     /// </summary>
-    /// <param name="r">The Thought's source neede not be this Thought</param>
+    /// <param name="r">The Thought's source neede not be this Thought.</param>
     public void RemoveLink(Thought r)
     {
         if (r is null) return;
@@ -516,6 +540,13 @@ public partial class Thought
         }
     }
 
+    /// <summary>
+    /// Finds a link matching the optional source/type/target criteria.
+    /// </summary>
+    /// <param name="source">Optional source filter.</param>
+    /// <param name="linkType">Optional link type filter.</param>
+    /// <param name="targett">Optional target filter.</param>
+    /// <returns>Matching link or null.</returns>
     public Thought HasLink(Thought source, Thought linkType, Thought targett)
     {
         if (source is null && linkType is null && targett is null) return null;
@@ -526,7 +557,12 @@ public partial class Thought
         return null;
     }
 
-
+    /// <summary>
+    /// Removes a link of the given type to the given target.
+    /// </summary>
+    /// <param name="t2">Target thought.</param>
+    /// <param name="linkType">Link type.</param>
+    /// <returns>The removed link (prototype).</returns>
     public Thought RemoveLink(Thought t2, Thought linkType)
     {
         Thought r = new() { From = this, LinkType = linkType, To = t2 };
@@ -535,9 +571,10 @@ public partial class Thought
     }
 
     /// <summary>
-    /// Addsa a parent to a Thought
+    /// Adds a parent link ("is-a") if not already present.
     /// </summary>
-    /// <param name="newParent"></param>
+    /// <param name="newParent">Parent to add.</param>
+    /// <returns>The link thought or existing one.</returns>
     public Thought AddParent(Thought newParent)
     {
         if (newParent is null) return null;
@@ -550,23 +587,29 @@ public partial class Thought
     }
 
     /// <summary>
-    /// Remove a parent from a Thought
+    /// Remove a parent from a Thought.
     /// </summary>
-    /// <param name="t">If the Thought is not a parent, the function does nothought</param>
+    /// <param name="t">If the Thought is not a parent, the function does nothing.</param>
     public void RemoveParent(Thought t)
     {
         Thought r = new() { From = this, LinkType = IsA, To = t };
         t.RemoveLink(r);
     }
 
-
+    /// <summary>
+    /// Remove a child link ("is-a") from this Thought.
+    /// </summary>
+    /// <param name="t">Child thought to remove.</param>
     public void RemoveChild(Thought t)
     {
         Thought r = new() { From = t, LinkType = IsA, To = this };
         RemoveLink(r);
     }
 
-
+    /// <summary>
+    /// Gets attributes linked via "hasAttribute" or "is".
+    /// </summary>
+    /// <returns>List of attribute thoughts.</returns>
     public List<Thought> GetAttributes()
     {
         List<Thought> retVal = new();
@@ -578,6 +621,11 @@ public partial class Thought
         return retVal;
     }
 
+    /// <summary>
+    /// Determines whether this thought has the specified property, considering inheritance.
+    /// </summary>
+    /// <param name="t">Property thought to test.</param>
+    /// <returns>True if the property is present; otherwise false.</returns>
     public bool HasProperty(Thought t)  //with inheritance
     {
         //NOT thread safe
@@ -591,7 +639,6 @@ public partial class Thought
         return false;
     }
 
-
     private void AddToTransientList()
     {
         if (!UKS.transientLinks.Contains(this))
@@ -604,8 +651,8 @@ public partial class Thought
     /// - follows all outgoing LinksTo (includes the link-thought, its LinkType, its To)
     /// - also follows incoming "is-a" LinksFrom (includes the link-thought, its LinkType, its From)
     /// Cycle-safe via reference-identity visited set (not labels).
-    ///
     /// </summary>
+    /// <returns>Enumerable of sub-thoughts.</returns>
     public IEnumerable<Thought> EnumerateSubThoughts()
     {
         var visited = new HashSet<Thought>();
@@ -632,7 +679,7 @@ public partial class Thought
             if (t.From is not null || t.To is not null || t.LinkType is not null)
                 yield return t;
             else
-            {}
+            { }
 
             EnqueueIfNew(t.LinkType);
             EnqueueIfNew(t.To);

@@ -22,12 +22,14 @@ public partial class UKS
     /// Emits facts as [S,R,O] (or [S,R,O,N] when R is a numeric specialization like "has.4").
     /// Optionally emits simple clause pairs if Thought exposes a Clauses collection.
     /// </summary>
+    /// <param name="root">Label of the starting thought to export.</param>
+    /// <param name="path">Destination file path for the exported text.</param>
+    /// <param name="maxDepth">Optional maximum traversal depth (currently unused).</param>
     public void ExportTextFile(string root, string path, int maxDepth = 12)
     {
         if (string.IsNullOrWhiteSpace(root)) throw new ArgumentException("Start label is required.", nameof(root));
         Thought Root = theUKS.Labeled(root);
         if (Root is null) return;
-
 
         HashSet<string> alreadyWritten = new();
         try
@@ -93,21 +95,13 @@ public partial class UKS
         return retVal;
     }
 
-
-
-
     // int or decimal, optional leading minus
     private static readonly Regex NumericRegex = new(@"^-?\d+(\.\d+)?$", RegexOptions.Compiled);
 
     /// <summary>
-    /// Text file format format:
-    /// A line represents a relationsship of the form LABEL[S->T->O]Weight,
-    /// S,T,&O may themseves be bracketed relatisnips.
-    /// Examples:
-    ///   [Dog->has.4->leg]0.90
-    ///   R23[Fido->plays->outside] IF [weather,is,sunny]1.00
-    /// Comments (# or //) allowed outside quotes/brackets.
+    /// Imports UKS content from a bracketed text file.
     /// </summary>
+    /// <param name="filePath">Path of the text file to import.</param>
     public void ImportTextFile(string filePath)
     {
         if (filePath is null) throw new ArgumentNullException(nameof(filePath));
@@ -142,7 +136,6 @@ public partial class UKS
                 t.RemoveLink("Unknown", "is-a");
         }
     }
-
 
     // Adds a link, 
     private Thought AddLinkStmt(string label, List<string> linkParts, string sWeight)
@@ -222,7 +215,6 @@ public partial class UKS
         result.Add(sb.ToString().Trim());
         return result;
     }
-
 
     // Strip EOL comments outside of quotes and brackets
     private static string StripEolComment(string line)

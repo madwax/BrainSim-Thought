@@ -10,9 +10,6 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
-
 namespace UKS;
 
 public partial class UKS
@@ -22,15 +19,15 @@ public partial class UKS
     List<Thought> succeededConditions = new();
 
     /// <summary>
-    /// Gets all links to a group of Thoughts including inherited links
+    /// Gets all links to a group of Thoughts including inherited links.
     /// </summary>
-    /// <param name="sources"></param>
-    /// <returns>List of matching links</returns>
+    /// <param name="sources">Thoughts that seed the search for related links.</param>
+    /// <returns>List of matching links.</returns>
     public List<Thought> GetAllLinks(List<Thought> sources) //with inheritance, conflicts, etc
     {
         List<Thought> result2 = new();
         if (sources.Count == 0) return result2;
-            //expand search list to include instances of given objects  WHY??
+        //expand search list to include instances of given objects  WHY??
         for (int i = 0; i < sources.Count; i++)
         {
             Thought t = sources[i];
@@ -97,7 +94,7 @@ public partial class UKS
             {
                 if (r.LinkType.HasProperty("inheritable"))
                 {
-                     if (thoughtsToExamine.FindFirst(x => x.thought == r.To) is ThoughtWithQueryParams twgp)
+                    if (thoughtsToExamine.FindFirst(x => x.thought == r.To) is ThoughtWithQueryParams twgp)
                         twgp.hitCount++;//thought is in the list, increment its count
                     else
                     {//thought is not in the list, add it
@@ -175,7 +172,7 @@ public partial class UKS
                 else
                 {
                     Thought r1 = new Thought(r);
-                    foreach (Thought r3 in r.LinksTo.Where(x=>x.LinkType.Label != "is-a"))
+                    foreach (Thought r3 in r.LinksTo.Where(x => x.LinkType.Label != "is-a"))
                         r1.AddLink(r3.To, r3.LinkType);
                     r1.Weight *= thoughtsToExamine[i].weight;
                     result.Add(r1);
@@ -184,7 +181,6 @@ public partial class UKS
         }
         return result;
     }
-
 
     private void RemoveConflictingResults(List<Thought> result)
     {
@@ -237,11 +233,11 @@ public partial class UKS
     }
 
     /// <summary>
-    /// Filters a list of Links returning only those with at least one component which  has an ancestor in the list of Ancestors
+    /// Filters a list of Links returning only those with at least one component which has an ancestor in the list of ancestors.
     /// </summary>
-    /// <param name="result">List of Links from a previous Query</param>
-    /// <param name="ancestors">Filter</param>
-    /// <returns></returns>
+    /// <param name="result">List of links from a previous query.</param>
+    /// <param name="ancestors">Ancestor filter list.</param>
+    /// <returns>Filtered list containing only links that match the ancestor filter.</returns>
     public IReadOnlyList<Thought> FilterResults(List<Thought> result, List<Thought> ancestors)
     {
         List<Thought> retVal = new();
@@ -274,9 +270,6 @@ public partial class UKS
         return retVal;
     }
 
-
-  
-
     bool ConditionsAreMet(Thought r)
     {
         foreach (Thought r1 in r.LinksTo)
@@ -298,7 +291,7 @@ public partial class UKS
             if (Equals(r, r1))
             {
                 if (!r1.HasProperty("isCondition"))
-                   return r1;
+                    return r1;
             }
         }
 
@@ -306,58 +299,31 @@ public partial class UKS
     }
 
     /// <summary>
-    /// Returns a list of Links which were false in the previous query
+    /// Returns a list of Links which were false in the previous query.
     /// </summary>
-    /// <returns></returns>
-
+    /// <returns>Links that failed conditional evaluation.</returns>
     public List<Thought> WhyNot()
     {
         return failedConditions;
     }
     /// <summary>
-    /// Returns a list of Links which were true in the previous query
+    /// Returns a list of Links which were true in the previous query.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Links that succeeded conditional evaluation.</returns>
     public List<Thought> Why()
     {
         return succeededConditions;
     }
 
     Dictionary<Thought, float> searchCandidates;
-    /// <summary>
-    /// Given that you have performed a search with SearchForClosestMatch, this returns the next-best result
-    /// given the previous best.
-    /// </summary>
-    /// <param name="confidence">value representin the quality of the match</param>
-    /// <returns></returns>
-    public Thought GetNextClosestMatch(ref float confidence)
-    {
-        Thought bestThought = null;
-        confidence = -1;
-        if (searchCandidates is null) return bestThought;
-
-        //find the best match with a value LESS THAN the previous best
-        foreach (var key in searchCandidates)
-            if (key.Value > confidence)
-            {
-                confidence = key.Value;
-                bestThought = key.Key;
-            }
-
-        //remove the item from the dictionary
-        if (bestThought is not null)
-            searchCandidates.Remove(bestThought);
-        return bestThought;
-    }
-
 
     /// <summary>
-    /// Search for the Thought which most closely resembles the target Thought based on the attributes of the target
+    /// Search for the Thought which most closely resembles the target Thought based on the attributes of the target.
     /// </summary>
-    /// <param name="target">The Links of this Thought are the attributes to search on</param>
-    /// <param name="root">All searching is done within the descendents of this Thought</param>
-    /// <param name="confidence">value representing the quality of the match. </param>
-    /// <returns></returns>
+    /// <param name="target">The links of this Thought are the attributes to search on.</param>
+    /// <param name="root">All searching is done within the descendants of this Thought.</param>
+    /// <param name="confidence">Unused output parameter reserved for match quality (not currently assigned).</param>
+    /// <returns>Ordered list of candidate thoughts with confidence scores.</returns>
     public List<(Thought t, float conf)> SearchForClosestMatch(Thought target, Thought root)
     {
         List<(Thought t, float conf)> retVal = new();
@@ -418,7 +384,7 @@ public partial class UKS
         for (int i = 0; i < searchCandidates.Keys.Count; i++)
         {
             Thought t = (Thought)searchCandidates.Keys.ToList()[i];
-            foreach (Thought t1 in t.Ancestors)
+            foreach (Thought t1 in t.AncestorsWithSelf)
             {
                 if (t1 != t && searchCandidates.ContainsKey(t1) && searchCandidates[t1] < 0)
                     searchCandidates.Remove(t);
@@ -444,6 +410,13 @@ public partial class UKS
             return true;
         }
     }
+
+    /// <summary>
+    /// DEPRECATED: Helper for SearchForClosestMatch that gets the weight of the link between two Thoughts.
+    /// </summary>
+    /// <param name="t1">First thought.</param>
+    /// <param name="t2">Second thought.</param>
+    /// <returns>Weight of the direct link between the two thoughts, or 0 if none.</returns>
     public float GetLinkWeight(Thought t1, Thought t2)
     {
         foreach (var r in t1.LinksTo)
@@ -452,19 +425,8 @@ public partial class UKS
             if (r.To == t2) return r.Weight;
         return 0;
     }
-    public void SetLinkWeight(Thought t1, Thought t2, float newWeight)
-    {
-        foreach (var r in t1.LinksTo)
-            if (r.To == t2) r.Weight = newWeight;
-        foreach (var r in t1.LinksFrom)
-            if (r.To == t2) r.Weight = newWeight;
-        foreach (var r in t2.LinksTo)
-            if (r.To == t1) r.Weight = newWeight;
-        foreach (var r in t2.LinksFrom)
-            if (r.To == t1) r.Weight = newWeight;
-    }
 
-    public bool ThoughtsHaveConflictingLink(Thought source, Thought target)
+    private bool ThoughtsHaveConflictingLink(Thought source, Thought target)
     {
         foreach (Thought r1 in source.LinksTo)
             foreach (Thought r2 in target.LinksTo)
@@ -478,6 +440,13 @@ public partial class UKS
         if (FindCommonParents(r1.To, r2.To).Count == 0) return false;
         return true;
     }
+
+    /// <summary>
+    /// DEPRECATED Determines whether two thoughts share at least one similar link (same link type and compatible targets).
+    /// </summary>
+    /// <param name="source">First thought to compare.</param>
+    /// <param name="target">Second thought to compare.</param>
+    /// <returns>True if a similar link exists; otherwise false.</returns>
     public bool ThoughtsHaveSimilarLink(Thought source, Thought target)
     {
         foreach (Thought r1 in source.LinksTo)

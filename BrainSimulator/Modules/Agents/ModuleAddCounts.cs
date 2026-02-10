@@ -108,7 +108,7 @@ public class ModuleAddCounts : ModuleBase
             foreach (Thought t in ts)
             {
                 if (t is null) continue;
-                foreach (Thought t1 in t.AncestorList())
+                foreach (Thought t1 in t.Ancestors)
                 {
                     if (dict.ContainsKey(t1))
                         dict[t1]++;

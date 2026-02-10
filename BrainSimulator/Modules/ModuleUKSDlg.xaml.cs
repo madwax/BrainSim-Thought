@@ -237,7 +237,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         currentLabel = currentLabel.Replace("||", "|"); //parentLabel may or may not have a leading '|'
         if (expandedItems.Contains(currentLabel))
             tviChild.IsExpanded = true;
-        if (child.AncestorList().Contains(expandAll) &&
+        if (child.Ancestors.Contains(expandAll) &&
             (child.Label == "" || !parentLabel.Contains("|" + child.Label)))
             tviChild.IsExpanded = true;
         tviChild.Expanded += EmptyChild_Expanded;
@@ -259,8 +259,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         header += " Links:" + r.LinksTo.Count;
         return header;
     }
-
-
 
 
     //the treeview is populated only with expanded items or it would contain the entire UKS content

@@ -204,7 +204,7 @@ namespace BrainSimulator.Modules
                     for (int i = 0; i < objectRoot.Children.Count; i++)
                     {
                         Thought child = (Thought)objectRoot.Children[i];
-                        int descendentCount = child.DescendantsList().Count;
+                        int descendentCount = child.Descendants.ToList().Count;
                         if (descendentCount == 1)
                         {
                             i--;

@@ -27,7 +27,7 @@ public partial class UKS
     public class sThought
     {
         public int index;
-        public string label = ""; 
+        public string label = "";
         [DefaultValue(-1)]
         public int source = -1;
         [DefaultValue(-1)]
@@ -40,14 +40,15 @@ public partial class UKS
         public object V;
         public override string ToString()
         {
-            return $"{ index}, {label}";
+            return $"{index}, {label}";
         }
     }
 
     /// <summary>
-    /// Saves the UKS content to an XML file
+    /// Saves the UKS content to an XML file.
     /// </summary>
-    /// <param name="fileNameIn">Leave null or empty to use file name from previous operation  </param>
+    /// <param name="filenameIn">Optional file name; when null or empty, the previous file name is reused.</param>
+    /// <returns><see langword="true"/> if the save succeeded; otherwise <see langword="false"/>.</returns>
     public bool SaveUKStoXMLFile(string filenameIn = "")
     {
         //if you don't pass in a file name, it uses the previous name
@@ -91,7 +92,7 @@ public partial class UKS
 
     //gets the index of a Thought in the output array
     //and creates an entry if it's not already there.
-    int GetIndex(Thought t)
+    private int GetIndex(Thought t)
     {
         if (t is null) return -1;
         if (string.IsNullOrWhiteSpace(t.Label))  // Put the GUID into the label only when it's unlabeled
@@ -145,7 +146,12 @@ public partial class UKS
         RemoveTempLabels(root);
     }
 
-
+    /// <summary>
+    /// Checks whether the specified file can be opened for writing.
+    /// </summary>
+    /// <param name="fileName">Path to test for write access.</param>
+    /// <param name="message">Outputs the error message if access fails.</param>
+    /// <returns><see langword="true"/> if the file is writable; otherwise <see langword="false"/>.</returns>
     public static bool CanWriteToFile(string fileName, out string message)
     {
         FileStream file1;
@@ -168,9 +174,10 @@ public partial class UKS
     }
 
     /// <summary>
-    /// Loads UKS content from a prvsiously-saved XML file
+    /// Loads UKS content from a previously-saved XML file.
     /// </summary>
-    /// <param name="fileNameIn">Leave null or empty to use file name from previous operation  </param>
+    /// <param name="filenameIn">Optional file name; when null or empty, the previous file name is reused.</param>
+    /// <returns><see langword="true"/> if the load succeeded; otherwise <see langword="false"/>.</returns>
     public bool LoadUKSfromXMLFile(string filenameIn = "")
     {
         //stash the current BrainSim configuration
@@ -239,12 +246,11 @@ public partial class UKS
         return true;
     }
 
-    List<string> ExtractPortionOfUKS(Thought root)
+    private List<string> ExtractPortionOfUKS(Thought root)
     {
         List<string> uksContent = new List<string>();
         if (root is null) return uksContent;
-        var descendants = root.DescendantsList;
-        foreach (var descendant in root.DescendantsList())
+        foreach (var descendant in root.Descendants)
         {
             foreach (var r in descendant.LinksTo)
             {
@@ -254,7 +260,7 @@ public partial class UKS
         return uksContent;
     }
 
-    void MergeStringListIntoUKS(List<String> contentToRestore)
+    private void MergeStringListIntoUKS(List<string> contentToRestore)
     {
         AddThought("BrainSim", null);
         foreach (string s in contentToRestore)
@@ -282,7 +288,7 @@ public partial class UKS
                 t.From = theUKS.Labeled(UKSTemp[st.source].label);
             if (st.linkType != -1)
                 t.LinkType = theUKS.Labeled(UKSTemp[st.linkType].label);
-            if (st.target!= -1)
+            if (st.target != -1)
                 t.To = theUKS.Labeled(UKSTemp[st.target].label);
             AllThoughts.Add(t);
             t.From?.LinksToWriteable.Add(t);

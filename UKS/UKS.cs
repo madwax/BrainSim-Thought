@@ -16,6 +16,7 @@ using Pluralize.NET;
 using System.Runtime.CompilerServices;
 
 
+
 /// <summary>
 /// Contains a collection of Thoughts linked by Links to implement Common Sense and general knowledge.
 /// </summary>
@@ -23,7 +24,6 @@ public partial class UKS
 {
     //This is the actual internal Universal Knowledge Store
     static private List<Thought> uKSList = new();// { Capacity = 1000000, };
-
 
     //This is a reformatted temporary copy of the UKS which used internally during the save and restore process to 
     //break circular links by storing index values instead of actual links Note the use of SThought instead of Thought
@@ -42,8 +42,9 @@ public partial class UKS
     public static UKS theUKS = new UKS();
 
     /// <summary>
-    /// Creates a new reference to the UKS and initializes it if it is the first reference. 
+    /// Creates a new reference to the UKS and initializes it if it is the first reference.
     /// </summary>
+    /// <param name="clear">When true, clears existing thoughts and label cache before initialization.</param>
     public UKS(bool clear = false)
     {
         if (AllThoughts.Count == 0 || clear)
@@ -57,42 +58,12 @@ public partial class UKS
         stateTimer = new Timer(RemoveExpiredLinks, autoEvent, 0, 1000);
     }
 
-    static bool isRunning = false;
-    private void RemoveExpiredLinks(Object stateInfo)
-    {
-        if (isRunning) return;
-        isRunning = true;
-        try
-        {
-            for (int i = transientLinks.Count - 1; i >= 0; i--)
-            {
-                Thought r = transientLinks[i];
-                //check to see if the link has expired
-                if (r.TimeToLive != TimeSpan.MaxValue && r.LastFiredTime + r.TimeToLive < DateTime.Now)
-                {
-                    r.To.RemoveLink(r);
-                    //if this leaves an orphan thought, make it unknown
-                    if (r.LinkType.Label == "is-a" && r.From?.Parents.Count == 0)
-                    {
-                        r.From.AddParent("Unknown");
-                    }
-                    transientLinks.Remove(r);
-                }
-            }
-        }
-        finally
-        {
-            isRunning = false;
-        }
-    }
-
-
     /// <summary>
-    /// This is a primitive method needed only to create ROOT Thoughts which have no parents
+    /// This is a primitive method needed only to create ROOT Thoughts which have no parents.
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="parent">May be null</param>
-    /// <returns></returns>
+    /// <param name="label">Label of the thought to create.</param>
+    /// <param name="parent">Optional parent thought (may be null).</param>
+    /// <returns>The newly created thought.</returns>
     public virtual Thought AddThought(string label, Thought? parent)
     {
         Thought newThought = new();
@@ -110,9 +81,20 @@ public partial class UKS
     }
 
     /// <summary>
-    /// This is a primitive method to Delete a Thought...the Thought must not have any children
+    /// Uses a hash table to return the Thought with the given label or null if it does not exist.
     /// </summary>
-    /// <param name="t">The Thought to delete</param>
+    /// <param name="label">Label to look up.</param>
+    /// <returns>The Thought or null.</returns>
+    public Thought Labeled(string label)
+    {
+        Thought retVal = ThoughtLabels.GetThought(label);
+        return retVal;
+    }
+
+    /// <summary>
+    /// This is a primitive method to delete a Thought; the Thought must not have any children.
+    /// </summary>
+    /// <param name="t">The thought to delete.</param>
     public virtual void DeleteThought(Thought t)
     {
         if (t is null) return;
@@ -129,155 +111,6 @@ public partial class UKS
             AllThoughts.Remove(t);
     }
 
-    /// <summary>
-    /// Uses a hash table to return the Thought with the given label or null if it does not exist
-    /// </summary>
-    /// <param name="label"></param>
-    /// <returns>The Thought or null</returns>
-    public Thought Labeled(string label)
-    {
-        Thought retVal = ThoughtLabels.GetThought(label);
-        return retVal;
-    }
-
-    public bool ThoughtInTree(Thought t1, Thought t2)
-    {
-        if (t2 is null) return false;
-        if (t1 is null) return false;
-        if (t1 == t2) return true;
-        if (t1.AncestorList().Contains(t2)) return true;
-        if (t2.AncestorList().Contains(t1)) return true;
-        return false;
-    }
-
-
-    //TODO: This method has gotten out of hand and needs a rewrite
-    private bool LinksAreExclusive(Thought r1, Thought r2)
-    {
-        //are two links mutually exclusive?
-        //yes if they differ by a single component property
-        //   which is exclusive on a property
-        //      which source and target are the ancestor of one another
-
-        //TODO:  expand this to handle
-        //  is lessthan is greaterthan
-        //  several other cases
-
-        if (r1.To != r2.To && (r1.To is null || r2.To is null)) return false;
-        if (r1.To == r2.To && r1.LinkType == r2.LinkType) return false;
-        //TODO Verify this:
-        if (r1.HasProperty("isResult")) return false;
-        if (r1.HasProperty("isCondition")) return false;
-        if (r2.HasProperty("isResult")) return false;
-        if (r2.HasProperty("isCondition")) return false;
-
-        if (r1.From == r2.From ||
-            r1.From.AncestorList().Contains(r2.From) ||
-            r2.From.AncestorList().Contains(r1.From) ||
-            FindCommonParents(r1.From, r1.From).Count() > 0)
-        {
-
-            IReadOnlyList<Thought> r1LinkiProps = r1.LinkType.GetAttributes();
-            IReadOnlyList<Thought> r2LinkProps = r2.LinkType.GetAttributes();
-            //handle case with properties of the target
-            if (r1.To is not null && r1.To == r2.To &&
-                (r1.To.AncestorList().Contains(r2.To) ||
-                r2.To.AncestorList().Contains(r1.To) ||
-                FindCommonParents(r1.To, r1.To).Count() > 0))
-            {
-                IReadOnlyList<Thought> r1TargetProps = r1.To.GetAttributes();
-                IReadOnlyList<Thought> r2TargetProps = r2.To.GetAttributes();
-                foreach (Thought t1 in r1TargetProps)
-                    foreach (Thought t2 in r2TargetProps)
-                    {
-                        List<Thought> commonParents = FindCommonParents(t1, t2);
-                        foreach (Thought t3 in commonParents)
-                        {
-                            if (HasProperty(t3, "isexclusive") || HasProperty(t3, "allowMultiple"))
-                                return true;
-                        }
-                    }
-            }
-            //handle case with conflicting targets
-            if (r1.To is not null && r2.To is not null)
-            {
-                List<Thought> commonParents = FindCommonParents(r1.To, r2.To);
-                foreach (Thought t3 in commonParents)
-                {
-                    if (HasProperty(t3, "isexclusive") || HasProperty(t3, "allowMultiple"))
-                        return true;
-                }
-            }
-            if (r1.To == r2.To)
-            {
-                foreach (Thought t1 in r1LinkiProps)
-                    foreach (Thought t2 in r2LinkProps)
-                    {
-                        if (t1 == t2) continue;
-                        List<Thought> commonParents = FindCommonParents(t1, t2);
-                        foreach (Thought t3 in commonParents)
-                        {
-                            if (HasProperty(t3, "isexclusive") || HasProperty(t3, "allowMultiple"))
-                                return true;
-                        }
-                    }
-            }
-            //if source and target are the same and one contains a number, assume that the other contains "1"
-            // fido has leg -> fido has 1 leg  
-            bool hasNumber1 = (r1LinkiProps.FindFirst(x => x.HasAncestor("number")) is not null);
-            bool hasNumber2 = (r2LinkProps.FindFirst(x => x.HasAncestor("number")) is not null);
-            if (r1.To == r2.To &&
-                (hasNumber1 || hasNumber2))
-                return true;
-
-            //if one of the linkypes contains negation and not the other
-            Thought r1Not = r1LinkiProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-            Thought r2Not = r2LinkProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-            if ((r1.From.Ancestors.Contains(r2.From) ||
-                r2.From.Ancestors.Contains(r1.From)) &&
-                r1.To == r2.To &&
-                (r1Not is null && r2Not is not null || r1Not is not null && r2Not is null))
-                return true;
-        }
-        else
-        {
-            //this appears to duplicate code at line 226
-            List<Thought> commonParents = FindCommonParents(r1.To, r2.To);
-            foreach (Thought t3 in commonParents)
-            {
-                if (HasProperty(t3, "isexclusive"))
-                    return true;
-                if (HasProperty(t3, "allowMultiple") && r1.From != r2.From)
-                    return true;
-            }
-
-        }
-        return false;
-    }
-
-    private bool LinkTypesAreExclusive(Thought r1, Thought r2)
-    {
-        IReadOnlyList<Thought> r1RelProps = r1.LinkType.GetAttributes();
-        IReadOnlyList<Thought> r2RelProps = r2.LinkType.GetAttributes();
-        Thought r1Not = r1RelProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-        Thought r2Not = r2RelProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-        if (r1.To == r2.To &&
-            (r1Not is null && r2Not is not null || r1Not is not null && r2Not is null))
-            return true;
-        return false;
-    }
-
-    private bool HasAttribute(Thought t, string name)
-    {
-        if (t is null) return false;
-        foreach (Thought r in t.LinksTo)
-        {
-            if (r.LinkType is not null && r.LinkType.Label == "is" && r.To.Label == name)
-                return true;
-        }
-        return false;
-    }
-
     bool HasProperty(Thought t, string propertyName)
     {
         if (t is null) return false;
@@ -285,7 +118,6 @@ public partial class UKS
         if (v.FindFirst(x => x.To?.Label.ToLower() == propertyName.ToLower() && x.LinkType.Label == "hasProperty") is not null) return true;
         return false;
     }
-
 
     private bool LinksAreEqual(Thought r1, Thought r2, bool ignoreSource = true)
     {
@@ -307,14 +139,27 @@ public partial class UKS
         return false;
     }
 
-    public Thought GetLink(Thought source, Thought linkType, Thought target)
+    /// <summary>
+    /// Gets an existing link matching the specified from/linkType/to triple, if present.
+    /// </summary>
+    /// <param name="from">Source thought of the link.</param>
+    /// <param name="linkType">Relationship type thought.</param>
+    /// <param name="to">Target thought of the link.</param>
+    /// <returns>The existing link Thought, or null if not found.</returns>
+    public Thought GetLink(Thought from, Thought linkType, Thought to)
     {
-        if (source is null) return null;
+        if (from is null) return null;
         //create a temporary link
-        Thought r = new() { From = source, LinkType = linkType, To = target };
+        Thought r = new() { From = from, LinkType = linkType, To = to };
         //see if it already exists
         return GetLink(r);
     }
+
+    /// <summary>
+    /// Gets an existing link matching the supplied link prototype.
+    /// </summary>
+    /// <param name="r">Link prototype (From, LinkType, To) to search for.</param>
+    /// <returns>The existing link Thought, or null if not found.</returns>
     public Thought GetLink(Thought r)
     {
         foreach (Thought r1 in r.From?.LinksTo)
@@ -323,6 +168,12 @@ public partial class UKS
         }
         return null;
     }
+
+    /// <summary>
+    /// Gets all links from the same source matching the prototype's LinkType and To.
+    /// </summary>
+    /// <param name="r">Link prototype containing source, link type, and target.</param>
+    /// <returns>List of matching link Thoughts.</returns>
     public List<Thought> GetLinks(Thought r)
     {
         List<Thought> retVal = new();
@@ -334,44 +185,10 @@ public partial class UKS
         return retVal;
     }
 
-    private Thought ThoughtFromString(string label, string defaultParent, Thought source = null)
-    {
-        GetOrAddThought("Thought"); //safety
-        GetOrAddThought("Unknown", "Thought"); //safety
-        if (string.IsNullOrEmpty(label)) return null;
-        if (label == "") return null;
-        Thought t = Labeled(label);
-
-        if (t is null)
-        {
-            if (Labeled(defaultParent) is null)
-            {
-                GetOrAddThought(defaultParent, Labeled("Object"), source);
-            }
-            t = GetOrAddThought(label, defaultParent, source);
-        }
-        return t;
-    }
-
-    //temporarily public for testing
-    private Thought ThoughtFromObject(object o, string parentLabel = "", Thought source = null)
-    {
-        if (parentLabel == "")
-            parentLabel = "Unknown";
-        if (o is string s3)
-            return ThoughtFromString(s3.Trim(), parentLabel, source);
-        else if (o is Thought t3)
-            return t3;
-        else if (o is null)
-            return null;
-        else
-            return null;
-    }
-
     /// <summary>
-    /// Recursively removes all the descendants of a Thought. If these descendants have no other parents, they will be deleted as well
+    /// Recursively removes all the descendants of a Thought. If these descendants have no other parents, they will be deleted as well.
     /// </summary>
-    /// <param name="t">The Thought to remove the children from</param>
+    /// <param name="t">The thought to remove the children from.</param>
     public void DeleteAllChildren(Thought t)
     {
         if (t is not null)
@@ -394,16 +211,13 @@ public partial class UKS
 
     }
 
-    // If a thought exists, return it.  If not, create it.
-    // If it is currently an unknown, defining the parent can make it known
     /// <summary>
-    /// Creates a new Thought in the UKS OR returns an existing Thought, based on the label
+    /// Creates a new Thought in the UKS OR returns an existing Thought, based on the label.
     /// </summary>
-    /// <param name="label">The new label OR if it ends in an asterisk, the astrisk will be replaced by digits to create a new Thought with a unique label.</param>
-    /// <param name="parent"></param>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
+    /// <param name="label">Label for the thought. Trailing '*' auto-increments to a unique label.</param>
+    /// <param name="parent">Optional parent thought or label; defaults to "Unknown" if null.</param>
+    /// <param name="source">Optional source thought used to probe existing numbered links.</param>
+    /// <returns>The existing or newly created Thought.</returns>
     public Thought GetOrAddThought(string label, object parent = null, Thought source = null)
     {
         Thought thoughtToReturn = null;
@@ -459,9 +273,6 @@ public partial class UKS
                 if (labeled is not null)
                     return labeled;
             }
-            //if (newParent is null)
-            //    newParent = AddThought(baseLabel, correctParent);
-            //correctParent = newParent;
         }
 
         thoughtToReturn = AddThought(label, correctParent);
@@ -470,12 +281,13 @@ public partial class UKS
 
 
     /// <summary>
-    /// Finds or creates a subclass.  "Has 4" becomes Thought{has.4} and has.4 is 4.
+    /// Finds or creates a subclass from a phrase, attaching attributes as dotted parts.
+    /// Example: "has 4" becomes thought {has.4} and [has.4 is 4].
     /// </summary>
-    /// <param name="label">The string to process</param>
-    /// <param name="attributesFollow">Attributes follow or precede the main</param>
-    /// <param name="singularize"></param>
-    /// <returns></returns>
+    /// <param name="label">Input phrase to process.</param>
+    /// <param name="attributesFollow">True if attributes follow the base term; false if they precede it.</param>
+    /// <param name="singularize">When true, singularizes non-capitalized words.</param>
+    /// <returns>The created or retrieved Thought.</returns>
     public Thought CreateThoughtFromMultipleAttributes(string label, bool attributesFollow, bool singularize = true)
     {
         IPluralize pluralizer = new Pluralizer();
@@ -507,4 +319,34 @@ public partial class UKS
         Thought t = GetOrAddThought(thoughtLabel);
         return t;
     }
+
+    static bool isRunning = false;
+    private void RemoveExpiredLinks(Object stateInfo)
+    {
+        if (isRunning) return;
+        isRunning = true;
+        try
+        {
+            for (int i = transientLinks.Count - 1; i >= 0; i--)
+            {
+                Thought r = transientLinks[i];
+                //check to see if the link has expired
+                if (r.TimeToLive != TimeSpan.MaxValue && r.LastFiredTime + r.TimeToLive < DateTime.Now)
+                {
+                    r.To.RemoveLink(r);
+                    //if this leaves an orphan thought, make it unknown
+                    if (r.LinkType.Label == "is-a" && r.From?.Parents.Count == 0)
+                    {
+                        r.From.AddParent("Unknown");
+                    }
+                    transientLinks.Remove(r);
+                }
+            }
+        }
+        finally
+        {
+            isRunning = false;
+        }
+    }
+
 }

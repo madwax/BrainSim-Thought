@@ -27,11 +27,11 @@ public partial class UKS
 	/// If the LinkType has an inverse, the inverse will be used and the Thought will be reversed so that 
 	/// Fido Is-a Dog become Dog Has-child Fido.<br/>
 	/// </summary>
-	/// <param name="sSource">string or Thought</param>
-	/// <param name="sLinkType">string or Thought</param>
-	/// <param name="sTarget">string or Thought (or null)</param>
-	/// <param name="isStatement">Boolean indicating if this is a true statement or part of a conditional</param>
-	/// <returns>The primary link which was created (others may be created for given attributes</returns>
+	/// <param name="sSource">string or Thought for the source.</param>
+	/// <param name="sLinkType">string or Thought for the link type.</param>
+	/// <param name="sTarget">string or Thought (or null) for the target.</param>
+	/// <param name="label">Optional label for the created link Thought.</param>
+	/// <returns>The primary link which was created (others may be created for given attributes).</returns>
 	public Thought AddStatement(string sSource, string sLinkType, string sTarget, string label = "")
 	{
 		Thought source = ThoughtFromObject(sSource);
@@ -51,6 +51,7 @@ public partial class UKS
 	/// <param name="source">The source <see cref="Thought"/> of the link. Cannot be <see langword="null"/>.</param>
 	/// <param name="linkType">The link type <see cref="Thought"/>. Cannot be <see langword="null"/>.</param>
 	/// <param name="target">The target <see cref="Thought"/> of the link.</param>
+	/// <param name="label">Optional label for the created link Thought.</param>
 	/// <returns>The created or existing <see cref="Thought"/> object that represents the link.  Returns <see
 	/// langword="null"/> if <paramref name="source"/> or <paramref name="linkType"/> is <see langword="null"/>.</returns>
 	public Thought AddStatement(Thought source, Thought linkType, Thought target, string label = "")
@@ -103,7 +104,7 @@ public partial class UKS
 		return r;
 	}
 
-	public Thought CreateTheLink(Thought source, Thought linkType, Thought target)
+	private Thought CreateTheLink(Thought source, Thought linkType, Thought target)
 	{
 		Thought inverseType1 = CheckForInverse(linkType);
 		//if this link has an inverse, switcheroo so we are storing consistently in one direction
@@ -208,44 +209,12 @@ public partial class UKS
 		return null;
 	}
 
-	private Thought ChildHasAllAttributes(Thought t, List<Thought> attrs, 
-		ref Thought bestMatch, ref List<Thought> missingAttributes, List<Thought> alreadyVisited = null)
-	{
-		//circular reference protection
-		if (alreadyVisited is null) alreadyVisited = new List<Thought>();
-		if (alreadyVisited.Contains(t)) return null;
-		alreadyVisited.Add(t);
-
-		//Localattrs lets us remove attrs from the required list without clobbering the parent list
-		List<Thought> localAttrs = new List<Thought>(attrs);
-		foreach (Thought child in t.Children)
-		{
-			List<Thought> childAttrs = child.LinksTo.Where(x=>x.LinkType.LinkType == "is").ToList();
-			foreach (Thought t3 in childAttrs)
-				localAttrs.Remove(t3);
-
-			if (localAttrs.Count == 0) //have all the attributes been found?
-				return child;
-
-			if (localAttrs.Count < missingAttributes.Count)
-			{
-				missingAttributes = new List<Thought>(localAttrs);
-				bestMatch = child;
-			}
-			//search any children with the remaining needed attributes
-			Thought retVal = ChildHasAllAttributes(child, localAttrs, ref bestMatch, ref missingAttributes, alreadyVisited);
-			if (retVal is not null)
-				return retVal;
-			localAttrs = new List<Thought>(attrs);
-		}
-		return null;
-	}
 
 	public Thought CreateInstanceOf(Thought t)
 	{
 		return CreateSubclass(t, new List<Thought>());
 	}
-	Thought CreateSubclass(Thought t, List<Thought> attributes)
+	private Thought CreateSubclass(Thought t, List<Thought> attributes)
 	{
 		if (t is null) return null;
 		//Thought t2 = SubclassExists(t, attributes);

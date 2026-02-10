@@ -316,13 +316,13 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 if (m1 < ave)
                 {
                     w = 1 - (1 - w) / 2;
-                    theUKS.SetLinkWeight(topResult, t, w);
+                    topResult.Weight = w;
                 }
                 if (m1 > ave)
                 {
                     w = w / 2;
                     if (w > .1f)
-                        theUKS.SetLinkWeight(topResult, t, w);
+                        topResult.Weight = w;
                     else
                         topResult.RemoveParent(t);
                 }
