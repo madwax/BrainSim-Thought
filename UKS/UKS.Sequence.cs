@@ -129,7 +129,7 @@ public partial class UKS
         {
             //this is a bit tricky...
             //it actually adds a 2nd element but then copies old 1st element values to the 2nd element and puts the new value on the old first
-            //why? all the FRST links will still be correct without modification
+            //why? all the FRST links and external pointers to the sequence will still be correct without modification
             Thought newNode = new Thought() { Label = prevElementIn.Label + "*" };  //the label will auto-increment.
             newNode.AddLink(first, "FRST");
             newNode.AddLink(first.LinksTo.FindFirst(x => x.LinkType.Label == "VLU").To, "VLU");
