@@ -10,11 +10,6 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-//
-// PROPRIETARY AND CONFIDENTIAL
-// Brain Simulator 3 v.1.0
-// © 2022 FutureAI, Inc., all rights reserved
-// 
 
 using System;
 using System.Collections.Generic;

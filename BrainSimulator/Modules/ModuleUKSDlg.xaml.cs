@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Brain Simulator Thought
  *
  * Copyright (c) 2026 Charles Simon
@@ -114,6 +114,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
         List<Thought> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
         theChildren = theChildren.OrderBy(x => x.From.Label).ToList();
+        if (detailsCB.IsChecked == true) 
+            theChildren = theChildren.OrderByDescending(x => x.From.Weight).ToList();
 
         foreach (Thought l in theChildren)
         {
@@ -214,7 +216,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             //show sequence content unless details are selected
             if (detailsCB.IsChecked == false && theUKS.IsSequenceElement(r.To))
             {
-                string joinCharacter = "";
+                string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
                 string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(r.To));
                 header = $"[{r.From.Label}->{r.LinkType.Label}->{sequence}]";
@@ -250,7 +252,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     private string AddDetails(Thought r, string header)
     {
         if (detailsCB.IsChecked == false) return header;
-        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "8" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
+        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
         if (r.Weight != 1f || r.TimeToLive != TimeSpan.MaxValue)
             header = $"<{r.Weight.ToString("f2")}, {timeToLive}> " + header;
         if (r.LinkType?.HasLink(null, null, theUKS.Labeled("not")) is not null) //prepend ! for negative  children

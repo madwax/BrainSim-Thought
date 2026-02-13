@@ -247,7 +247,6 @@ public partial class UKS
             return instanceThought;
         }
 
-
         Thought correctParent = null;
         if (parent is string s)
             correctParent = ThoughtLabels.GetThought(s);

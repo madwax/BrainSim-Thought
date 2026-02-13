@@ -191,7 +191,7 @@ public partial class UKS
     }
     private Thought CreateRawSequence(List<Thought> targets, string baseLabel = "seq*")
     {
-        if (targets.Count < 2) return null;
+        if (targets.Count < 1) return null;
         Thought newTarget = targets[0];
 
         Thought firstElement = CreateFirstElement(baseLabel, newTarget);
@@ -216,7 +216,7 @@ public partial class UKS
     /// <returns>The first node of the created or reused sequence, or null if insufficient targets.</returns>
     public Thought AddSequence(Thought source, Thought linkType, List<Thought> targets, float baseWeight = 1.0f)
     {
-        if (targets.Count < 2) return null;  //a sequence must have at least 2 elements
+        if (targets.Count < 1) return null;  //a sequence must have at least 2 elements
 
         //clear out any existing sequence links of this type
         source.RemoveLinks(linkType);  //TODO delete the sequence
@@ -263,7 +263,6 @@ public partial class UKS
                 resolvedTargets.Insert(i, seqStart);
                 continue;
             }
-
         }
 
         // does this one already exist?

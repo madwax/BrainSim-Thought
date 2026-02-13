@@ -8,12 +8,11 @@
         Title="Text Import" Height="260" Width="560" Background="Gray" ShowInTaskbar="False" >
 
     <Grid>
-        <TextBox x:Name="tbPhrase" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
+        <TextBox x:Name="tbPhrase" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" PreviewKeyDown="tbPhrase_PreviewKeyDown"
                  TextWrapping="Wrap" Margin="78,62,0,0" HorizontalAlignment="Left" Width="283" Height="24" VerticalAlignment="Top" />
 
-        <Button x:Name="btnIngest"
-                    Content="Ingest"
-                    Click="BtnIngest_Click" Margin="387,62,0,0" Height="24" Width="75" VerticalAlignment="Top" HorizontalAlignment="Left" />
+        <Button x:Name="btnIngest" Content="Add"
+                    Click="BtnAdd_Click" Margin="387,62,0,0" Height="24" Width="75" VerticalAlignment="Top" HorizontalAlignment="Left" />
 
         <!-- File Loading Section -->
         <Label Content="Enter Phrase" FontWeight="Bold" Margin="10,0,0,0" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="135"/>
@@ -28,6 +27,6 @@
         <Button x:Name="btnLoad" Content="Load" Click="btnLoad_Click"  Width="75" Height="24"
               Margin="441,169,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         <Button x:Name="btnTrigram" Content="Trigrams" Click="btnTrigram_Click"  Width="75" Height="24"
-              Margin="441,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+              Margin="441,105,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
 </local:ModuleBaseDlg>
