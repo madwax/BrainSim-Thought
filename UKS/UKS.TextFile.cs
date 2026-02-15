@@ -80,18 +80,17 @@ public partial class UKS
         string retVal = t.Label.PadRight(15);
         if (t.V is not null)
             retVal += " V: " + t.V.ToString();
-
-        if (t.From is null || t.LinkType is null)
-            return retVal;
-
-        retVal += "[";
-        if (t.From is not null)
-            retVal += t.From?.Label;
-        if (t.LinkType is not null)
-            retVal += ((retVal == "") ? "" : "->") + t.LinkType?.Label;
-        if (t.To is not null)
-            retVal += ((retVal == "") ? "" : "->") + ((t.To.Label == "") ? t.To?.Label : t.To.Label);
-        retVal += "]";
+        if (t is Link r)
+        {
+            retVal += "[";
+            if (r.From is not null)
+                retVal += r.From?.Label;
+            if (r.LinkType is not null)
+                retVal += ((retVal == "") ? "" : "->") + r.LinkType?.Label;
+            if (r.To is not null)
+                retVal += ((retVal == "") ? "" : "->") + ((r.To.Label == "") ? r.To?.Label : r.To.Label);
+            retVal += "]";
+        }
         return retVal;
     }
 
@@ -142,7 +141,7 @@ public partial class UKS
     {
         if (linkParts[0].Contains("seq2"))
         { }
-        Thought r = null;
+        Link r = null;
         if (linkParts.Count < 2) return null;
         if (r is null)
         {

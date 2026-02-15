@@ -16,17 +16,17 @@ namespace UKS;
 public partial class UKS
 {
     //keeps track of the conditions of the previous query in order to answer "Why?" or "Why not?"
-    List<Thought> failedConditions = new();
-    List<Thought> succeededConditions = new();
+    List<Link> failedConditions = new();
+    List<Link> succeededConditions = new();
 
     /// <summary>
     /// Gets all links to a group of Thoughts including inherited links.
     /// </summary>
     /// <param name="sources">Thoughts that seed the search for related links.</param>
     /// <returns>List of matching links.</returns>
-    public List<Thought> GetAllLinks(List<Thought> sources) //with inheritance, conflicts, etc
+    public List<Link> GetAllLinks(List<Thought> sources) //with inheritance, conflicts, etc
     {
-        List<Thought> result2 = new();
+        List<Link> result2 = new();
         if (sources.Count == 0) return result2;
         //expand search list to include instances of given objects  WHY??
         for (int i = 0; i < sources.Count; i++)
@@ -46,7 +46,7 @@ public partial class UKS
         return result2;
     }
 
-    private void SortLinks(ref List<Thought> result2)
+    private void SortLinks(ref List<Link> result2)
     {
         result2 = result2.OrderByDescending(x => x.Weight).ToList();
     }
@@ -91,9 +91,9 @@ public partial class UKS
             int curCount = thoughtsToExamine[i].haveCount;
             Thought reachedWith = thoughtsToExamine[i].reachedWith;
 
-            foreach (Thought r in t.LinksTo)  //has-child et al
+            foreach (Link r in t.LinksTo)  //has-child et al
             {
-                if (r.LinkType.HasProperty("inheritable"))
+                if (r.LinkType?.HasProperty("inheritable") == true)
                 {
                     if (thoughtsToExamine.FindFirst(x => x.thought == r.To) is ThoughtWithQueryParams twgp)
                         twgp.hitCount++;//thought is in the list, increment its count
@@ -121,41 +121,43 @@ public partial class UKS
         }
         return thoughtsToExamine;
     }
-    private List<Thought> GetLinksBetween(Thought t1, Thought t2)
+
+    private List<Link> GetLinksBetween(Thought t1, Thought t2)
     {
-        List<Thought> retVal = new();
-        foreach (Thought r in t1.LinksTo)
+        List<Link> retVal = new();
+        foreach (Link r in t1.LinksTo)
             if (r.To == t2) retVal.Add(r);
-        foreach (Thought r in t1.LinksFrom)
+        foreach (Link r in t1.LinksFrom)
             if (r.To == t2) retVal.Add(r);
-        foreach (Thought r in t2.LinksTo)
+        foreach (Link r in t2.LinksTo)
             if (r.To == t1) retVal.Add(r);
-        foreach (Thought r in t2.LinksFrom)
+        foreach (Link r in t2.LinksFrom)
             if (r.To == t1) retVal.Add(r);
         return retVal;
     }
-    private List<Thought> GetAllLinksInternal(List<ThoughtWithQueryParams> thoughtsToExamine)
+
+    private List<Link> GetAllLinksInternal(List<ThoughtWithQueryParams> thoughtsToExamine)
     {
-        List<Thought> result = new();
+        List<Link> result = new();
         for (int i = 0; i < thoughtsToExamine.Count; i++)
         {
             Thought t = thoughtsToExamine[i].thought;
             if (t is null) continue; //safety
             int haveCount = thoughtsToExamine[i].haveCount;
-            foreach (Thought r in t.LinksTo)
+            foreach (Link r in t.LinksTo)
             {
                 if (r.LinkType == Thought.IsA) continue;
-                //only add the new relatinoship to the list if it is not already in the list
+                //only add the new relationship to the list if it is not already in the list
                 bool ignoreSource = thoughtsToExamine[i].hopCount > 1;
-                Thought existing = result.FindFirst(x => LinksAreEqual(x, r, ignoreSource));
+                Link existing = result.FindFirst(x => LinksAreEqual(x, r, ignoreSource));
                 if (existing is not null) continue;
 
                 if (haveCount > 1 && r.LinkType?.HasAncestor("has") is not null)
                 {
-                    //this HACK creates a temporary link so suzie has 2 arm, arm has 5 fingers, return suzie has 10 fingers
-                    //this (transient) relationshiop doesn't exist in the UKS
-                    Thought r1 = new Thought(r);
-                    r1.Weight *= thoughtsToExamine[i].weight;
+                    Link r1 = new Link(r.From, r.LinkType, r.To)
+                    {
+                        Weight = r.Weight * thoughtsToExamine[i].weight
+                    };
                     Thought newCountType = GetOrAddThought((GetCount(r.LinkType) * haveCount).ToString(), "number");
 
                     //hack for numeric labels
@@ -172,10 +174,12 @@ public partial class UKS
                 }
                 else
                 {
-                    Thought r1 = new Thought(r);
-                    foreach (Thought r3 in r.LinksTo.Where(x => x.LinkType.Label != "is-a"))
+                    Link r1 = new Link(r.From, r.LinkType, r.To)
+                    {
+                        Weight = r.Weight * thoughtsToExamine[i].weight
+                    };
+                    foreach (Link r3 in r.LinksTo.Where(x => x.LinkType?.Label != "is-a"))
                         r1.AddLink(r3.To, r3.LinkType);
-                    r1.Weight *= thoughtsToExamine[i].weight;
                     result.Add(r1);
                 }
             }
@@ -183,42 +187,44 @@ public partial class UKS
         return result;
     }
 
-    private void RemoveConflictingResults(List<Thought> result)
+    private void RemoveConflictingResults(List<Link> result)
     {
         for (int i = 0; i < result.Count; i++)
         {
-            Thought r1 = result[i];
+            Link r1 = result[i];
 
             //remove properties from the results list (they are internal)
-            if (r1.LinkType.Label == "hasProperty")
+            if (r1.LinkType?.Label == "hasProperty")
             {
                 result.RemoveAt(i);
+                i--;
                 continue;
             }
             for (int j = i + 1; j < result.Count; j++)
             {
-                Thought r2 = result[j];
+                Link r2 = result[j];
                 //are the results the same?
                 if (r1.LinkType == r2.LinkType && r1.To == r2.To)
                 {
                     result.RemoveAt(j);
                     j--;
                 }
-                if (r1.LinkType.Label.Contains(".") && r2.LinkType.Label.Contains("."))
+                if (r1.LinkType?.Label.Contains(".") == true && r2.LinkType?.Label.Contains(".") == true)
                     if (LinksAreExclusive(r1, r2))
                     {
                         //if two links are in conflict, delete the 2nd one (First takes priority)
                         result.RemoveAt(j);
-                        break;
+                        j--;
                     }
             }
         }
     }
-    private void RemoveFalseConditionals(List<Thought> result)
+
+    private void RemoveFalseConditionals(List<Link> result)
     {
         for (int i = 0; i < result.Count; i++)
         {
-            Thought r1 = result[i];
+            Link r1 = result[i];
             if (!r1.HasProperty("isResult")) continue;
             if (!ConditionsAreMet(r1))
             {
@@ -239,24 +245,24 @@ public partial class UKS
     /// <param name="result">List of links from a previous query.</param>
     /// <param name="ancestors">Ancestor filter list.</param>
     /// <returns>Filtered list containing only links that match the ancestor filter.</returns>
-    public IReadOnlyList<Thought> FilterResults(List<Thought> result, List<Thought> ancestors)
+    public IReadOnlyList<Link> FilterResults(List<Link> result, List<Thought> ancestors)
     {
-        List<Thought> retVal = new();
+        List<Link> retVal = new();
         if (ancestors is null || ancestors.Count == 0)
             return result;
-        foreach (Thought r in result)
+        foreach (Link r in result)
             if (LinkHasAncestor(r, ancestors))
                 retVal.Add(r);
         return retVal;
     }
 
-    private bool LinkHasAncestor(Thought r, List<Thought> ancestors)
+    private bool LinkHasAncestor(Link r, List<Thought> ancestors)
     {
         foreach (Thought ancestor in ancestors)
         {
-            if (r.From.HasAncestor(ancestor)) return true;
-            if (r.LinkType.HasAncestor(ancestor)) return true;
-            if (r.To.HasAncestor(ancestor)) return true;
+            if (r.From?.HasAncestor(ancestor) == true) return true;
+            if (r.LinkType?.HasAncestor(ancestor) == true) return true;
+            if (r.To?.HasAncestor(ancestor) == true) return true;
         }
         return false;
     }
@@ -264,30 +270,32 @@ public partial class UKS
     int GetCount(Thought t)
     {
         int retVal = 1;
-        foreach (Thought r in t.LinksTo)
-            if (r.LinkType.Label == "is")
-                if (int.TryParse(r.To.Label, out int val))
+        foreach (Link r in t.LinksTo)
+            if (r.LinkType?.Label == "is")
+                if (int.TryParse(r.To?.Label, out int val))
                     return val;
         return retVal;
     }
 
-    bool ConditionsAreMet(Thought r)
+    bool ConditionsAreMet(Link r)
     {
-        foreach (Thought r1 in r.LinksTo)
+        foreach (Link r1 in r.LinksTo)
         {
-            if (!r1.From.HasProperty("isResult")) continue;
-            if (!r1.To.HasProperty("isCondition")) continue;
+            if (r1.From?.HasProperty("isResult") != true) continue;
+            if (r1.To?.HasProperty("isCondition") != true) continue;
 
-            Thought r2 = (Thought)r1.To;
+            Link r2 = r1.To as Link;
             //is r1 true?
             if (GetUnconditionalLink(r2) is null)
                 return false;
         }
         return true;
     }
-    Thought GetUnconditionalLink(Thought r)
+
+    Link GetUnconditionalLink(Link r)
     {
-        foreach (Thought r1 in r.From.LinksTo)
+        if (r?.From is null) return null;
+        foreach (Link r1 in r.From.LinksTo)
         {
             if (Equals(r, r1))
             {
@@ -303,7 +311,7 @@ public partial class UKS
     /// Returns a list of Links which were false in the previous query.
     /// </summary>
     /// <returns>Links that failed conditional evaluation.</returns>
-    public List<Thought> WhyNot()
+    public List<Link> WhyNot()
     {
         return failedConditions;
     }
@@ -311,7 +319,7 @@ public partial class UKS
     /// Returns a list of Links which were true in the previous query.
     /// </summary>
     /// <returns>Links that succeeded conditional evaluation.</returns>
-    public List<Thought> Why()
+    public List<Link> Why()
     {
         return succeededConditions;
     }
@@ -335,13 +343,13 @@ public partial class UKS
         searchCandidates = new();
 
         //seed the search queue with the given parameters.
-        foreach (Thought r in target.LinksTo)
+        foreach (Link r in target.LinksTo)
         {
-            foreach (Thought r1 in r.To.LinksFrom)
+            foreach (Link r1 in r.To?.LinksFrom ?? Enumerable.Empty<Link>())
             {
                 if (r1.From == target) continue;
                 var existing = thoughtsToSearch.FindFirst(x => x == r1.From);
-                if ((r1.LinkType == r.LinkType || r1.LinkType.HasAncestor(r.LinkType)) && r1.To == r.To && existing is null)
+                if ((r1.LinkType == r.LinkType || r1.LinkType?.HasAncestor(r.LinkType) == true) && r1.To == r.To && existing is null)
                 {
                     thoughtsToSearch.Add(r1.From);
                     if (!searchCandidates.ContainsKey(r1.From))
@@ -360,9 +368,9 @@ public partial class UKS
             var t = thoughtsToSearch[0];
             thoughtsToSearch.RemoveAt(0);
             alreadySearched.Add(t);
-            foreach (Thought r in t.LinksFrom)
+            foreach (Link r in t.LinksFrom)
             {
-                if (!r.LinkType.HasProperty("inheritable")) continue;
+                if (r.LinkType?.HasProperty("inheritable") != true) continue;
                 if (r.From == target) continue;
                 AddToQueues(t, r.From);
                 //TODO fix this to handle isSimilarTo  (and transitive...?)
@@ -375,7 +383,6 @@ public partial class UKS
         foreach (var key in searchCandidates.ToList())
         {
             if (!ThoughtsHaveConflictingLink(key.Key, target)) continue;
-            //searchCandidates.Remove(key.Key);
             searchCandidates[key.Key] = searchCandidates[key.Key] - .5f;
         }
         if (searchCandidates.Count == 0)
@@ -384,7 +391,7 @@ public partial class UKS
         // delete items which have ancestor in list too
         for (int i = 0; i < searchCandidates.Keys.Count; i++)
         {
-            Thought t = (Thought)searchCandidates.Keys.ToList()[i];
+            Thought t = searchCandidates.Keys.ToList()[i];
             foreach (Thought t1 in t.AncestorsWithSelf)
             {
                 if (t1 != t && searchCandidates.ContainsKey(t1) && searchCandidates[t1] < 0)
@@ -429,13 +436,14 @@ public partial class UKS
 
     private bool ThoughtsHaveConflictingLink(Thought source, Thought target)
     {
-        foreach (Thought r1 in source.LinksTo)
-            foreach (Thought r2 in target.LinksTo)
+        foreach (Link r1 in source.LinksTo)
+            foreach (Link r2 in target.LinksTo)
                 if (LinksAreExclusive(r1, r2))
                     return true;
         return false;
     }
-    private bool LinksAreSimilar(Thought r1, Thought r2)
+
+    private bool LinksAreSimilar(Link r1, Link r2)
     {
         if (r1.LinkType != r2.LinkType) return false;
         if (FindCommonParents(r1.To, r2.To).Count == 0) return false;
@@ -450,8 +458,8 @@ public partial class UKS
     /// <returns>True if a similar link exists; otherwise false.</returns>
     public bool ThoughtsHaveSimilarLink(Thought source, Thought target)
     {
-        foreach (Thought r1 in source.LinksTo)
-            foreach (Thought r2 in target.LinksTo)
+        foreach (Link r1 in source.LinksTo)
+            foreach (Link r2 in target.LinksTo)
                 if (LinksAreSimilar(r1, r2))
                     return true;
         return false;

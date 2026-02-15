@@ -96,7 +96,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         var sourceParts = UKSStatement.Singular(fromString.Split(" ", StringSplitOptions.RemoveEmptyEntries));
         if (sourceParts.Length == 3)
         {
-            Thought r2 = new()
+            Link r2 = new()
             {
                 From = UKSStatement.theUKS.GetOrAddThought(sourceParts[0]),
                 LinkType = UKSStatement.theUKS.GetOrAddThought(sourceParts[1]),
@@ -149,10 +149,10 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             r1.Weight = confidence;
             r1.TimeToLive = duration;
         }
-        if (r1 is not null && eventCB.IsChecked == true)
+        if (r1 is not null && eventCB.IsChecked == true && r1 is Link r3)
         {
-            r1.Fire();
-            Thought subject = r1.From;
+            r3.Fire();
+            Thought subject = r3.From;
             UKSStatement.theUKS.GetOrAddThought("events", "LinkType");
             Thought previousEvents = subject.LinksTo.FindFirst(x => x.LinkType.Label == "events");
             Thought theSequence = subject.LinksTo.FindFirst(x => x.LinkType.Label == "events")?.To;

@@ -112,12 +112,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         depth++;
         if (depth > maxDepth) return;
 
-        List<Thought> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
+        List<Link> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
         theChildren = theChildren.OrderBy(x => x.From.Label).ToList();
         if (detailsCB.IsChecked == true) 
             theChildren = theChildren.OrderByDescending(x => x.From.Weight).ToList();
 
-        foreach (Thought l in theChildren)
+        foreach (Link l in theChildren)
         {
             //"l" is the link defining the is-a link so child is the from of it
             var child = l.From;
@@ -141,7 +141,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddLinks(Thought t, TreeViewItem tvi, int depth, string parentLabel)
     {
-        if (t.LinksTo.Count == 0 && t.From is null && t.To is null) return;
+        if (t.LinksTo.Count == 0 && t is not Link lnk) return;
 
         //build the entry for the tabel of expanded items
         string currentLabel = "|" + parentLabel + "|" + t.Label;
@@ -154,7 +154,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         var sortedLinks = t.LinksTo.OrderBy(x => x?.LinkType?.Label).ToList();
         if (detailsCB.IsChecked == false)
             sortedLinks = t.LinksTo.Where(x => x.LinkType.Label != "is-a").OrderBy(x => x?.LinkType?.Label).ToList();
-        foreach (Thought l in sortedLinks)
+        foreach (Link l in sortedLinks)
         {
             if (showConditionals.IsChecked != true)
                 if (l.HasProperty("isCondition") || l.HasProperty("isResult")) continue; //hide conditionals
@@ -174,7 +174,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddLinksFrom(Thought t, TreeViewItem tvi, string parentLabel)
     {
-        if (t.LinksFrom.Count == 0 && t.From is null && t.To is null) return;
+        if (t.LinksFrom.Count == 0 && t is not Link lnk) return;
 
         //add the entry to the entry of expanded items
         parentLabel = "|" + parentLabel + "|" + t.ToString();
@@ -183,7 +183,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         //add each of the links as a "child" of the parent entry
         //display is-a links if deteails are requested
         var sortedLinks = t.LinksFrom.OrderBy(x => x?.LinkType?.Label).ToList();
-        foreach (Thought r in sortedLinks)
+        foreach (Link r in sortedLinks)
         {
             if (showConditionals.IsChecked != true)
                 if (r.HasProperty("isCondition") || r.HasProperty("isResult")) continue; //hide conditionals
@@ -196,20 +196,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
 
     //build and format the TreeView item for this Thought
-    private TreeViewItem GetTreeChildFormatted(string parentLabel, Thought r)
+    private TreeViewItem GetTreeChildFormatted(string parentLabel, Thought t)
     {
-        Thought child = r;
+        Thought child = t;
         string header = "";
-        if (r.LinkType is null && r.To is null)
-        {
-            //Format a node-like line in the treeview
-            header = child.ToString();
-            if (header == "") header = "\u25A1"; //put in a small empty box--if the header is unlabeled, so you can right-click 
-            if (showConditionals.IsChecked == true && r.LinkType?.Label == "is-a") //hack to show conditions on is-a links
-                foreach (Thought r1 in r.LinksTo)
-                    header += "  " + r1.ToString();
-        }
-        else
+        if (t is Link r)
         {
             //format a link-like line in the treeview
             header = r.ToString();
@@ -222,7 +213,18 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 header = $"[{r.From.Label}->{r.LinkType.Label}->{sequence}]";
             }
         }
-        header = AddDetails(r, header);
+        else
+        {
+            //Format a node-like line in the treeview
+            header = child.ToString();
+            if (header == "") 
+                header = "\u25A1"; //put in a small empty box--if the header is unlabeled, so you can right-click 
+            //if (showConditionals.IsChecked == true && r.LinkType?.Label == "is-a") //hack to show conditions on is-a links
+            //    foreach (Thought r1 in r.LinksTo)
+            //        header += "  " + r1.ToString();
+        }
+
+        header = AddDetails(t, header);
 
         //create the treeview entry
         TreeViewItem tviChild = new() { Header = header };
@@ -231,7 +233,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         tviChild.SetValue(ThoughtObjectProperty, child);
         if (child.LastFiredTime > DateTime.Now - TimeSpan.FromMilliseconds(500))
             tviChild.Background = new SolidColorBrush(Colors.LightGreen);
-        if (r.TimeToLive != TimeSpan.MaxValue && r.LastFiredTime + r.TimeToLive < DateTime.Now + TimeSpan.FromSeconds(3))
+        if (child.TimeToLive != TimeSpan.MaxValue && child.LastFiredTime + child.TimeToLive < DateTime.Now + TimeSpan.FromSeconds(3))
             tviChild.Background = new SolidColorBrush(Colors.LightYellow);
 
         //is this expanded?
@@ -249,16 +251,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
 
     //if the "details" box is checked, add the details
-    private string AddDetails(Thought r, string header)
+    private string AddDetails(Thought t, string header)
     {
+
         if (detailsCB.IsChecked == false) return header;
-        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
-        if (r.Weight != 1f || r.TimeToLive != TimeSpan.MaxValue)
-            header = $"<{r.Weight.ToString("f2")}, {timeToLive}> " + header;
-        if (r.LinkType?.HasLink(null, null, theUKS.Labeled("not")) is not null) //prepend ! for negative  children
-            header = "!" + header;
-        header += ": Children:" + r.Children.Count;
-        header += " Links:" + r.LinksTo.Count;
+        if (t is Link r)
+        {
+            string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
+            if (r.Weight != 1f || r.TimeToLive != TimeSpan.MaxValue)
+                header = $"<{r.Weight.ToString("f2")}, {timeToLive}> " + header;
+            if (r.LinkType?.HasLink(null, null, theUKS.Labeled("not")) is not null) //prepend ! for negative  children
+                header = "!" + header;
+        }
+        header += ": Children:" + t.Children.Count;
+        header += " Links:" + t.LinksTo.Count;
         return header;
     }
 
@@ -293,8 +299,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 AddLinks(t, tvi, 1, parentLabel);
             if (reverseCB.IsChecked == true && t.LinksFrom.Count > 0)
                 AddLinksFrom(t, tvi, parentLabel);
-            if (theUKS.IsSequenceElement(t.To))
-                AddLinks(t.To, tvi, 1, parentLabel);
+            if (theUKS.IsSequenceElement((t as Link)?.To))
+                AddLinks((t as Link)?.To, tvi, 1, parentLabel);
             e.Handled = true;
         }
     }
@@ -429,7 +435,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
     }
 
-    private ContextMenu GetLinkContextMenu(Thought r)
+    private ContextMenu GetLinkContextMenu(Link r)
     {
         ContextMenu menu = new ContextMenu();
         menu.SetValue(LinkObjectProperty, r);
@@ -478,7 +484,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             Thought t = (Thought)m.GetValue(ThoughtObjectProperty);
             if (t is null)
             {
-                Thought r = (Thought)m.GetValue(LinkObjectProperty);
+                Link r = m.GetValue(LinkObjectProperty) as Link;
                 (r.From as Thought).RemoveLink(r);
                 //force a repaint
                 Refresh();

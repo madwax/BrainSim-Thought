@@ -89,7 +89,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         string filter = filterText.Text;
 
         List<Thought> thoughts;
-        List<Thought> links;
+        List<Link> links;
         ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
         var results1 = UKSQuery.QueryUKS(source, type, target, filter, out thoughts, out links);
 
@@ -356,7 +356,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         //remove any attributes which are common to all parents
         for (int i = 0; i < queryThought.LinksTo.Count; i++)
         {
-            Thought r = queryThought.LinksTo[i];
+            Link r = queryThought.LinksTo[i];
             if (r.LinkType.Label == "is-a") continue;
             bool linkIsCommonToAllParents = true;
             foreach (Thought parent in queryThought.Parents)
@@ -376,14 +376,14 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         }
     }
 
-    List<Thought> GetMissingAttributes(Thought queryThought, Thought foundThought)
+    List<Link> GetMissingAttributes(Thought queryThought, Thought foundThought)
     {
         ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
         var theUKS = UKSQuery.theUKS;
 
-        List<Thought> missingAttributes = new();
+        List<Link> missingAttributes = new();
         var inheritableLinks = theUKS.GetAllLinks(new List<Thought> { foundThought });
-        foreach (Thought r in queryThought.LinksTo)
+        foreach (Link r in queryThought.LinksTo)
         {
             if (inheritableLinks.FindFirst(x => x.LinkType == r.LinkType && x.To == r.To) is null)
                 missingAttributes.Add(r);
@@ -432,7 +432,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
 
         // does the query thought have all the same links as the result?
         bool allMatch = true;
-        foreach (Thought r in queryThought.LinksTo)
+        foreach (Link r in queryThought.LinksTo)
         {
             if (topResult.HasLink(topResult, r.LinkType, r.To) is null)
             {
@@ -495,7 +495,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 if (newParent is null)
                     newParent = UKSQuery.theUKS.GetOrAddThought("newParent", tExisting.Parents[0]);
                 newParent.AddLink(key.target, key.linkType);
-                foreach (Thought r in key.links)
+                foreach (Link r in key.links)
                 {
                     Thought tChild = (Thought)r.From;
                     Thought rp = tChild.AddParent(newParent);
@@ -511,7 +511,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
 
     private static void CountAttributes(Thought tExisting, List<LinkDest> attributes)
     {
-        foreach (Thought r in tExisting.LinksTo)
+        foreach (Link r in tExisting.LinksTo)
         {
             if (r.LinkType == Thought.IsA) continue;
             Thought useLinkType = GetInstanceType(r.LinkType);
@@ -538,11 +538,11 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         }
         foreach (var r1 in r)
         {
-            if (r1 is ValueTuple<Thought, float> tuple)
+            if (r1 is ValueTuple<Link, float> tuple)
             {
                 var r3 = tuple.Item1;
                 var conf = tuple.Item2;
-                if (r3.To?.LinkType?.Label == "NXT")
+                if ((r3.To as Link)?.LinkType?.Label == "NXT")
                 {
                     ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
                     var theUKS = UKSQuery.theUKS;
@@ -553,7 +553,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 else
                     resultString += $"{r3.From.ToString()} {r3.LinkType.ToString()} {r3.To.ToString()}  ({conf.ToString("0.00")})\n";
             }
-            else if (r1 is Thought r2)
+            else if (r1 is Link r2)
             {
                 if (noSource && fullCB.IsChecked == false)
                     resultString += $"{r2.LinkType?.ToString()} {r2.To.ToString()}  ({r2.Weight.ToString("0.00")})\n";

@@ -27,39 +27,32 @@ public partial class UKS
 	/// <param name="sTarget">string or Thought (or null) for the target.</param>
 	/// <param name="label">Optional label for the created link Thought.</param>
 	/// <returns>The primary link which was created (others may be created for given attributes).</returns>
-	public Thought AddStatement(string sSource, string sLinkType, string sTarget, string label = "")
+	public Link AddStatement(string sSource, string sLinkType, string sTarget, string label = "")
 	{
 		Thought source = ThoughtFromObject(sSource);
 		Thought linkType = ThoughtFromObject(sLinkType, "LinkType", source);
 		Thought target = ThoughtFromObject(sTarget);
 
-		Thought theLink = AddStatement(source, linkType, target, label);
+		Link theLink = AddStatement(source, linkType, target, label);
 		return theLink;
 	}
+
 	/// <summary>
 	/// Adds a statement relating the specified source, link type, and target. No new Thoughts are created.
 	/// </summary>
-	/// <remarks>If a link with the same source, link type, and target already exists, the existing
-	/// link  is returned after being activated. Otherwise, a new link is created and added. If the
-	/// link type  has the "isCommutative" property, a reverse link is also created. Additionally, any
-	/// extraneous parent  links for the source, target, or link type are cleared.</remarks>
-	/// <param name="source">The source <see cref="Thought"/> of the link. Cannot be <see langword="null"/>.</param>
-	/// <param name="linkType">The link type <see cref="Thought"/>. Cannot be <see langword="null"/>.</param>
-	/// <param name="target">The target <see cref="Thought"/> of the link.</param>
-	/// <param name="label">Optional label for the created link Thought.</param>
-	/// <returns>The created or existing <see cref="Thought"/> object that represents the link.  Returns <see
-	/// langword="null"/> if <paramref name="source"/> or <paramref name="linkType"/> is <see langword="null"/>.</returns>
-	public Thought AddStatement(Thought source, Thought linkType, Thought target, string label = "")
+	public Link AddStatement(Thought source, Thought linkType, Thought target, string label = "")
 	{
 		if (source is null || linkType is null) return null;
 
-		Thought existing = Labeled(label);
-		Thought r = null;
+		Thought t = Labeled(label);
+		Link existing = t as Link;
+		Link lnk = null;
 
 		if (existing is null)
-		{        //create the link but don't add it to the UKS
-			r = CreateTheLink(source, linkType, target);
-			existing = GetLink(r);
+		{
+			//create the link but don't add it to the UKS
+			lnk = CreateTheLink(source, linkType, target);
+			existing = GetLink(lnk);
 		}
 		else
 		{
@@ -75,31 +68,29 @@ public partial class UKS
 			existing.Fire();
 			return existing;
 		}
-		if (r?.From?.Label == "") r.From.AddDefaultLabel();
-		if (r?.To?.Label == "") r.To.AddDefaultLabel();
+		if (lnk?.From?.Label == "") lnk.From.AddDefaultLabel();
+		if (lnk?.To?.Label == "") lnk.To.AddDefaultLabel();
 		if (!string.IsNullOrEmpty(label))
-			r.Label = label.Trim();
+			lnk.Label = label.Trim();
 
-		WeakenConflictingLinks(source, r);
+		WeakenConflictingLinks(source, lnk);
 
-		WriteTheLink(r);
-		if (r.LinkType is not null && HasProperty(r.LinkType, "isCommutative"))
+		WriteTheLink(lnk);
+		if (lnk.LinkType is not null && HasProperty(lnk.LinkType, "isCommutative"))
 		{
-			Thought rReverse = new Thought(r);
-			(rReverse.From, rReverse.To) = (rReverse.To, rReverse.From);
-			//rReverse.Clauses.Clear();
+			Link rReverse = new Link(lnk.To, lnk.LinkType, lnk.From);
 			WriteTheLink(rReverse);
 		}
 
 		//if this is adding a child link, remove any Unknown parent
-		ClearExtraneousParents(r.From);
-		ClearExtraneousParents(r.To);
-		ClearExtraneousParents(r.LinkType);
+		ClearExtraneousParents(lnk.From);
+		ClearExtraneousParents(lnk.To);
+		ClearExtraneousParents(lnk.LinkType);
 
-		return r;
+		return lnk;
 	}
 
-	private Thought CreateTheLink(Thought source, Thought linkType, Thought target)
+	private Link CreateTheLink(Thought source, Thought linkType, Thought target)
 	{
 		Thought inverseType1 = CheckForInverse(linkType);
 		//if this link has an inverse, switcheroo so we are storing consistently in one direction
@@ -109,7 +100,7 @@ public partial class UKS
 			linkType = inverseType1;
 		}
 
-		Thought r = new Thought()
+		Link r = new()
 		{ From = source, LinkType = linkType, To = target };
 
 		r.From?.Fire();
@@ -119,30 +110,27 @@ public partial class UKS
 		return r;
 	}
 
-	private void WeakenConflictingLinks(Thought newSource, Thought newLink)
+	private void WeakenConflictingLinks(Thought newSource, Link newLink)
 	{
-		//does this new link conflict with an existing link)?
-		for (int i = 0; i < newSource?.LinksTo.Count; i++)
+		if (newSource is null || newLink is null) return;
+
+		for (int i = 0; i < newSource.LinksTo.Count; i++)
 		{
-			Thought existingLink = newSource.LinksTo[i];
+			Link existingLink = newSource.LinksTo[i];
 			if (existingLink == newLink)
 			{
-				//strengthen this link
 				newLink.Weight += (1 - newLink.Weight) / 2.0f;
 				newLink.Fire();
 			}
 			else if (LinksAreExclusive(newLink, existingLink))
 			{
-				//special cases for "not" so we delete rather than weakening
-				if (newLink.LinkType.Children.Contains(existingLink.LinkType) && HasAttribute(existingLink.LinkType, "not"))
+				if (newLink.LinkType?.Children.Contains(existingLink.LinkType) == true && HasAttribute(existingLink.LinkType, "not"))
 				{
-					AddStatement(newLink, "AFTER", existingLink);
-					existingLink.From.RemoveLink(existingLink);
+					existingLink.From?.RemoveLink(existingLink);
 				}
-				else if (existingLink.LinkType.Children.Contains(newLink.LinkType) && HasAttribute(newLink.LinkType, "not"))
+				else if (existingLink.LinkType?.Children.Contains(newLink.LinkType) == true && HasAttribute(newLink.LinkType, "not"))
 				{
-					AddStatement(newLink, "AFTER", existingLink);
-					existingLink.From.RemoveLink(existingLink);
+					existingLink.From?.RemoveLink(existingLink);
 				}
 				else
 				{
@@ -165,30 +153,22 @@ public partial class UKS
 		if (t is null) return;
 
 		bool reconnectNeeded = t.HasAncestor("Thought");
-		//if a thought has more than one parent and one of them is unkonwn, 
-		//then the Unknown link is unnecessary
 		if (t.Parents.Count > 1)
 			t.RemoveParent(ThoughtLabels.GetThought("Unknown"));
-		//if this disconnects the Thought from the tree, reconnect it as a Unknown
-		//this may happen in the case of a circular reference.
 		if (reconnectNeeded && !t.HasAncestor("Thought"))
 			t.AddParent(ThoughtLabels.GetThought("Unknown"));
 	}
 
 	public Thought SubclassExists(Thought t, List<Thought> thoughtAttributes, ref Thought bestMatch, ref List<Thought> missingAttributes)
 	{
-		//TODO this doesn't work as needed if some attributes are inherited from an ancestor
 		if (t is null) return null;
 
 		bestMatch = t;
 		missingAttributes = thoughtAttributes;
-		//there are no attributes specified
 		if (thoughtAttributes.Count == 0) return t;
 
-		List<Thought> attrs = new List<Thought>(thoughtAttributes);
+		List<Thought> attrs = new(thoughtAttributes);
 
-		//get the attributes of t
-		//var existingLinks = GetAllLinks(new List<Thought> { t }, false);
 		List<Thought> existingLinks = t.Descendants.ToList();
 		existingLinks.Insert(0, t);
 		foreach (Thought r in existingLinks)
@@ -204,29 +184,24 @@ public partial class UKS
 		return null;
 	}
 
-
 	public Thought CreateInstanceOf(Thought t)
 	{
 		return CreateSubclass(t, new List<Thought>());
 	}
+
 	private Thought CreateSubclass(Thought t, List<Thought> attributes)
 	{
 		if (t is null) return null;
-		//Thought t2 = SubclassExists(t, attributes);
-		//if (t2 is not null && attributes.Count != 0) return t2;
 
 		string newLabel = t.Label;
 		foreach (Thought t1 in attributes)
 		{
 			newLabel += ((t1.Label.StartsWith(".")) ? "" : ".") + t1.Label;
 		}
-		//create the new thought which is child of the original
 		Thought retVal = AddThought(newLabel, t);
-		//add the attributes
 		foreach (Thought t1 in attributes)
 		{
-			Thought r1 = new Thought()
-			{ From = retVal, LinkType = ThoughtLabels.GetThought("is"), To = t1 };
+			Link r1 = new() { From = retVal, LinkType = ThoughtLabels.GetThought("is"), To = t1 };
 			WriteTheLink(r1);
 		}
 		return retVal;
@@ -235,43 +210,41 @@ public partial class UKS
 	private Thought CheckForInverse(Thought linkType)
 	{
 		if (linkType is null) return null;
-		Thought inverse = linkType.LinksTo.FindFirst(x => x.LinkType.Label == "inverseOf");
-		if (inverse is not null) return inverse.To;
-		//use the below if inverses are 2-way.  Without this, there is a one-way translation
-		//inverse = linkType.LinksBy.FindFirst(x => x.linktype.Label == "inverseOf");
-		//if (inverse is not null) return inverse.source;
-		return null;
+		Thought inverse = linkType.LinksTo.FindFirst(x => x.LinkType?.Label == "inverseOf")?.To;
+		return inverse;
 	}
+
 	private static List<Thought> FindCommonParents(Thought t, Thought t1)
 	{
-		List<Thought> commonParents = new List<Thought>();
+		List<Thought> commonParents = new();
 		foreach (Thought p in t.Parents)
 			if (t1.Parents.Contains(p))
 				commonParents.Add(p);
 		return commonParents;
 	}
-	public static void WriteTheLink(Thought r)
+
+	public static void WriteTheLink(Link lnk)
 	{
-		if (r.From is null) return;
-		if (r.LinkType is null) return;
-		if (r.To is null)
+		if (lnk.From is null) return;
+		if (lnk.LinkType is null) return;
+		if (lnk.To is null)
 		{
-			lock (r.From.LinksToWriteable)
+			lock (lnk.From.LinksToWriteable)
 			{
-				if (!r.From.LinksToWriteable.Contains(r))
-					r.From.LinksToWriteable.Add(r);
+				if (!lnk.From.LinksToWriteable.Contains(lnk))
+					lnk.From.LinksToWriteable.Add(lnk);
 			}
 		}
 		else
 		{
-			lock (r.From.LinksToWriteable)
-				lock (r.To.LinksFromWriteable)
-				{
-					if (!r.From.LinksToWriteable.Contains(r))
-						r.From.LinksToWriteable.Add(r);
-					if (!r.To.LinksToWriteable.Contains(r))
-						r.To.LinksFromWriteable.Add(r);
-				}
+			lock (lnk.From.LinksToWriteable)
+			lock (lnk.To.LinksFromWriteable)
+			{
+				if (!lnk.From.LinksToWriteable.Contains(lnk))
+					lnk.From.LinksToWriteable.Add(lnk);
+				if (!lnk.To.LinksFromWriteable.Contains(lnk))
+					lnk.To.LinksFromWriteable.Add(lnk);
+			}
 		}
 	}
 }

@@ -70,8 +70,8 @@ Follow has ONLY if called out in type
 
      */
 
-    public List<(Thought r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
-            string filter, out List<Thought> thoughtResult, out List<Thought> links)
+    public List<(Link r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
+            string filter, out List<Thought> thoughtResult, out List<Link> links)
     {
         thoughtResult = new();
         links = new();
@@ -149,7 +149,7 @@ Follow has ONLY if called out in type
         //filter the links
         for (int i = 0; i < links.Count; i++)
         {
-            Thought r = links[i];
+            Link r = links[i];
             if (targetList.Count > 0 && target != "" && !r.To.HasAncestor(targetList[0]))
             { links.RemoveAt(i); i--; continue; }
             if (r.LinkType is not null && linkType != "" && !r.LinkType.HasAncestor(linkType))

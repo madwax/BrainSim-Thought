@@ -387,7 +387,7 @@ is-part-of-speech, ";
                     String newParent = valuePairs[1];
 
                     // Make the english word "means" the abstract item.
-                    Thought r = theUKS.AddStatement(englishWord, "means", textIn + "*");
+                    Link r = theUKS.AddStatement(englishWord, "means", textIn + "*");
 
                     // Make the disambiguated term a child of the parent.
                     theUKS.AddStatement(r.To, "is-a", newParent);
@@ -630,7 +630,7 @@ is-part-of-speech, ";
                         }
                         ///
                         foreach (Thought t in theUKS.AllThoughts)
-                            foreach (Thought r in t.LinksTo)
+                            foreach (Link r in t.LinksTo)
                                 if (r.LinkType is null)
                                 {
                                     t.RemoveLink(r);
@@ -651,7 +651,7 @@ is-part-of-speech, ";
             {
                 // Find unique parents to remove duplicates
                 List<Thought> uniqueParents = new List<Thought>();
-                foreach (Thought meaning in word.LinksTo)
+                foreach (Link meaning in word.LinksTo)
                 {
                     // Find the parents of each target in the realtionship.
                     foreach (Thought parent in meaning.To.Parents)

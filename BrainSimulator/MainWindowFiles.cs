@@ -103,7 +103,7 @@ namespace BrainSimulator
             {
                 for (int i = 0; i < t.LinksTo.Count; i++)
                 {
-                    Thought r = t.LinksTo[i];
+                    Link r = t.LinksTo[i];
                     theUKS.DeleteThought(r.To);
                     t.RemoveLink(r);
                 }

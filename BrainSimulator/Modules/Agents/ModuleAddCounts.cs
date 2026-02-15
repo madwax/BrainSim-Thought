@@ -71,7 +71,7 @@ public class ModuleAddCounts : ModuleBase
     {
         for (int j = 0; j < t.LinksTo.Count; j++)
         {
-            Thought r = t.LinksTo[j];
+            Link r = t.LinksTo[j];
             if (r.LinkType == Thought.IsA) continue;
             Thought useLinkType = ModuleAttributeBubble.GetInstanceType(r.LinkType);
 

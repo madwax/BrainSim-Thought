@@ -93,7 +93,7 @@ public class ModuleText : ModuleBase
         theUKS.GetOrAddThought("followedBy", "LinkType");
         for (int i = 0; i < wordsInPhrase.Count - 1; i++)
         {
-            var bigram = wordsInPhrase[i].LinksTo.FindFirst(x => x.LinkType == "followedBy" && x.To == wordsInPhrase[i + 1]);
+            Link bigram = wordsInPhrase[i].LinksTo.FindFirst(x => x.LinkType == "followedBy" && x.To == wordsInPhrase[i + 1]);
             if (bigram is null)
             {  //does not exist, create a new pair.
                 {
@@ -268,16 +268,17 @@ public class ModuleText : ModuleBase
         // Iterate all existing bigram link-thoughts
         foreach (Thought t in ((Thought)"bigram").Children)
         {
+            if (t is not Link lnk) continue;
             // Expect: t is a followedBy link from A -> B
-            Thought a = t.From;
-            Thought b = t.To;
+            Thought a = lnk.From;
+            Thought b = lnk.To;
 
             if (a == null || b == null) continue;
 
             // Find B --followedBy--> C (second bigram)
             foreach (Thought l in b.LinksTo.Where(x => x.LinkType.Label == "followedBy"))
             {
-                Thought c = l.To;
+                Thought c = lnk.To;
                 if (c == null) continue;
 
                 // Optional: ensure A,B,C occurs somewhere in actual ingested sequences

@@ -104,11 +104,14 @@ public partial class UKS
             {
                 index = UKSTemp.Count,
                 label = t.Label,
-                source = GetIndex(t.From),
-                linkType = GetIndex(t.LinkType),
-                target = GetIndex(t.To),
                 V = t.V,
             };
+            if (t is Link lnk)
+            {
+                st.source = GetIndex(lnk.From);
+                st.linkType = GetIndex(lnk.LinkType);
+                st.target = GetIndex(lnk.To);
+            }
             index = UKSTemp.Count;
             UKSTemp.Add(st);
         }
@@ -125,9 +128,9 @@ public partial class UKS
             string label = t.Label;
             if (string.IsNullOrWhiteSpace(label))  // Put the GUID into the label only when it's unlabeled
                 label = $"unl_{Guid.NewGuid().ToString("N")[..8]}";
-            int from = GetIndex(t.From);
-            int sType = GetIndex(t.LinkType);
-            int to = GetIndex(t.To);
+            int from = GetIndex((t as Link)?.From);
+            int sType = GetIndex((t as Link)?.LinkType);
+            int to = GetIndex((t as Link)?.To);
             if (UKSTemp.Count >= 170)
             { }
 
@@ -276,28 +279,39 @@ public partial class UKS
         //get all the thoughts
         foreach (sThought st in UKSTemp)
         {
-            if (st.label.ToLower() == "r0")
-            { }
-            Thought t = new()
+            if (st.source == -1 && st.linkType == -1 && st.target == -1)
             {
-                Label = st.label,
-                Weight = st.weight,
-                V = st.V,
-            };
-            if (st.source != -1)
-                t.From = theUKS.Labeled(UKSTemp[st.source].label);
-            if (st.linkType != -1)
-                t.LinkType = theUKS.Labeled(UKSTemp[st.linkType].label);
-            if (st.target != -1)
-                t.To = theUKS.Labeled(UKSTemp[st.target].label);
-            AllThoughts.Add(t);
-            t.From?.LinksToWriteable.Add(t);
+                Thought t = new()
+                {
+                    Label = st.label,
+                    Weight = st.weight,
+                    V = st.V,
+                };
+                AllThoughts.Add(t);
+            }
+            else
+            {
+                Link t = new()
+                {
+                    Label = st.label,
+                    Weight = st.weight,
+                    V = st.V,
+                };
+                if (st.source != -1)
+                    t.From = theUKS.Labeled(UKSTemp[st.source].label);
+                if (st.linkType != -1)
+                    t.LinkType = theUKS.Labeled(UKSTemp[st.linkType].label);
+                if (st.target != -1)
+                    t.To = theUKS.Labeled(UKSTemp[st.target].label);
+                AllThoughts.Add(t);
+                t.From?.LinksToWriteable.Add(t);
+            }
         }
 
         //re-create reverse links
         foreach (Thought t in AllThoughts)
         {
-            foreach (Thought r in t.LinksTo)
+            foreach (Link r in t.LinksTo)
             {
                 Thought t1 = r.To;
                 if (t1 is not null)

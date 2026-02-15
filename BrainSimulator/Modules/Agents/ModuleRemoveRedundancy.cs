@@ -56,7 +56,7 @@ public class ModuleRemoveRedundancy : ModuleBase
     public void DoTheWork()
     {
         debugString = "Agent Started\n";
-        foreach (Thought t in theUKS.AllThoughts)
+        foreach (Link t in theUKS.AllThoughts)
         {
             RemoveRedundantAttributes(t);
         }
@@ -68,11 +68,11 @@ public class ModuleRemoveRedundancy : ModuleBase
     {
         foreach (Thought parent in t.Parents) //usually only a single parent
         {
-            List<Thought> linksWithInheritance = theUKS.GetAllLinks(new List<Thought> { parent });
+            List<Link> linksWithInheritance = theUKS.GetAllLinks(new List<Thought> { parent });
             for (int i = 0; i < t.LinksTo.Count; i++)
             {
-                Thought r = t.LinksTo[i];
-                Thought rMatch = linksWithInheritance.FindFirst(x => x.From != r.From && x.LinkType == r.LinkType && x.To == r.To);
+                Link r = t.LinksTo[i];
+                Link rMatch = linksWithInheritance.FindFirst(x => x.From != r.From && x.LinkType == r.LinkType && x.To == r.To);
                 if (rMatch is not null && rMatch.Weight > 0.8f)
                 {
                     r.Weight -= 0.1f;

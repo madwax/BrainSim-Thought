@@ -286,7 +286,7 @@ namespace BrainSimulator.Modules
             if (!label.StartsWith(".")) label = "." + label;
             UKS.Thought t = mf.theUKS.Labeled(label);
             if (t is null) return;
-            foreach (Thought r in t.LinksTo)
+            foreach (Link r in t.LinksTo)
             {
                 //if (r.GPTVerified) continue;
                 if (r.LinkType.Label != "has-child") continue;

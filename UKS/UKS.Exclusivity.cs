@@ -33,7 +33,7 @@ public partial class UKS
 
 
     //TODO: This method has gotten out of hand and needs a rewrite
-    private bool LinksAreExclusive(Thought r1, Thought r2)
+    private bool LinksAreExclusive(Link r1, Link r2)
     {
         //are two links mutually exclusive?
         //yes if they differ by a single component property
@@ -136,7 +136,7 @@ public partial class UKS
         return false;
     }
 
-    private bool LinkTypesAreExclusive(Thought r1, Thought r2)
+    private bool LinkTypesAreExclusive(Link r1, Link r2)
     {
         IReadOnlyList<Thought> r1RelProps = r1.LinkType.GetAttributes();
         IReadOnlyList<Thought> r2RelProps = r2.LinkType.GetAttributes();
@@ -151,7 +151,7 @@ public partial class UKS
     private bool HasAttribute(Thought t, string name)
     {
         if (t is null) return false;
-        foreach (Thought r in t.LinksTo)
+        foreach (Link r in t.LinksTo)
         {
             if (r.LinkType is not null && r.LinkType.Label == "is" && r.To.Label == name)
                 return true;
