@@ -28,7 +28,7 @@ public class ModuleSound : ModuleBase
     DateTime lastCadenceTime = DateTime.Now;
     List<Thought> tuneToSearch = null;
 
-    IEnumerator<Thought> enumerator = null;  //we'll needc multiple enumerators soon
+    IEnumerator<SeqElement> enumerator = null;  //we'll needc multiple enumerators soon
 
     // Add these properties to the ModuleSound class
     public int Cadence { get; set; } = 100;
@@ -45,7 +45,10 @@ public class ModuleSound : ModuleBase
             {
                 var tunesFound = theUKS.HasSequence(tuneToSearch, null);
                 if (tunesFound.Count > 0)
-                    tunesFound[0].r.From.Fire();
+                {
+                    var phrase = tunesFound[0].r.LinksFrom[0];
+                    phrase.From.Fire();
+                }
             }
             tuneToSearch = null;
             lastNotePressed = null;
@@ -61,7 +64,7 @@ public class ModuleSound : ModuleBase
                     if (!theUKS.IsSequenceElement(seqStart))
                         seqStart = phrase.LinksTo.FindFirst(x => theUKS.IsSequenceElement(x.To))?.To;
 
-                    enumerator = theUKS.EnumerateSequenceElements(seqStart).GetEnumerator();
+                    enumerator = theUKS.EnumerateSequenceElements(seqStart as SeqElement).GetEnumerator();
                 }
             }
 

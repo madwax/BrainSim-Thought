@@ -546,7 +546,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 {
                     ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
                     var theUKS = UKSQuery.theUKS;
-                    var seq = theUKS.FlattenSequence(r3.To);
+                    var seq = theUKS.FlattenSequence((SeqElement)r3.To);
                     foreach (Thought t in seq) resultString += t.Label + " ";
                     resultString += $"{conf.ToString("0.00")}\n";
                 }

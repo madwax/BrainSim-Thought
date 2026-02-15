@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Brain Simulator Thought
  *
  * Copyright (c) 2026 Charles Simon
@@ -16,7 +16,17 @@ namespace UKS;
 
 public class Link : Thought
 {
+    /// <summary>
+    /// Default constructor for a link thought.
+    /// </summary>
     public Link() { }
+
+    /// <summary>
+    /// Creates a link with the specified source, link type, and target.
+    /// </summary>
+    /// <param name="from">Source thought.</param>
+    /// <param name="linkType">Relationship type thought.</param>
+    /// <param name="to">Target thought.</param>
     public Link(Thought from, Thought linkType, Thought to)
     {
         From = from;
@@ -27,6 +37,39 @@ public class Link : Thought
     public Thought? From { get; set; }
     public Thought? LinkType { get; set; }
     public Thought? To { get; set; }
+
+    /// <summary>
+    /// Returns a formatted string for the link, showing sequence notation or From→Type→To.
+    /// </summary>
+    public override string ToString()
+    {
+        string retVal = Label + "[";
+        if (From is not null) retVal += From.ToString();
+        if (LinkType is not null) retVal += ((retVal == "") ? "" : "→") + LinkType.ToString();
+        if (To is not null) retVal += ((retVal == "") ? "" : "→") + To.ToString();
+        retVal += "]";
+        return retVal;
+    }
+
+}
+
+public class SeqElement : Thought
+{
+    /// <summary>
+    /// Default constructor for sequence element placeholder.
+    /// </summary>
+    public SeqElement() { }
+
+    public SeqElement? FRST { get; set; }
+    public SeqElement? NXT { get; set; }
+    public override string ToString()
+    {
+        string retVal = "";
+        var valuList = theUKS.FlattenSequence(this);
+        retVal = "^" + string.Join("", valuList);
+        return retVal;
+        return retVal;
+    }
 }
 
 /// <summary>
@@ -48,29 +91,9 @@ public class Thought
     /// <summary>Safe snapshot of incoming links.</summary>
     public IReadOnlyList<Link> LinksFrom { get { lock (_linksFrom) { return new List<Link>(_linksFrom.AsReadOnly()); } } }
     /// <summary>Direct parents (targets of outgoing is-a links).</summary>
-    public IReadOnlyList<Thought> Parents
-    {
-        get
-        {
-            lock (_linksTo)
-                return _linksTo.Where(x => x.LinkType?.Label == "is-a")
-                               .Select(x => x.To)
-                               .Where(x => x is not null)!
-                               .ToList();
-        }
-    }
+    public IReadOnlyList<Thought> Parents { get { lock (_linksTo) return _linksTo.Where(x => x.LinkType?.Label == "is-a").Select(x => x.To).ToList(); } }
     /// <summary>Direct children (sources of incoming is-a links).</summary>
-    public IReadOnlyList<Thought> Children
-    {
-        get
-        {
-            lock (_linksFrom)
-                return _linksFrom.Where(x => x.LinkType?.Label == "is-a")
-                                 .Select(x => x.From)
-                                 .Where(x => x is not null)!
-                                 .ToList();
-        }
-    }
+    public IReadOnlyList<Thought> Children { get { lock (_linksFrom) return _linksFrom.Where(x => x.LinkType?.Label == "is-a").Select(x => x.From).ToList(); } }
 
     private string _label = "";
     public string Label
@@ -88,6 +111,7 @@ public class Thought
     public DateTime LastFiredTime = DateTime.Now;
 
     private TimeSpan _timeToLive = TimeSpan.MaxValue;
+    /// <summary>Makes a Thought transient when set to a finite time.</summary>
     public TimeSpan TimeToLive
     {
         get => _timeToLive;
@@ -124,51 +148,49 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Default constructor.
+    /// </summary>
     public Thought() { }
 
+    /// <summary>
+    /// Copy constructor. For link thoughts, construct a Link instead.
+    /// </summary>
+    /// <param name="r">Thought to copy.</param>
     public Thought(Thought r)
     {
         // Copy only common fields; link-specific fields handled via Link subclass.
-        if (r is Link l)
-        {
-            // If this copy should be a link, caller should instantiate Link instead.
+        if (r is Link)
             return;
-        }
         Weight = r.Weight;
         V = r.V;
         Label = r.Label;
     }
 
+    /// <summary>
+    /// Returns a Thought's label with attached value if present.
+    /// </summary>
     public override string ToString()
     {
         string retVal = Label;
-        if (this is Link lnk)
-        {
-            if (theUKS.IsSequenceElement(lnk))
-            {
-                var valuList = theUKS.FlattenSequence(lnk);
-                retVal = "^" + string.Join("", valuList);
-                return retVal;
-            }
-
-            retVal += "[();";
-            if (lnk.From is not null) retVal += lnk.From.ToString();
-            if (lnk.LinkType is not null) retVal += ((retVal == "") ? "" : "->") + lnk.LinkType.ToString();
-            if (lnk.To is not null) retVal += ((retVal == "") ? "" : "->") + lnk.To.ToString();
-            retVal += "]";
-        }
         if (V is not null)
             retVal += "_V:" + V.ToString();
 
         return retVal;
     }
 
+    /// <summary>
+    /// Allows implicit conversion from a label string to an existing Thought (or null if not found).
+    /// </summary>
     public static implicit operator Thought(string label)
     {
         Thought t = ThoughtLabels.GetThought(label);
         return t;
     }
 
+    /// <summary>
+    /// Equality by label; for Link, also compares endpoints and link type.
+    /// </summary>
     public override bool Equals(object obj)
     {
         if (obj is Thought t)
@@ -195,6 +217,9 @@ public class Thought
     }
     public static bool operator !=(Thought? a, Thought? b) => !(a == b);
 
+    /// <summary>
+    /// Assigns a default label to a link thought when missing.
+    /// </summary>
     public Thought AddDefaultLabel()
     {
         if (this is not Link l || l.LinkType is null) return this;
@@ -203,6 +228,9 @@ public class Thought
         return this;
     }
 
+    /// <summary>
+    /// Returns direct children plus any subclass children.
+    /// </summary>
     public IReadOnlyList<Thought> ChildrenWithSubclasses
     {
         get
@@ -222,6 +250,9 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Ancestors including self (BFS).
+    /// </summary>
     public IEnumerable<Thought> AncestorsWithSelf
     {
         get
@@ -232,6 +263,9 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Breadth-first ancestors (excluding self).
+    /// </summary>
     public IEnumerable<Thought> Ancestors
     {
         get
@@ -252,6 +286,9 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Breadth-first descendants.
+    /// </summary>
     public IEnumerable<Thought> Descendants
     {
         get
@@ -272,6 +309,10 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Determines whether this thought has the specified ancestor (self-inclusive).
+    /// </summary>
+    /// <param name="t">Ancestor to test.</param>
     public bool HasAncestor(Thought t)
     {
         foreach (var ancestor in AncestorsWithSelf)
@@ -279,12 +320,22 @@ public class Thought
         return false;
     }
 
+    /// <summary>
+    /// Updates the last-fired time on a Thought.
+    /// </summary>
     public void Fire()
     {
         LastFiredTime = DateTime.Now;
     }
 
     // LINK OPERATIONS
+
+    /// <summary>
+    /// Adds a link to this thought if it does not already exist.
+    /// </summary>
+    /// <param name="target">Target thought.</param>
+    /// <param name="linkType">Relationship type thought.</param>
+    /// <returns>The new or existing link.</returns>
     public Link AddLink(Thought target, Thought linkType)
     {
         if (linkType is null) return null;
@@ -302,11 +353,11 @@ public class Thought
         if (target is not null && linkType is not null)
         {
             lock (_linksTo)
-            lock (target._linksFrom)
-            {
-                LinksToWriteable.Add(r);
-                target.LinksFromWriteable.Add(r);
-            }
+                lock (target._linksFrom)
+                {
+                    LinksToWriteable.Add(r);
+                    target.LinksFromWriteable.Add(r);
+                }
         }
         else
         {
@@ -318,6 +369,10 @@ public class Thought
         return r;
     }
 
+    /// <summary>
+    /// Removes all links of a given type originating from this thought.
+    /// </summary>
+    /// <param name="linkType">Link type to remove.</param>
     public void RemoveLinks(Thought linkType)
     {
         for (int i = 0; i < _linksTo.Count; i++)
@@ -341,6 +396,10 @@ public class Thought
         return null;
     }
 
+    /// <summary>
+    /// Removes a specific link instance.
+    /// </summary>
+    /// <param name="r">Link to remove.</param>
     public void RemoveLink(Link r)
     {
         if (r is null) return;
@@ -384,6 +443,9 @@ public class Thought
         }
     }
 
+    /// <summary>
+    /// Finds a link matching the optional source/type/target criteria.
+    /// </summary>
     public Link HasLink(Thought source, Thought linkType, Thought targett)
     {
         if (source is null && linkType is null && targett is null) return null;
@@ -394,6 +456,11 @@ public class Thought
         return null;
     }
 
+    /// <summary>
+    /// Removes a link of the given type to the given target.
+    /// </summary>
+    /// <param name="t2">Target thought.</param>
+    /// <param name="linkType">Link type.</param>
     public Link RemoveLink(Thought t2, Thought linkType)
     {
         Link r = new() { From = this, LinkType = linkType, To = t2 };
@@ -401,6 +468,10 @@ public class Thought
         return r;
     }
 
+    /// <summary>
+    /// Adds a parent link ("is-a") if not already present.
+    /// </summary>
+    /// <param name="newParent">Parent to add.</param>
     public Link AddParent(Thought newParent)
     {
         if (newParent is null) return null;
@@ -409,18 +480,29 @@ public class Thought
         return LinksTo.FindFirst(x => x.To == newParent && x.LinkType == IsA);
     }
 
+    /// <summary>
+    /// Remove a parent from a Thought.
+    /// </summary>
+    /// <param name="t">Parent thought to remove.</param>
     public void RemoveParent(Thought t)
     {
         Link r = new() { From = this, LinkType = IsA, To = t };
         t.RemoveLink(r);
     }
 
+    /// <summary>
+    /// Remove a child link ("is-a") from this Thought.
+    /// </summary>
+    /// <param name="t">Child thought to remove.</param>
     public void RemoveChild(Thought t)
     {
         Link r = new() { From = t, LinkType = IsA, To = this };
         RemoveLink(r);
     }
 
+    /// <summary>
+    /// Gets attributes linked via "hasAttribute" or "is".
+    /// </summary>
     public List<Thought> GetAttributes()
     {
         List<Thought> retVal = new();
@@ -432,6 +514,10 @@ public class Thought
         return retVal;
     }
 
+    /// <summary>
+    /// Determines whether this thought has the specified property, considering inheritance.
+    /// </summary>
+    /// <param name="t">Property thought to test.</param>
     public bool HasProperty(Thought t)  //with inheritance
     {
         if (t is null) return false;
@@ -448,6 +534,9 @@ public class Thought
             UKS.transientLinks.Add(this);
     }
 
+    /// <summary>
+    /// Enumerate the closure starting from this Thought (root) using BFS over links and is-a children.
+    /// </summary>
     public IEnumerable<Thought> EnumerateSubThoughts()
     {
         var visited = new HashSet<Thought>();

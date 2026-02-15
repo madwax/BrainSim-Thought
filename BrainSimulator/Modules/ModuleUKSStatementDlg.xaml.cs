@@ -164,7 +164,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             }
             else
             {
-                Thought t1 = UKSStatement.theUKS.InsertElement(theSequence, r1);
+                Thought t1 = UKSStatement.theUKS.InsertElement((SeqElement)theSequence, r1);
             }
         }
 

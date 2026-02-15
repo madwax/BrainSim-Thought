@@ -60,7 +60,7 @@ public class ModuleWord : ModuleBase
         string retVal = word;
         var suggestions = theUKS.HasSequence(letters,"spelled",true,true);
         if (suggestions.Count > 0)
-            retVal = suggestions[0].r.From?.Label;
+            retVal = ((Link)suggestions[0].r).From?.Label;
         return retVal;
     }
 

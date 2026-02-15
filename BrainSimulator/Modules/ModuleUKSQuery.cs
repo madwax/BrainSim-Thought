@@ -12,7 +12,6 @@
  */
 
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UKS;
@@ -70,7 +69,7 @@ Follow has ONLY if called out in type
 
      */
 
-    public List<(Link r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
+    public List<(Thought r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
             string filter, out List<Thought> thoughtResult, out List<Link> links)
     {
         thoughtResult = new();
@@ -127,7 +126,7 @@ Follow has ONLY if called out in type
             Thought tDict = theUKS.Labeled("location");
             if (tDict is not null)
             {
-                var seq = tDict.LinksTo.Where(x => x.LinkType.Label == "spelled").ToList()[0].To;
+                SeqElement seq = (SeqElement)tDict.LinksTo.Where(x => x.LinkType.Label == "spelled").ToList()[0].To;
                 var testing = theUKS.FlattenSequence(seq);
             }
             return results1;

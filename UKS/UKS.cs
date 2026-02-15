@@ -99,10 +99,9 @@ public partial class UKS
         if (t is null) return;
 
         foreach (Link r in t.LinksTo.Where(x => IsSequenceFirstElement(x.To)))
-            DeleteSequence((Link)r.To);
+            DeleteSequence((SeqElement)r.To);
 
-        foreach (Link
-            r in t.LinksTo)
+        foreach (Link r in t.LinksTo)
             t.RemoveLink(r);
         foreach (Link r in t.LinksFrom)
             r.From.RemoveLink(r);
@@ -111,7 +110,7 @@ public partial class UKS
             AllThoughts.Remove(t);
     }
 
-    bool HasProperty(Thought t, string propertyName)
+    private bool HasProperty(Thought t, string propertyName)
     {
         if (t is null) return false;
         var v = t.LinksTo;

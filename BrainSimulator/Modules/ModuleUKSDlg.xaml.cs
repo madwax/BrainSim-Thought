@@ -205,12 +205,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             //format a link-like line in the treeview
             header = r.ToString();
             //show sequence content unless details are selected
-            if (detailsCB.IsChecked == false && theUKS.IsSequenceElement(r.To))
+            if (detailsCB.IsChecked == false && r.To is SeqElement s)
             {
                 string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
-                string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(r.To));
-                header = $"[{r.From.Label}->{r.LinkType.Label}->{sequence}]";
+                string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(s));
+                header = $"[{r.From.Label}→{r.LinkType.Label}→{sequence}]";
             }
         }
         else
