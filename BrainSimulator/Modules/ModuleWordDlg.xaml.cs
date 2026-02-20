@@ -99,7 +99,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         var module = ParentModule as ModuleWord;
         if (module != null)
         {
-            ModuleWord.AddWordSpelling(word);
+            module.AddWordSpelling(word);
             SetStatus($"Spelling added: {word}", Colors.Black);
             txtWord.Clear();
             txtWord.Focus();

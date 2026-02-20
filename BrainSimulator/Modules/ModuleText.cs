@@ -66,8 +66,11 @@ public class ModuleText : ModuleBase
                 if (clean.Any(ch => !char.IsLetterOrDigit(ch))) continue;
                 if (clean.Count(char.IsDigit) > 2) continue;
                 attempted++;
-                var wordThought = ModuleWord.AddWordSpelling(clean);
-                wordsInPhrase.Add(wordThought);
+                if (MainWindow.theWindow.GetModuleByLabel("ModuleWord0") is ModuleWord mw)
+                {
+                    var wordThought = mw.AddWordSpelling(clean);
+                    wordsInPhrase.Add(wordThought);
+                }
                 ingested++;
             }
 

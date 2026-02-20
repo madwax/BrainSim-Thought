@@ -264,6 +264,10 @@ namespace BrainSimulator
             ReloadActiveModulesSP();
             return t.Label;
         }
+        public ModuleBase GetModuleByLabel(string label)
+        {
+            return activeModules.FindFirst(x => x.Label == label);
+        }   
 
 
         public void CloseAllModuleDialogs()

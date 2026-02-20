@@ -21,14 +21,32 @@ namespace BrainSimulator.Modules;
 
 public class ModuleWord : ModuleBase
 {
+    //to put letters one by one into the mental Model
+    DateTime lastLetterTime = DateTime.Now;
+    string remainingLetters = "";
     public ModuleWord()
     {
         Label = "Word";
     }
-
     public override void Fire()
     {
         // Called periodically by the module engine
+        if (remainingLetters != "")
+        {
+            if (lastLetterTime < DateTime.Now - TimeSpan.FromSeconds(1))
+            {
+                if (MainWindow.theWindow.GetModuleByLabel("ModuleMentalModel0") is ModuleMentalModel mm)
+                {
+                    mm.RotateMentalModel(Angle.FromDegrees(-2.5f), Angle.FromDegrees(0));
+                    Thought center = mm.GetCell(0, 0);
+                    Thought firstChar = theUKS.GetOrAddThought("c:" + char.ToUpper(remainingLetters[0]),"letter");
+                    mm.BindObjectToCells(firstChar, new List<Thought>() { center });
+                    lastLetterTime = DateTime.Now;
+                    remainingLetters = remainingLetters.Length > 0 ? remainingLetters[1..] : string.Empty;
+                }
+            }
+        }
+
     }
     public override void Initialize()
     {
@@ -59,14 +77,17 @@ public class ModuleWord : ModuleBase
         return retVal;
     }
 
-    public static Thought AddWordSpelling(string word)
+    public Thought AddWordSpelling(string word)
     {
         var theUKS = MainWindow.theUKS;
-        if (string.IsNullOrWhiteSpace(word)) return null;
-
         word = word.Trim();
         theUKS.GetOrAddThought("EnglishWord", "Thought");
         theUKS.GetOrAddThought("symbol", "Object");
+
+        if (string.IsNullOrWhiteSpace(word)) return null;
+
+        //Set up one-by-one character reading
+        remainingLetters = word;
 
         // Get or create the word thought
         Thought wordThought = theUKS.GetOrAddThought("w:" + word, "EnglishWord");

@@ -54,7 +54,7 @@ public partial class UKS
         UKSTemp.Clear();
 
         var autoEvent = new AutoResetEvent(false);
-        stateTimer = new Timer(RemoveExpiredLinks, autoEvent, 0, 1000);
+        stateTimer = new Timer(RemoveExpiredLinks, autoEvent, 0, 100);
     }
 
     /// <summary>
@@ -334,7 +334,7 @@ public partial class UKS
                     //remove the link
                     if (t is Link r)
                     {
-                        r.To.RemoveLink(r);
+                        r.From?.RemoveLink(r);
                         //if this leaves an orphan thought, make it unknown
                         if (r.LinkType.Label == "is-a" && r.From?.Parents.Count == 0)
                         {
