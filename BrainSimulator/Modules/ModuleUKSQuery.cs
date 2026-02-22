@@ -73,7 +73,7 @@ Follow has ONLY if called out in type
      */
 
     //this is called from the GetAttribs tab
-    public List<(Thought r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
+    public List<(Thought r, float confidence)> GetAttributes(string sourceIn, string linkTypeIn, string targetIn,
             string filter, out List<Thought> thoughtResult, out List<Link> links)
     {
         thoughtResult = new();
@@ -117,39 +117,6 @@ Follow has ONLY if called out in type
             if (sourceList.Count > 0)
                 thoughtResult = sourceList[0].AncestorsWithSelf.ToList();
             return null;
-        }
-
-        //check for target sequence
-        if (sourceList.Count > 1)
-        {
-            float confidence = 0.0f;
-            List<Thought> targets = new();
-            foreach (Thought t in sourceList)
-                targets.Add(t);
-            List<(SeqElement seqNode, float confidence)> results1;
-            var retVal = new List<(Thought t, float c)>();
-            if (targets.All(t => t?.Label.StartsWith("c:") == true))
-            {
-                results1 = theUKS.RawAnchoredFuzzyMatch(targets);
-                foreach (var match in results1)
-                {
-                    string seqString = string.Join("", theUKS.FlattenSequence(match.seqNode).Select(x => x.Label));
-                    retVal.Add(new(match.seqNode, match.confidence));
-                }
-            }
-            else
-            {
-                results1 = theUKS.HasSequence(targets, null);
-                foreach (var match in results1)
-                    retVal.Add(new(theUKS.GetElementValue(match.seqNode), match.confidence));
-            }
-            Thought tDict = theUKS.Labeled("location");
-            if (tDict is not null)
-            {
-                SeqElement seq = (SeqElement)tDict.LinksTo.Where(x => x.LinkType.Label == "spelled").ToList()[0].To;
-                var testing = theUKS.FlattenSequence(seq);
-            }
-            return retVal;
         }
 
         links = theUKS.GetAllLinks(sourceList);

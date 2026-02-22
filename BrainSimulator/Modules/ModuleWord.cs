@@ -37,7 +37,7 @@ public class ModuleWord : ModuleBase
             {
                 if (MainWindow.theWindow.GetModuleByLabel("ModuleMentalModel0") is ModuleMentalModel mm)
                 {
-                    mm.RotateMentalModel(Angle.FromDegrees(-2.5f), Angle.FromDegrees(0));
+                    mm.RotateMentalModel(Angle.FromDegrees(5f), Angle.FromDegrees(0));
                     Thought center = mm.GetCell(0, 0);
                     Thought firstChar = theUKS.GetOrAddThought("c:" + char.ToUpper(remainingLetters[0]),"letter");
                     mm.BindObjectToCells(firstChar, new List<Thought>() { center });
@@ -46,7 +46,6 @@ public class ModuleWord : ModuleBase
                 }
             }
         }
-
     }
     public override void Initialize()
     {

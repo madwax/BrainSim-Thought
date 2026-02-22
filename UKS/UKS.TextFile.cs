@@ -123,24 +123,20 @@ public partial class UKS
         foreach (var t in ((Thought)"Thought").EnumerateSubThoughts())
         {
             if (t.Label.StartsWith("unl_"))
-            {
                 t.Label = "";
-            }
         }
-        //This is a bit of a hack because the default AddStatement adds sequence elements to Unknown unnecessarily
-        for (int i = 0; i < theUKS.AllThoughts.Count; i++)
-        {
-            Thought t = AllThoughts[i];
-            if (IsSequenceElement(t))
-                t.RemoveLink1("is-a","Unknown");
+        ////This is a bit of a hack because the default AddStatement adds sequence elements to Unknown unnecessarily
+        //for (int i = 0; i < theUKS.AllThoughts.Count; i++)
+        //{
+        //    Thought t = AllThoughts[i];
 
-        }
+        //}
     }
 
     // Adds a link, 
     private Thought AddLinkStmt(string label, List<string> linkParts, string sWeight)
     {
-        if (linkParts[0].Contains("seq2"))
+        if (linkParts[0].Contains("seq0"))
         { }
         Link r = null;
         if (linkParts.Count < 2) return null;
@@ -176,6 +172,10 @@ public partial class UKS
                 r.Label = label.Trim();
                 if (!AllThoughts.Contains(r))
                     AllThoughts.Add(r);
+            }
+            if (linkType.Label == "VLU")
+            {//this must a a sequence element, promote it to one.
+               var newfrom = PromoteToSeqElement(from);
             }
         }
         if (sWeight is { } n)

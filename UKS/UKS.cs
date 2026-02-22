@@ -288,6 +288,19 @@ public partial class UKS
     /// <returns>The created or retrieved Thought.</returns>
     public Thought CreateThoughtFromMultipleAttributes(string label, bool attributesFollow, bool singularize = true)
     {
+        if (label.StartsWith("^"))  //if it starts with an ^, it's a sequence
+        {
+            List<Thought> targets = new();
+            string[] targetParts = label[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            foreach (string label1 in targetParts)
+            {
+                Thought t1 = theUKS.GetOrAddThought(label1);
+                targets.Add(t1);
+            }
+            Thought r1 = (Thought)theUKS.CreateRawSequence(targets,"query");
+            return r1;
+
+        }
         IPluralize pluralizer = new Pluralizer();
         label = label.Trim();
         string[] tempStringArray = label.Split(' ', StringSplitOptions.RemoveEmptyEntries);

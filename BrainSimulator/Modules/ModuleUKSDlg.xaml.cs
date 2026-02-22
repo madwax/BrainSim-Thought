@@ -11,6 +11,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+//using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -207,12 +209,29 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             //format a link-like line in the treeview
             header = r.ToString();
             //show sequence content unless details are selected
+            if (r.From is SeqElement)
+            {
+                if (r.LinkType.Label == "VLU")
+                {
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
+                    if (r.To.Label == "")
+                        header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.ToString()}]";
+                }
+
+            }
             if (detailsCB.IsChecked == false && r.To is SeqElement s)
             {
                 string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
-                string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(s));
-                header = $"[{r.From.Label}→{r.LinkType.Label}→{sequence}]";
+                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST")
+                {
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
+                }
+                else
+                {
+                    string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(s));
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{sequence}]";
+                }
             }
         }
         else
@@ -295,10 +314,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 expandedItems.Add(parentLabel);
 
             tvi.Items.Clear(); // delete empty child
-            if (t is Link l && l.From is SeqElement s)
-            {
-                t = theUKS.GetElementValue(s.NXT);
-            }
             if (t.Children.Count > 0)
                 AddChildren(t, tvi, depth, parentLabel);
             if (t.LinksTo.Count > 0)

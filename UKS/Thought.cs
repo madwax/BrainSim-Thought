@@ -53,23 +53,6 @@ public class Link : Thought
 
 }
 
-public class SeqElement : Thought
-{
-    /// <summary>
-    /// Default constructor for sequence element placeholder.
-    /// </summary>
-    public SeqElement() { }
-
-    public SeqElement? FRST { get; set; }
-    public SeqElement? NXT { get; set; }
-    public override string ToString()
-    {
-        string retVal = "";
-        var valuList = theUKS.FlattenSequence(this);
-        retVal = "^" + string.Join(" ", valuList);
-        return retVal;
-    }
-}
 
 /// <summary>
 /// A Thought is an atomic unit of thought. In the lexicon of graphs, a Thought is both a "node" and an Edge.  
@@ -373,7 +356,7 @@ public class Thought
     /// </summary>
     /// <param name="linkType">Link type.</param>
     /// <param name="to">Target thought.</param>
-    public Link RemoveLink1(Thought linkType, Thought to)
+    public Link RemoveLink(Thought linkType, Thought to)
     {
         Link r = new() { From = this, LinkType = linkType, To = to };
         RemoveLink(r);
@@ -562,7 +545,10 @@ public class Thought
                 EnqueueIfNew(lnk.To);
             }
 
-            //TODO add follow sequences
+            if (t is SeqElement s)
+            {
+                do { EnqueueIfNew(s);s = s.NXT as SeqElement; } while (s is not null);
+            }
             foreach (var isaLink in t.LinksFrom.Where(x => x.LinkType?.Label == "is-a"))
             {
                 EnqueueIfNew(isaLink);

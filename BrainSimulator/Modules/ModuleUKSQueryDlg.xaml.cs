@@ -91,7 +91,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         List<Thought> thoughts;
         List<Link> links;
         ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
-        var results1 = UKSQuery.QueryUKS(source, type, target, filter, out thoughts, out links);
+        var results1 = UKSQuery.GetAttributes(source, type, target, filter, out thoughts, out links);
 
         if (results1 is not null)
         {
@@ -369,7 +369,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             }
             if (linkIsCommonToAllParents)
             {
-                queryThought.RemoveLink1(r.LinkType, r.To);
+                queryThought.RemoveLink(r.LinkType, r.To);
                 i--;
                 //Thread.Sleep(1000);
             }

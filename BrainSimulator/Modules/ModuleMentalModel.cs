@@ -154,23 +154,32 @@ public class ModuleMentalModel : ModuleBase
     {
         Thought allCells = theUKS.Labeled("_mm:cell");
         if (allCells is null) return;
+
+        // Snapshot occupants so new links added during rotation aren’t processed again
+        var moves = new List<(Thought fromCell, Thought obj, TimeSpan ttl, float weight)>();
+
         foreach (var cell in allCells.Children)
         {
-            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains))
+            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains).ToList())
             {
-                //get the current source (bins) for this link.source
-                Thought oldPosition = l.From;
-                var angles = GetAnglesFromCell(oldPosition);
-                angles.azimuth += azimuth;
-                angles.elevation += elevation;
-                Thought newPosition = GetCell(angles.azimuth, angles.elevation);
-                if (newPosition != oldPosition)
-                {
-                    oldPosition.RemoveLink(l);
-                    Link newLink = newPosition.AddLink(_ltContains, l.To);
-                    newLink.TimeToLive = l.TimeToLive;
-                }
+                moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight));
             }
+        }
+
+        foreach (var move in moves)
+        {
+            var angles = GetAnglesFromCell(move.fromCell);
+            angles.azimuth += azimuth;
+            angles.elevation += elevation;
+
+            Thought newPosition = GetCell(angles.azimuth, angles.elevation);
+            if (newPosition == move.fromCell) continue;
+
+            // Remove from old, add to new, preserving attributes
+            move.fromCell.RemoveLink(_ltContains, move.obj);
+            Link newLink = newPosition.AddLink(_ltContains, move.obj);
+            newLink.TimeToLive = move.ttl;
+            newLink.Weight = move.weight;
         }
     }
 

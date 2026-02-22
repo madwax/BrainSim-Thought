@@ -11,11 +11,80 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using static UKS.UKS;
 
 namespace UKS;
 
+public class SeqElement : Thought
+{
+    /// <summary>
+    /// Default constructor for sequence element placeholder.
+    /// </summary>
+    public SeqElement() { }
+    public SeqElement? FRST
+    {
+        get
+        {
+            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "FRST");
+            return nxt?.To as SeqElement;
+        }
+        set
+        {
+            // Remove existing links
+            RemoveLinks("FRST");
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("FRST", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public SeqElement? NXT
+    {
+        get
+        {
+            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "NXT");
+            return nxt?.To as SeqElement;
+        }
+        set
+        {
+            // Remove existing links
+            RemoveLinks("NXT");
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("NXT", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public Thought? VLU
+    {
+        get
+        {
+            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "VLU");
+            return nxt?.To;
+        }
+        set
+        {
+            // Remove existing links ??
+            RemoveLinks("VLU");  //Removing this would allow for multiple values per element , but would require changes to the search and flattening functions
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("VLU", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public override string ToString()
+    {
+        string retVal = "";
+        var valuList = theUKS.FlattenSequence(this);
+        retVal = "^" + string.Join(" ", valuList);
+        return retVal;
+    }
+}
+
 public partial class UKS
 {
+
+
     //The structure of a sequence is a series (linked list) of elements, each with 3 links.
     //"NXT" with a To of the next element in the sequence
     //"VLU" to the actual Thought in the sequence
@@ -124,7 +193,7 @@ public partial class UKS
             };
             Thought origValue = GetElementValue(first);
             newNode.AddLink("VLU", origValue);
-            first.RemoveLink1("VLU", origValue);
+            first.RemoveLink("VLU", origValue);
             first.AddLink("VLU", value);
             first.NXT = newNode;
         }
@@ -155,7 +224,7 @@ public partial class UKS
     {
         SeqElement firstNode = new()
         {
-            Label = source.Label.ToLower() + "-seq0",
+            Label = source?.Label.ToLower() + "-seq0",
         };
         firstNode.AddLink("VLU", value);
         firstNode.FRST = firstNode; //points to itself as the first element
@@ -431,7 +500,7 @@ public partial class UKS
         //get direct sequences
         var candidateNodes = targets[0].LinksFrom
             .Where(r => r.LinkType?.Label == "VLU" && IsSequenceFirstElement(r.From))
-            .Select(r=>r.From)
+            .Select(r => r.From)
             .ToList();
         //add in sequences which refer to this at the beginning
         for (int i = 0; i < candidateNodes.Count; i++)
@@ -440,7 +509,8 @@ public partial class UKS
             var referrers = candidate.LinksFrom.Where(x => x.LinkType.Label == "VLU" && IsSequenceFirstElement(x.From));
             foreach (Link referrer in referrers)
                 candidateNodes.Add(referrer.From);
-        };
+        }
+        ;
 
         //see which of the candidates qualifies and get the scores
         foreach (var candidate in candidateNodes)
@@ -495,7 +565,7 @@ public partial class UKS
             }
         }
         //ignoring the possibility that a pair might occur multiple times.
-        float score = count / (Math.Max(seq.Count,targets.Count) - 1);
+        float score = count / (Math.Max(seq.Count, targets.Count) - 1);
         return score;
     }
     private List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> RawSearchExact(List<Thought> targets, bool skipPlusEntries = false)
@@ -667,5 +737,50 @@ public partial class UKS
                 AddReferencingSequences(parentReferences, linkType, accumulator);
             }
         }
+    }
+
+    /// <summary>
+    /// Replace a plain Thought with a SeqElement while preserving label, value, weight, and links.
+    /// </summary>
+    public SeqElement PromoteToSeqElement(Thought t)
+    {
+        if (t is null) return null;
+        if (t is SeqElement sExisting) return sExisting;
+        ThoughtLabels.RemoveThoughtLabel(t.Label);
+
+        var seq = new SeqElement
+        {
+            Label = t.Label,   // keeps label mapping
+            V = t.V,
+            Weight = t.Weight
+        };
+
+        // Move outgoing links
+        foreach (var link in t.LinksToWriteable.ToList())
+        {
+            link.From = seq;
+            seq.LinksToWriteable.Add(link);
+        }
+        t.LinksToWriteable.Clear();
+
+        // Move incoming links
+        foreach (var link in t.LinksFromWriteable.ToList())
+        {
+            link.To = seq;
+            seq.LinksFromWriteable.Add(link);
+        }
+        t.LinksFromWriteable.Clear();
+
+        // Replace in global list
+        lock (AllThoughts)
+        {
+            int idx = AllThoughts.IndexOf(t);
+            if (idx >= 0) 
+                AllThoughts[idx] = seq;
+        }
+        DeleteThought(t);
+
+        ThoughtLabels.AddThoughtLabel(seq.Label, seq);
+        return seq;
     }
 }

@@ -190,7 +190,7 @@ public class ModuleAttributeBubble : ModuleBase
 
                         foreach (Thought t1 in t.Children)
                         {
-                            Thought rrr = t1.RemoveLink1(rr.linkType,rr.target);
+                            Thought rrr = t1.RemoveLink(rr.linkType,rr.target);
                             debugString += $"Removed {rrr.ToString()} \n";
                         }
                         //if there is a conflicting link, delete it

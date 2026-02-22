@@ -138,7 +138,8 @@ public class ModuleUKSStatement : ModuleBase
         for ( int i = 0; i < tempStringArray.Length; i++)
         {
             if (tempStringArray[i] == "") continue;
-            if (tempStringArray[i].Length == 1) tempStringArray[i] = "c:"+tempStringArray[i];
+            //old hack for spelling
+            //if (tempStringArray[i].Length == 1) tempStringArray[i] = "c:"+tempStringArray[i];
             if (!char.IsUpper(tempStringArray[i][0]) && tempStringArray[i].Length > 2)
                 tempStringArray[i] = pluralizer.Singularize(tempStringArray[i]);
             Thought t = ThoughtLabels.GetThought(tempStringArray[i]);

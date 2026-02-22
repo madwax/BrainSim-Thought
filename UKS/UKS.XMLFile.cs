@@ -230,21 +230,21 @@ public partial class UKS
         if (hasChild is not null)
         {
             hasChild.AddLink("inverseOf", "is-a");
-            hasChild.RemoveLink1("hasProperty", "isTransitive");
-            hasChild.RemoveLink1("hasProperty", "inheritable");
+            hasChild.RemoveLink("hasProperty", "isTransitive");
+            hasChild.RemoveLink("hasProperty", "inheritable");
         }
         Thought isA = Labeled("is-a");
         if (isA is not null)
         {
             isA.AddLink("hasProperty", "inheritable");
             isA.AddLink("hasProperty", "isTransitive");
-            isA.RemoveLink1("inverseOf","has-child");
-            isA.RemoveLink1("hasProperty",null);
+            isA.RemoveLink("inverseOf", "has-child");
+            isA.RemoveLink("hasProperty", null);
         }
         Thought has = Labeled("has");
         if (has is not null)
         {
-            has.AddLink("hasProperty","inheritable");
+            has.AddLink("hasProperty", "inheritable");
         }
         return true;
     }
@@ -298,13 +298,18 @@ public partial class UKS
                     V = st.V,
                 };
                 if (st.source != -1)
-                    t.From = theUKS.Labeled(UKSTemp[st.source].label);
+                    t.From = Labeled(UKSTemp[st.source].label);
                 if (st.linkType != -1)
-                    t.LinkType = theUKS.Labeled(UKSTemp[st.linkType].label);
+                    t.LinkType = Labeled(UKSTemp[st.linkType].label);
                 if (st.target != -1)
-                    t.To = theUKS.Labeled(UKSTemp[st.target].label);
+                    t.To = Labeled(UKSTemp[st.target].label);
                 AllThoughts.Add(t);
-                t.From?.LinksToWriteable.Add(t);
+                //t.From?.LinksToWriteable.Add(t);  //this is quick bot doesn't build the reverse links required by Promote
+                t.From?.AddLink(t.LinkType, t.To);
+                if (t.LinkType.Label == "VLU")
+                {//this must a a sequence element, promote it to one.
+                    SeqElement newfrom = PromoteToSeqElement(t.From);
+                }
             }
         }
 
