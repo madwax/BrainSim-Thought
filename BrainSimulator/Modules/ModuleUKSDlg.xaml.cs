@@ -217,13 +217,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                     if (r.To.Label == "")
                         header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.ToString()}]";
                 }
-
             }
-            if (detailsCB.IsChecked == false && r.To is SeqElement s)
+            if (r.To is SeqElement s)
             {
                 string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
-                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST")
+                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST" || r.LinkType.Label == "VLU")
                 {
                     header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
                 }
