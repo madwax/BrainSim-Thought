@@ -21,6 +21,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Input;
 using UKS;
 using static BrainSimulator.Modules.ModuleAttributeBubble;
 
@@ -68,6 +69,12 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                         queryText1.Text += "\n";
                     queryText1.Text += newText;
                 }
+                QueryByAttributes();
+            }
+            if (b.Content.ToString() == "New")
+            {
+                string newText = typeText1.Text + "," + targetText1.Text;
+                queryText1.Text = newText;
                 QueryByAttributes();
             }
             if (b.Content.ToString() == "Clear")
@@ -581,6 +588,15 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         return theSource;
     }
 
+    private void Text_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            string newText = typeText1.Text + "," + targetText1.Text;
+            queryText1.Text = newText;
+            QueryByAttributes();
+        }
+    }
     // thoughtText_TextChanged is called when the thought textbox changes
     private void Text_TextChanged(object sender, TextChangedEventArgs e)
     {
@@ -612,4 +628,5 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         }
         return null;
     }
+
 }

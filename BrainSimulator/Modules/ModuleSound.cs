@@ -43,11 +43,11 @@ public class ModuleSound : ModuleBase
         {
             if (tuneToSearch.Count > 1)
             {
-                var tunesFound = theUKS.HasSequence(tuneToSearch, null);
+                var tunesFound = theUKS.HasSequence(tuneToSearch, null,true);
                 if (tunesFound.Count > 0)
                 {
-                    var phrase = tunesFound[0].seqNode.LinksFrom[0];
-                    phrase.From.Fire();
+                    var phrase = tunesFound[0].seqNode.LinksFrom.FindFirst(x=>x.LinkType.Label == "soundAs")?.From;
+                    phrase.Fire();
                 }
             }
             tuneToSearch = null;

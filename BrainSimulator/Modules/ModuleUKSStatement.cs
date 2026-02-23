@@ -86,8 +86,17 @@ public class ModuleUKSStatement : ModuleBase
             targetParts = to[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             foreach (string label in targetParts)
             {
-                Thought t = theUKS.GetOrAddThought(label);
-                targets.Add(t);
+                if (label.Length == 1)
+                {
+                    Thought letterParent = theUKS.GetOrAddThought("letter", "Object");
+                    Thought t = theUKS.GetOrAddThought(label.ToUpper(), letterParent);
+                    targets.Add(t);
+                }
+                else
+                {
+                    Thought t = theUKS.GetOrAddThought(label);
+                    targets.Add(t);
+                }
             }
             Thought r1 = theUKS.AddSequence(tSource, tLinkType, targets);
             return r1;
