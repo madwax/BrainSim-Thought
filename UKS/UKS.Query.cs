@@ -347,46 +347,43 @@ public partial class UKS
         //seed the search queue with the given parameters.
         foreach (Link r in target.LinksTo)
         {
-            foreach (Link r1 in r.To?.LinksFrom ?? Enumerable.Empty<Link>())
+            if (r.To is SeqElement s)
             {
-                if (r1.To is SeqElement s)
+                var x = FlattenSequence(s);  //if this is a sequence fragment, try to get the whole sequence
+                var y = HasSequence(x, r.LinkType);
+                foreach (var z in y)
                 {
-                    var x = FlattenSequence(s);  //if this is a sequence fragment, try to get the whole sequence
-                    var y = HasSequence(x, r1.LinkType);
-                    foreach (var z in y)
+                    foreach (var w in z.seqNode.LinksFrom.Where(x => x.From != target))
                     {
-                        foreach (var w in z.seqNode.LinksFrom.Where(x => x.From != target))
+                        var existing = thoughtsToSearch.FindFirst(x => x == w.From);
+                        if ((w.LinkType == r.LinkType || w.LinkType?.HasAncestor(r.LinkType) == true) && r.To == r.To && existing is null)
                         {
-                            var existing = thoughtsToSearch.FindFirst(x => x == w.From);
-                            if ((w.LinkType == r.LinkType || w.LinkType?.HasAncestor(r.LinkType) == true) && r1.To == r.To && existing is null)
-                            {
-                                thoughtsToSearch.Add(w.From);
-                                if (!searchCandidates.ContainsKey(w.From))
-                                    searchCandidates[w.From] = 0; //initialize a new dictionary entry if needed
-                                searchCandidates[w.From] += w.Weight * r.Weight * z.confidence;
-                            }
-                            else if (existing is not null)
-                            {
-                                searchCandidates[w.From] += w.Weight * r.Weight * z.confidence;
-                            }
+                            thoughtsToSearch.Add(w.From);
+                            if (!searchCandidates.ContainsKey(w.From))
+                                searchCandidates[w.From] = 0; //initialize a new dictionary entry if needed
+                            searchCandidates[w.From] += w.Weight * r.Weight * z.confidence;
+                        }
+                        else if (existing is not null)
+                        {
+                            searchCandidates[w.From] += w.Weight * r.Weight * z.confidence;
                         }
                     }
                 }
-                else
+            }
+            foreach (Link r1 in r.To?.LinksFrom ?? Enumerable.Empty<Link>())
+            {
+                if (r1.From == target) continue;
+                var existing = thoughtsToSearch.FindFirst(x => x == r1.From);
+                if ((r1.LinkType == r.LinkType || r1.LinkType?.HasAncestor(r.LinkType) == true) && r1.To == r.To && existing is null)
                 {
-                    if (r1.From == target) continue;
-                    var existing = thoughtsToSearch.FindFirst(x => x == r1.From);
-                    if ((r1.LinkType == r.LinkType || r1.LinkType?.HasAncestor(r.LinkType) == true) && r1.To == r.To && existing is null)
-                    {
-                        thoughtsToSearch.Add(r1.From);
-                        if (!searchCandidates.ContainsKey(r1.From))
-                            searchCandidates[r1.From] = 0; //initialize a new dictionary entry if needed
-                        searchCandidates[r1.From] += r1.Weight * r.Weight;
-                    }
-                    else if (existing is not null)
-                    {
-                        searchCandidates[r1.From] += r1.Weight * r.Weight;
-                    }
+                    thoughtsToSearch.Add(r1.From);
+                    if (!searchCandidates.ContainsKey(r1.From))
+                        searchCandidates[r1.From] = 0; //initialize a new dictionary entry if needed
+                    searchCandidates[r1.From] += r1.Weight * r.Weight;
+                }
+                else if (existing is not null)
+                {
+                    searchCandidates[r1.From] += r1.Weight * r.Weight;
                 }
             }
         }

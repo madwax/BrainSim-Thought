@@ -192,22 +192,34 @@ public partial class UKS
     {
         if (t is not null)
         {
-            while (t.Children.Count > 0)
+            List<Thought> subThoughts = t.EnumerateSubThoughts().ToList();
+            foreach (Link t1 in subThoughts)
             {
-                Thought theChild = t.Children[0];
-                if (theChild.Parents.Count == 1)
+                if (t1.To is SeqElement s)
                 {
-                    DeleteAllChildren(theChild);
-                    if (t.Label == "Thought" && t.Children.Count == 0) return;
-                    DeleteThought(theChild);
+                    DeleteSequence(s);
                 }
                 else
-                {//this thought has multiple parents.
-                    t.RemoveChild(theChild);
+                {
+                    DeleteThought(t1);
                 }
             }
-        }
 
+            //while (t.Children.Count > 0)
+            //{
+            //    Thought theChild = t.Children[0];
+            //    if (theChild.Parents.Count == 1)
+            //    {
+            //        DeleteAllChildren(theChild);
+            //        if (t.Label == "Thought" && t.Children.Count == 0) return;
+            //        DeleteThought(theChild);
+            //    }
+            //    else
+            //    {//this thought has multiple parents.
+            //        t.RemoveChild(theChild);
+            //    }
+            //}
+        }
     }
 
     /// <summary>
@@ -297,7 +309,7 @@ public partial class UKS
                 Thought t1 = theUKS.GetOrAddThought(label1);
                 targets.Add(t1);
             }
-            Thought r1 = (Thought)theUKS.CreateRawSequence(targets,"query");
+            Thought r1 = (Thought)theUKS.CreateRawSequence(targets,"thequery");
             return r1;
 
         }

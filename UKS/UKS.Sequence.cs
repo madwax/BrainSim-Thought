@@ -235,22 +235,30 @@ public partial class UKS
         //make sure there's only one reference to this sequence
         if (!IsSequenceFirstElement(s)) return;
         if (s.LinksFrom.Count(x => x.LinkType.Label != "FRST") > 1) return;
-        //delete it from the cache
-        var sequenceContent = FlattenSequence(s);
-        SequenceCache.Remove(sequenceContent);
-
+        if (!s.Label.StartsWith("thequery"))  //queries don't have cache entries
+        {        //delete it from the cache
+            var sequenceContent = FlattenSequence(s);
+            SequenceCache.Remove(sequenceContent);
+        }
         //follow the chain and delete the elements.
         SeqElement current = s;
-        SeqElement next = GetNextElement(current);
         while (current is not null)
-        {  //This replicates DeleteThought but eliminates problems of re-entrance
-            next = GetNextElement(current);
+        {
+            //This replicates DeleteThought but eliminates problems of re-entrance
+            SeqElement next = GetNextElement(current);
+            //recursively delete subsequences which are not used anywhere else
+            var subsequences = current.VLU?.LinksFrom.Where(x => x.LinkType.Label != "FRST");
+            if (subsequences?.Count() == 1 && subsequences.First().To is SeqElement s1)
+                DeleteSequence(s1);
+            foreach (Link lnk in current.LinksTo)
+                current.RemoveLink(lnk);
             ThoughtLabels.RemoveThoughtLabel(current.Label);
             lock (AllThoughts)
                 AllThoughts.Remove(current);
             current = next;
         }
     }
+    //This unconditionally creates a (no-subsequcne) sequence of Thoughts
     private SeqElement CreateRawSequence(List<Thought> targets, string baseLabel = "seq*")
     {
         if (targets.Count < 1) return null;
@@ -324,10 +332,10 @@ public partial class UKS
         //check for any existing sequences which begins with the targets[startIndes]
         (Thought seqStart, int length) FindExistingSubsequence(int startIndex)
         {
-            int remaining = targets.Count - startIndex;
+            int remaining = resolvedTargets.Count - startIndex;
             for (int len = remaining; len > 1; len--)
             {
-                var testSequence = targets.GetRange(startIndex, len);
+                var testSequence = resolvedTargets.GetRange(startIndex, len);
                 if (SequenceCache.TryGetValue(testSequence, out Thought existing) && existing is not null)
                     return (existing, len);
             }
@@ -405,6 +413,19 @@ public partial class UKS
         // When this returns, seqNode is the first matching node.  curPos.Current is the last
         List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> searchCandidates = RawSearchExact(targets, skipPlusEntries);
         if (searchCandidates.Count == 0) return retVal;
+
+        //Do we want to follow up the chain of referrers?
+        if (true)
+        {
+            for (int j = 0; j < searchCandidates.Count; j++)
+            {
+                SeqElement current = searchCandidates[j].seqNode;
+                var referrers = current.FRST.LinksFrom.Where(x => x.LinkType.Label == "VLU");
+                foreach (Link referrer in referrers)
+                    searchCandidates.Add(new((SeqElement)referrer.From, null, searchCandidates[j].matchCount));
+            }
+        }
+
 
         if (mustMatchFirst)
         {
@@ -775,7 +796,7 @@ public partial class UKS
         lock (AllThoughts)
         {
             int idx = AllThoughts.IndexOf(t);
-            if (idx >= 0) 
+            if (idx >= 0)
                 AllThoughts[idx] = seq;
         }
         DeleteThought(t);
