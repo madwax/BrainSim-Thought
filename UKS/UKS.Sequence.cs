@@ -25,7 +25,7 @@ public class SeqElement : Thought
     {
         get
         {
-            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "FRST");
+            Link? nxt = LinksToWriteable.FindFirst(x => x.LinkType?.Label == "FRST");
             return nxt?.To as SeqElement;
         }
         set
@@ -277,8 +277,12 @@ public partial class UKS
     }
 
     //the sequence cache
-    //private readonly Dictionary<string,Thought> SequenceCache = new();
-    Dictionary<IReadOnlyList<Thought>, Thought> SequenceCache = new(new ThoughtListComparer());
+    private Dictionary<IReadOnlyList<Thought>, Thought> SequenceCache = new(new ThoughtListComparer());
+    public void ClearSequenceCache()
+    {
+        SequenceCache.Clear();
+    }
+
     // Reference-only comparer for a list of Thought
     sealed class ThoughtListComparer : IEqualityComparer<IReadOnlyList<Thought>>
     {
@@ -404,7 +408,7 @@ public partial class UKS
         List<(SeqElement seqNode, float confidence)> retVal = new();
 
         // Handle edge cases
-        if (targets is null || targets.Count == 0) return retVal;
+        if (targets is null || targets.Count <2) return retVal;
         if (targets[0] is null) return retVal;
 
         // Step 1: Find all sequence nodes that have targets[0] as their VLU

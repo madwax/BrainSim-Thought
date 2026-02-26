@@ -26,6 +26,9 @@ public class ModuleWellBeing : ModuleBase
 
     public static float SetState(float value)
     {
+        float delta = _state - value;
+        TimeSpan recency = TimeSpan.FromSeconds(Math.Abs(delta) * 200);
+        Thought.FireAllRecentlyFiredThoughts(recency);
         _state = Math.Clamp(value, MinState, MaxState);
         return _state;
     }

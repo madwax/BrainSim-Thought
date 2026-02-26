@@ -245,6 +245,7 @@ public partial class UKS
         }
 
         thoughtToReturn = AddThought(label, correctParent);
+        thoughtToReturn.Fire();
         return thoughtToReturn;
     }
 

@@ -64,6 +64,7 @@ public class ModuleWord : ModuleBase
 
     public string GetWordSuggestion(string word)
     {
+        
         List<Thought> letters = new List<Thought>();
         foreach (char c in word.ToUpper())
         {
@@ -94,9 +95,11 @@ public class ModuleWord : ModuleBase
 
         // Get or create the word thought
         Thought wordThought = theUKS.GetOrAddThought("w:" + word, "EnglishWord");
-        if (wordThought.LinksTo.FindFirst(x=>x.LinkType.Label == "spelled") is not null)
+        if (wordThought.LinksTo.FindFirst(x => x.LinkType.Label == "spelled") is not null)
+        {
+            wordThought.Fire();
             return wordThought; // Spelling already exists, no need to add again
-
+        }
         // Create list of letter thoughts
         List<Thought> letters = new List<Thought>();
         foreach (char c in word.ToUpper())
@@ -111,6 +114,7 @@ public class ModuleWord : ModuleBase
 
         // Add the sequence
         var t = theUKS.AddSequence(wordThought, spelledLinkType, letters);
+        wordThought.TimeToLive = TimeSpan.FromSeconds(1110);
 
         return wordThought;
     }
@@ -125,7 +129,6 @@ public class ModuleWord : ModuleBase
         {
             string[] lines = File.ReadAllLines(filePath);
             foreach (string line in lines)
-            //Parallel.ForEach (lines, line=>
             {
                 string word = line.Trim();
                 var splits = word.Split("\t");
@@ -135,7 +138,6 @@ public class ModuleWord : ModuleBase
                     AddWordSpelling(word);
                     count++;
                 }
-                //    });
             }
         }
         catch (Exception ex)

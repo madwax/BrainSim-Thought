@@ -15,10 +15,7 @@
 using Pluralize.NET;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Intrinsics.Arm;
-using System.Windows.Documents;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 namespace BrainSimulator.Modules;
 

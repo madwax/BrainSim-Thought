@@ -21,7 +21,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 
 namespace BrainSimulator.Modules;
@@ -119,8 +118,8 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
                 foreach (var t in existing)
                 {
                     string toolTipText = "";
-                    foreach (var r in t.LinksTo.Where(x=>x.LinkType.Label != "is-a"))
-                        toolTipText += r.ToString() +  "\n";
+                    foreach (var r in t.LinksTo.Where(x => x.LinkType.Label != "is-a"))
+                        toolTipText += r.ToString() + "\n";
                     if (!string.IsNullOrEmpty(toolTipText))
                         toolTipText = toolTipText[..^1];
 
@@ -139,25 +138,27 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         if (tSource is null)
         {
             tSource = UKSStatement.theUKS.CreateThoughtFromMultipleAttributes(fromString, false);
-            if (tSource.UseCount == 0)
-                tSource.TimeToLive = duration;
         }
 
 
         Link r1 = UKSStatement.AddLink(tSource, linkTypeString, toString);
 
-        if (r1.To.UseCount == 0)
-            r1.To.TimeToLive = duration;
 
+        //set the duration
         if (r1 is not null && setConfCB.IsChecked == true)
         {
-            r1.Weight = confidence;
-            r1.TimeToLive = duration;
+            if (r1.UseCount == 1)
+            {
+                r1.Weight = confidence;
+                r1.TimeToLive = duration;
+            }
+            if (r1.From.UseCount == 1) r1.From.TimeToLive = duration;
+            if (r1.LinkType.UseCount == 1) r1.LinkType.TimeToLive = duration;
+            if (r1.To.UseCount == 1) r1.To.TimeToLive = duration;
         }
-        if (r1 is not null && eventCB.IsChecked == true && r1 is Link r3)
+        if (r1 is not null && eventCB.IsChecked == true)
         {
-            r3.Fire();
-            Thought subject = r3.From;
+            Thought subject = r1.From;
             UKSStatement.theUKS.GetOrAddThought("events", "LinkType");
             Thought previousEvents = subject.LinksTo.FindFirst(x => x.LinkType.Label == "events");
             Thought theSequence = subject.LinksTo.FindFirst(x => x.LinkType.Label == "events")?.To;
@@ -173,9 +174,9 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             }
         }
 
-        CheckThoughtExistence(targetText);
-        CheckThoughtExistence(sourceText);
-        CheckThoughtExistence(linkText);
+        SetTextbosBackground(targetText);
+        SetTextbosBackground(sourceText);
+        SetTextbosBackground(linkText);
 
         tSource = null;
     }
@@ -202,7 +203,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
     }
 
     // Check for thought existence and set background color of the textbox and the error message accordingly.
-    private bool CheckThoughtExistence(object sender)
+    private bool SetTextbosBackground(object sender)
     {
         if (sender is TextBox tb)
         {
@@ -238,7 +239,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
     // thoughtText_TextChanged is called when the thought textbox changes
     private void Text_TextChanged(object sender, TextChangedEventArgs e)
     {
-        CheckThoughtExistence(sender);
+        SetTextbosBackground(sender);
     }
 
     // Check for parent existence and set background color of the textbox and the error message accordingly.

@@ -68,10 +68,11 @@ public partial class ModuleWordDlg : ModuleBaseDlg
             if (module is null) return;
             string suggestion = module.GetWordSuggestion(txtWord.Text);
             //get the real label to get the capitalization right
-            if (suggestion is not null) suggestion = ThoughtLabels.GetThought(suggestion)?.Label;
+            if (suggestion is not null) suggestion = ThoughtLabels.GetThought("w:" + suggestion)?.Label;
 
             if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
             {
+                suggestion = suggestion[2..];
                 int caretIndex = txtWord.CaretIndex;
                 _isTextChangingInternally = true;
                 txtWord.Text = suggestion;

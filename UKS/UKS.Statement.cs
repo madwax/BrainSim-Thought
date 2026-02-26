@@ -60,10 +60,10 @@ public partial class UKS
 			existing.LinkType = linkType;
 			existing.To = target;
 			existing.From = source;
-            existing.From.Fire();
-            existing.LinkType.Fire();
-            existing.To.Fire();
         }
+        source.Fire();
+        linkType.Fire();
+        target.Fire();
 
         //does this link already exist (without conditions)?
         if (existing is not null)
@@ -80,6 +80,7 @@ public partial class UKS
 		WeakenConflictingLinks(source, lnk);
 
 		WriteTheLink(lnk);
+		lnk.Fire();
 		if (lnk.LinkType is not null && HasProperty(lnk.LinkType, "isCommutative"))
 		{
 			Link rReverse = new Link(lnk.To, lnk.LinkType, lnk.From);

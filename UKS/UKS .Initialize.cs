@@ -19,12 +19,16 @@ public partial class UKS
     public void CreateMinimumStructureForTests()
     {
         AtomicThoughts.Clear();
+        ClearSequenceCache();
         ThoughtLabels.ClearLabelList();
         AddThought("Thought", null);
         Thought isA = AddThought("is-a", null);
         Thought linkType = AddThought("LinkType", "Thought");
         isA.AddParent(linkType);
         GetOrAddThought("Unknown", "Thought");
+        GetOrAddThought("VLU", "LinkType");
+        GetOrAddThought("NXE", "LinkType");
+        GetOrAddThought("FRST", "LinkType");
     }
 
 
@@ -44,8 +48,10 @@ public partial class UKS
         }
 
         ThoughtLabels.ClearLabelList();
+        Thought.ClearRecentlyFiredQueue();
         foreach (Thought t in AtomicThoughts)
             ThoughtLabels.AddThoughtLabel(t.Label, t);
+        ClearSequenceCache();
 
         //Bootstrapping is needed for is-a, Unknown, and the root: Thought
         //because AddStatement and GetOrAddThing won't work without them

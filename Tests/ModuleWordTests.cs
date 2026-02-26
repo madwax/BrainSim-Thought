@@ -12,7 +12,7 @@ public class ModuleWordTests
     private static UKS.UKS CreateUKS()
     {
         var uks = new UKS.UKS(clear: true);
-        uks.CreateInitialStructure();
+        uks.CreateMinimumStructureForTests();
         MainWindow.theUKS = uks; // required by ModuleWord and AddWordSpelling
         return uks;
     }

@@ -58,6 +58,8 @@ public class Link : Thought
 /// </summary>
 public class Thought
 {
+    private static Queue<Thought> recentlyFired = new();
+
     public static Thought IsA { get => ThoughtLabels.GetThought("is-a"); }  //this is a cache value shortcut for (Thought)"is-a"
     private readonly List<Link> _linksTo = new();   // links to "has", "is", is-a, many others
     private readonly List<Link> _linksFrom = new(); // links from
@@ -99,9 +101,10 @@ public class Thought
 
     public void Delete()
     {
-        foreach (Link r in _linksTo.Where(x => UKS.theUKS.IsSequenceFirstElement(x.To)))
+        foreach (Link r in _linksTo.Where(x => (x.To as SeqElement)?.FRST == x.To))
+        {
             UKS.theUKS.DeleteSequence((SeqElement)r.To);
-
+        }
         for (int i = 0; i < _linksTo.Count; i++)
         {
             Link r = _linksTo[i];
@@ -139,7 +142,7 @@ public class Thought
     }
 
     public int UseCount = 0;
-    public DateTime LastFiredTime = DateTime.Now;
+    public DateTime LastFiredTime = DateTime.MinValue;
 
     private TimeSpan _timeToLive = TimeSpan.MaxValue;
     /// <summary>Makes a Thought transient when set to a finite time.</summary>
@@ -165,16 +168,7 @@ public class Thought
     public float Weight
     {
         get => _weight;
-        set
-        {
-            _weight = value;
-            if (this is Link link && link.LinkType?.HasProperty("IsCommutative") == true)
-            {
-                Link rReverse = link.To?.LinksTo.FindFirst(x => x.LinkType == link.LinkType && x.To == link.From);
-                if (rReverse is not null)
-                    rReverse._weight = _weight;
-            }
-        }
+        set => _weight = value;
     }
 
     /// <summary>
@@ -356,6 +350,43 @@ public class Thought
     {
         LastFiredTime = DateTime.Now;
         UseCount++;
+        AddToRecentlyFired();
+        UpdateTimeToLive();
+    }
+
+    private void AddToRecentlyFired()
+    {
+        int maxCount = 100;
+        recentlyFired.Enqueue(this);
+        while (recentlyFired.Count > maxCount) _ = recentlyFired.Dequeue();
+    }
+    public static void FireAllRecentlyFiredThoughts(TimeSpan recency)
+    {
+        DateTime cutoff = DateTime.Now - recency;
+        var snapshot = recentlyFired.ToArray();
+        var seen = new HashSet<Thought>();
+        var resultRev = new List<Thought>();
+
+        foreach (var item in snapshot.Reverse())
+        {
+            if (seen.Add(item))
+                resultRev.Add(item); // keep first time we see it from the back (i.e., the last occurrence)
+        }
+        resultRev.Reverse();
+        recentlyFired = new(resultRev); // restore original ordering of the kept items
+
+        foreach (Thought t in resultRev.Where(x => x.LastFiredTime > cutoff))
+        {
+            t.Fire();
+        }
+    }
+    public static void ClearRecentlyFiredQueue()
+    {
+        recentlyFired.Clear();
+    }
+
+    private void UpdateTimeToLive()
+    {
         float baseSeconds = 10;
         float growthFactor = 2;
         float maxSeconds = 60 * 60 * 24; //1 day
