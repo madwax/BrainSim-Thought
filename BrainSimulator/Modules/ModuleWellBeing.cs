@@ -21,30 +21,70 @@ public class ModuleWellBeing : ModuleBase
     private const float MinState = -1f;
     private const float MaxState = 1f;
     private static float _state = 0f; // -1 very sad, +1 very happy
+    private static DateTime _lastUpdateUtc = DateTime.UtcNow;
 
-    public static float State => _state;
+    public static double DecayTimeConstantSeconds { get; set; } = 5f; // adjust as needed
 
-    public static float SetState(float value)
+    public static float State
     {
-        float delta = _state - value;
+        get
+        {
+            ApplyDecay();
+            return _state;
+        }
+    }
+
+    private static void ApplyDecay()
+    {
+        var now = DateTime.UtcNow;
+        var dt = (now - _lastUpdateUtc).TotalSeconds;
+        _lastUpdateUtc = now;
+        if (dt <= 0 || DecayTimeConstantSeconds <= 0) return;
+
+        var decay = Math.Exp(-dt / DecayTimeConstantSeconds);
+        _state *= (float)decay;
+    }
+
+    private static float SetStateInternal(float target, bool decayAlreadyApplied)
+    {
+        if (!decayAlreadyApplied) ApplyDecay();
+
+        float delta = _state - target;
         TimeSpan recency = TimeSpan.FromSeconds(Math.Abs(delta) * 200);
         Thought.FireAllRecentlyFiredThoughts(recency);
-        _state = Math.Clamp(value, MinState, MaxState);
+
+        _state = Math.Clamp(target, MinState, MaxState);
         return _state;
     }
 
-    public static float Increase(float delta = 0.05f) => SetState(_state + delta);
-    public static float Decrease(float delta = 0.05f) => SetState(_state - delta);
+    public static float SetState(float value) => SetStateInternal(value, decayAlreadyApplied: false);
+
+    // Asymptotic toward limits
+    public static float Increase(float fraction = 0.05f)
+    {
+        ApplyDecay();
+        float target = _state + (MaxState - _state) * fraction;
+        return SetStateInternal(target, decayAlreadyApplied: true);
+    }
+
+    public static float Decrease(float fraction = 0.05f)
+    {
+        ApplyDecay();
+        float target = _state + (MinState - _state) * fraction;
+        return SetStateInternal(target, decayAlreadyApplied: true);
+    }
 
     public override void Fire()
     {
+        ApplyDecay();
         Init();
         UpdateDialog();
     }
 
     public override void Initialize()
     {
-        SetState(0f);
+        _state = 0f;
+        _lastUpdateUtc = DateTime.UtcNow;
     }
 
     public override void UKSInitializedNotification()

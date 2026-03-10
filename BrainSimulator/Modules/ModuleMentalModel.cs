@@ -4,7 +4,8 @@
  * Copyright (c) 2026 Charles Simon
  *
  * This file is part of Brain Simulator Thought and is licensed under
- * the MIT License. You may use, copy, modify, merge, publish, distribute,
+ * the MIT License.
+ * You may use, copy, modify, merge, publish, distribute,
  * sublicense, and/or sell copies of this software under the terms of
  * the MIT License.
  *
@@ -14,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Policy;
 using System.Text.RegularExpressions;
 using UKS;
 
@@ -26,7 +26,6 @@ public class ModuleMentalModel : ModuleBase
     public Thought Root { get; private set; }
 
     // Spatial sheet (fixed)
-    //public SpatialSheet Sheet { get; private set; }
     public SpatialSheetConfig cfg;
 
     // Cells indexed by (ring, rayIndexWithinRing)
@@ -37,18 +36,12 @@ public class ModuleMentalModel : ModuleBase
     private Thought _ltContains;
     private Thought _ltCenter;
 
-
-
     public override void Fire()
     {
         Init();
-
         UpdateDialog();
     }
 
-    // Fill this method in with code which will execute once
-    // when the module is added, when "initialize" is selected from the context menu,
-    // or when the engine restart button is pressed
     public override void Initialize()
     {
     }
@@ -57,39 +50,97 @@ public class ModuleMentalModel : ModuleBase
     public override void UKSInitializedNotification()
     {
         theUKS = MainWindow.theUKS;
+        theUKS.GetOrAddThought("mentalModel", "Abstract");
 
-        Root = theUKS.GetOrAddThought("_mm:root");
-        _ltContains = theUKS.GetOrAddThought("_mm:contains");
-        _ltCenter = theUKS.GetOrAddThought("_mm:center");
+        Root = theUKS.GetOrAddThought("_mm:root","mentalModel");
+        _ltContains = theUKS.GetOrAddThought("_mm:contains", "mentalModel");
+        _ltCenter = theUKS.GetOrAddThought("_mm:center", "mentalModel");
+
+        theUKS.GetOrAddThought("activeThought", "mentalModel");
+        theUKS.GetOrAddThought("imaginedThought", "mentalModel");
+        theUKS.GetOrAddThought("inActiveThought", "mentalModel");
+
 
         cfg = new SpatialSheetConfig();
         BuildOrLoad(cfg);
     }
 
+
     /// <summary>
-    /// Bind an object Thought into one or more cells (distributed occupancy).
+    /// Bind an object Thought into one cell.
+    /// If it is already bound, bind it to a (potentially) new location
     /// Volatile links should decay quickly elsewhere in your tick/decay mechanism.
     /// </summary>
-    public void BindObjectToCells(Thought obj, IEnumerable<Thought> cells, float weight = 1f)
+    public Link BindThoughtToMentalModel(Thought t, Thought mmPosition, float weight = 1f,bool imagined = false)
     {
-        foreach (var cell in cells)
+        //this rebuilds the link instead of strengthening
+        var existingLink = t.LinksFrom.FindFirst(x => x.LinkType == _ltContains);
+        if (existingLink is not null && mmPosition == existingLink.From)
         {
-            Link l = cell.AddLink(_ltContains, obj);
-            l.Weight = weight; // mark as volatile in your implementation
-            l.TimeToLive = TimeSpan.FromSeconds(15);
+            existingLink.TimeToLive += TimeSpan.FromSeconds(5);
+            return existingLink;
         }
+        if (existingLink is not null)
+            existingLink.From.RemoveLink(_ltContains, t);
+        Link l = mmPosition.AddLink(_ltContains, t);
+        l.Weight = weight;
+        l.TimeToLive = TimeSpan.FromSeconds(100);
+        if (t.Label == "attention")
+            l.TimeToLive = TimeSpan.FromSeconds(3);
+        if (!imagined)
+            t.AddLink("is-a", "activeThought");
+        else
+            t.AddLink("is-a", "imaginedThought");
+        return l;
     }
+    public Link ImagineThought(Thought t, Thought mmPosition, float weight = 1f)
+    {
+        return BindThoughtToMentalModel(t, mmPosition, weight, true);
+    }
+    public void UnbindThought(Thought t)
+    {
+        var existingLink = t.LinksFrom.FindFirst(x => x.LinkType == _ltContains);
+        if (existingLink is not null)
+            existingLink.From.RemoveLink(_ltContains, t);
+        t.RemoveLink("is-a", "activeThought");
+        t.RemoveLink("is-a", "imaginedThought");
+        Link l = t.AddLink("is-a", "inActiveThought");
+        l.TimeToLive = TimeSpan.FromSeconds(1);
+    }
+
+    internal double ComputeProximity(Thought t)
+    {
+        if (t is null || _cells.Length == 0 || Center is null) return 0;
+        double best = 0;
+        var centerAngles = GetAnglesFromCell(Center);
+
+        foreach (var link in t.LinksFrom.Where(x => x.LinkType == _ltContains))
+        {
+            Thought cell = link.From;
+            if (cell is null) continue;
+
+            var pos = GetAnglesFromCell(cell);
+            double dAz = AngularDistanceDegrees(pos.azimuth.Degrees, centerAngles.azimuth.Degrees);
+            double dEl = Math.Abs(pos.elevation.Degrees - centerAngles.elevation.Degrees);
+            double norm = Math.Sqrt((dAz / 180.0) * (dAz / 180.0) + (dEl / 180.0) * (dEl / 180.0));
+            double proximity = 1.0 / (1.0 + norm * 4.0);
+            if (proximity > best) best = proximity;
+        }
+        return best;
+    }
+
+    private static double AngularDistanceDegrees(double a, double b)
+    {
+        double diff = Math.Abs(a - b) % 360.0;
+        if (diff > 180.0) diff = 360.0 - diff;
+        return diff;
+    }
+
     public Thought GetCell(Angle azimuth, Angle elevation)
     {
-        //first, find which elevation band we're in
-        // Clamp to valid range
         float el = (float)Math.Clamp(elevation.Degrees, -90.0, 90.0);
-
         int ring = GetBinFromElevation(el);
-
-        //Then calculate the offset into that band and return the cell
-        //wrap to range
-        int idx =  GetBinFromAzimuth(azimuth, ring);
+        int idx = GetBinFromAzimuth(azimuth, ring);
         return _cells[ring][idx];
     }
 
@@ -98,20 +149,18 @@ public class ModuleMentalModel : ModuleBase
         double x = azimuth.Degrees % 360.0;
         if (x >= 180.0) x -= 360.0;
         if (x < -180.0) x += 360.0;
-        // normalize to [-1, +1]
         x = x / 180.0;
 
-        // non-linear warp (more resolution near 0)
-        float alpha = cfg.FrontBias; //1.5 mild, 5 extreme
-        double u = Math.Tanh(alpha * x) / Math.Tanh(alpha); // still in [-1, +1]
+        float alpha = cfg.FrontBias;
+        double u = Math.Tanh(alpha * x) / Math.Tanh(alpha);
         int bins = _cells[ring].Length;
-        // map to [0, bins)
         double t = (u + 1.0) * 0.5;
         int idx = (int)Math.Floor(t * bins);
         if (idx < 0) idx = 0;
         if (idx >= bins) idx = bins - 1;
         return idx;
     }
+
     public Angle GetAzimuthFromBin(int bin, int ring)
     {
         float halfWidth = _cells[ring].Length / 2;
@@ -120,22 +169,21 @@ public class ModuleMentalModel : ModuleBase
         Angle a = Angle.FromDegrees((float)InvertWarp(u) * 180);
         return a;
     }
+
     public double InvertWarp(double u)
     {
         float alpha = cfg.FrontBias;
-        // guard domain: |u| <= 1
         u = Math.Clamp(u, -1.0, 1.0);
-        double v = u * Math.Tanh(alpha);      // scale back
-        double x = Math.Atanh(v) / alpha;     // invert tanh and scale
+        double v = u * Math.Tanh(alpha);
+        double x = Math.Atanh(v) / alpha;
         return Math.Clamp(x, -1.0, 1.0);
     }
-
 
     public int GetBinFromElevation(float el)
     {
         float absEl = Math.Abs(el);
         var edges = cfg.ElevationEdges;
-        int absRing = edges.Count - 2; // default to last band
+        int absRing = edges.Count - 2;
 
         for (int i = 0; i < edges.Count - 1; i++)
         {
@@ -155,14 +203,14 @@ public class ModuleMentalModel : ModuleBase
         Thought allCells = theUKS.Labeled("_mm:cell");
         if (allCells is null) return;
 
-        // Snapshot occupants so new links added during rotation aren’t processed again
         var moves = new List<(Thought fromCell, Thought obj, TimeSpan ttl, float weight)>();
 
         foreach (var cell in allCells.Children)
         {
-            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains).ToList())
+            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains ).ToList())
             {
-                moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight));
+                if (l.To?.Label != "attention" || cell.LinksTo.Count(x => x.LinkType == _ltContains) > 1)
+                    moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight));
             }
         }
 
@@ -175,7 +223,6 @@ public class ModuleMentalModel : ModuleBase
             Thought newPosition = GetCell(angles.azimuth, angles.elevation);
             if (newPosition == move.fromCell) continue;
 
-            // Remove from old, add to new, preserving attributes
             move.fromCell.RemoveLink(_ltContains, move.obj);
             Link newLink = newPosition.AddLink(_ltContains, move.obj);
             newLink.TimeToLive = move.ttl;
@@ -203,7 +250,6 @@ public class ModuleMentalModel : ModuleBase
 
     (Angle azimuth, Angle elevation) GetAnglesFromCell(Thought t)
     {
-        //string label = $"_mm:cell:r{r}:k{k}";
         var m = Regex.Match(t.Label, @"^_mm:cell:r(?<r>-?\d+):k(?<k>\d+)$");
         int r = m.Success ? int.Parse(m.Groups["r"].Value) : -1;
         int k = m.Success ? int.Parse(m.Groups["k"].Value) : -1;
@@ -214,25 +260,23 @@ public class ModuleMentalModel : ModuleBase
 
     public void BuildOrLoad(SpatialSheetConfig cfg)
     {
-        // If you persist the sheet in the UKS, you can "load" by looking up cell labels.
-        // For now, build deterministically; repeated builds will GetOrAdd the same cells.
         Build(cfg);
         LinkNeighbors(cfg);
     }
 
     private void Build(SpatialSheetConfig cfg)
     {
-        int totalRings = cfg.Rings * 2 + 1;           // rings above + center + rings below
-        int centerIndex = cfg.Rings;                  // center row index
+        int totalRings = cfg.Rings * 2 + 1;
+        int centerIndex = cfg.Rings;
 
         _cells = new Thought[totalRings][];
         Thought rootCells = theUKS.GetOrAddThought("_mm:cell", "_mm:root");
 
         for (int r = 0; r < totalRings; r++)
         {
-            int signedRing = r;         // negative above, positive below, 0 = center
-            if (signedRing > 6) 
-                signedRing = signedRing - 2*Math.Abs(6-signedRing);
+            int signedRing = r;
+            if (signedRing > 6)
+                signedRing = signedRing - 2 * Math.Abs(6 - signedRing);
             int radialDistance = Math.Abs(signedRing);
 
             int rays = cfg.RaysPerRing(radialDistance);
@@ -253,12 +297,11 @@ public class ModuleMentalModel : ModuleBase
         Center = centerRing[centerRay];
 
         rootCells.AddLink(_ltCenter, Center);
-        Center.AddLink(_ltCenter, rootCells); // optional symmetry
+        Center.AddLink(_ltCenter, rootCells);
     }
 
     private void LinkNeighbors(SpatialSheetConfig cfg)
     {
-        // 1) Ring neighbors (wrap-around within each ring)
         Thought rt = theUKS.GetOrAddThought("rightOf", "comparison");
         Thought above = theUKS.GetOrAddThought("above", "comparison");
         for (int r = 0; r < _cells.Length; r++)
@@ -272,57 +315,41 @@ public class ModuleMentalModel : ModuleBase
             }
         }
 
-        // 2) ring neighbors (connect ring r to ring r+1)
-        for (int r = 0;r < cfg.Rings;r++)
+        for (int r = 0; r < cfg.Rings; r++)
         {
-            //start with the densest row and work both upward and downward
             int denseRow1 = cfg.Rings - r;
             int denseRow2 = cfg.Rings + r;
 
             float numCellsInDenseRow = _cells[denseRow2].Length;
-            float numCellsInLessDenseRow = _cells[denseRow2+1].Length;
+            float numCellsInLessDenseRow = _cells[denseRow2 + 1].Length;
 
-            // Map each outer ray to an inner ray (or vice versa).
-            // This is where non-linear geometry lives.
             for (int rowIndex = 0; rowIndex < numCellsInDenseRow; rowIndex++)
             {
                 Thought cell1 = _cells[denseRow1][rowIndex];
-                float pos2 = (rowIndex * numCellsInLessDenseRow)  / numCellsInDenseRow;
-                Thought cell2 = _cells[denseRow1-1][(int)Math.Round(pos2)];
+                float pos2 = (rowIndex * numCellsInLessDenseRow) / numCellsInDenseRow;
+                Thought cell2 = _cells[denseRow1 - 1][(int)Math.Round(pos2)];
                 cell2.AddLink(above, cell1);
 
                 Thought cell3 = _cells[denseRow2][rowIndex];
-                Thought cell4 = _cells[denseRow2+1][(int)Math.Round(pos2)];
+                Thought cell4 = _cells[denseRow2 + 1][(int)Math.Round(pos2)];
                 cell3.AddLink(above, cell4);
             }
         }
     }
 }
 
-//this allows for a non-linear spatial sheet where the number of rays can grow with each ring,
-//and a front bias can allocate more cells to the front sector if desired.
+//non-linear spatial sheet settings
 public sealed class SpatialSheetConfig
 {
     public int Rings { get; init; } = 6;
-
-    // Base rays and growth control how “non-linear” it is.
     public int BaseRays { get; init; } = 16;
     public float Growth { get; init; } = 1.35f;
-
-    // Optional: front bias factor ( >1 means more cells allocated to “front sector”)
-    // We'll implement anisotropy later; for now it influences RaysPerRing.
     public float FrontBias { get; init; } = 1.0f;
-
-    // Optional: Elevation edges for flexible banding
     public List<float> ElevationEdges { get; init; } = new() { 0f, 1.5f, 5f, 10f, 20f, 35f, 60f, 90f };
 
     public int RaysPerRing(int ring)
     {
-        // Non-linear: rays grow sublinearly or superlinearly; tune later.
-        // This is a placeholder that’s easy to adjust.
         double rays = BaseRays * Math.Pow(Growth, ring);
-
-        // Optionally clamp
         int r = (int)Math.Round(rays);
         return Math.Clamp(r, 8, 128);
     }

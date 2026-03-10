@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
         xmlns:local="clr-namespace:BrainSimulator.Modules"
         mc:Ignorable="d"
         Title="Universal Knowledge Store (UKS)" Height="450" Width="800" Background="Gray" ShowInTaskbar="False" Loaded="Dlg_Loaded">
@@ -21,7 +22,18 @@
         <CheckBox x:Name="showConditionals" IsChecked="False" Content="Show Conditionals" HorizontalAlignment="Left" Margin="256,39,0,0" Width="161" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked" FontSize="16" RenderTransformOrigin="1.073,-0.658" Height="19" VerticalAlignment="Top"/>
 
         <Label Content="Root:" HorizontalAlignment="Left" Margin="424,4,0,0" Width="90" FontSize="16" Height="35" VerticalAlignment="Top"/>
-        <TextBox x:Name="textBoxRoot" HorizontalAlignment="Left" Margin="467,8,0,0" TextWrapping="Wrap" Text="Thought" Width="150" TextChanged="textBoxRoot_TextChanged" PreviewKeyDown="TextBoxRoot_KeyDown" FontSize="16" Height="25" VerticalAlignment="Top"/>
+        <ComboBox x:Name="comboRoot"
+                  IsEditable="True"
+                  HorizontalAlignment="Left"
+                  Margin="467,8,0,0"
+                  Width="180"
+                  FontSize="16"
+                  Height="25"
+                  VerticalAlignment="Top"
+                  IsTextSearchEnabled="False"
+                  Text="Thought"
+                  primitives:TextBoxBase.TextChanged="textBoxRoot_TextChanged"
+                  PreviewKeyDown="TextBoxRoot_KeyDown"/>
         <Label Content="" x:Name="statusLabel"  HorizontalAlignment="Left" Margin="424,33,0,0" Width="220" FontSize="16" Height="35" VerticalAlignment="Top"/>
         <Button x:Name="InitializeButton" Content="Initialize" VerticalAlignment="Top" Height="25" Click="InitializeButton_Click" Margin="18,19,0,0" FontSize="16" HorizontalAlignment="Left" Width="90"   />
         <Button Content="Import" Height="25" HorizontalAlignment="Left" Margin="645,8,0,0" VerticalAlignment="Top" FontSize="16" Width="70" Click="ImportButton_Click"/>

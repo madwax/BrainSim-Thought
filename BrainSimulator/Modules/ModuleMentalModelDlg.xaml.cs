@@ -49,7 +49,13 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
     private void DrawCells(ModuleMentalModel parent)
     {
         if (theCanvas is null) return;
-        if (theCanvas.IsMouseOver) return;
+        if (theCanvas.IsMouseOver && Mouse.RightButton != MouseButtonState.Pressed)
+        {
+            SetStatus("Paused");
+            return;
+        }
+        if (GetStatus() == "Paused")
+            SetStatus("OK");
         theCanvas.Children.Clear();
 
         var cells = parent._cells;
@@ -107,11 +113,14 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
                 if (cells[r][k] == parent.Center)
                     rect.Fill = Brushes.Pink;
                 if (t.LastFiredTime > DateTime.Now - TimeSpan.FromSeconds(1))
-                    rect.Fill = Brushes.Red;
-                if (t.LinksTo.FindFirst(x => x.LinkType.Label == "_mm:contains") != null)
+                    rect.Fill = Brushes.AliceBlue;
+                Link ThoughtAtLocation = t.LinksTo.FindFirst(x => x.LinkType.Label == "_mm:contains");
+                if (ThoughtAtLocation is not null)
                 {
                     rect.Fill = Brushes.Yellow;
-                    rect.ToolTip = t.LinksTo.FindFirst(x => x.LinkType.Label == "_mm:contains").To?.Label;
+                    if (ThoughtAtLocation.To.Label == "attention") rect.Fill = Brushes.Green;
+
+                    rect.ToolTip = string.Join("\r\n", t.LinksTo.Where(x => x.LinkType.Label == "_mm:contains")?.Select(x=>x.To?.Label));
                 }
                 Canvas.SetLeft(rect, xLeft);
                 Canvas.SetTop(rect, y);
@@ -156,11 +165,6 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
             t.Fire();
             t.LinksTo.FindFirst(x => x.LinkType.Label == "above")?.To.Fire();
             t.LinksTo.FindFirst(x => x.LinkType.Label == "rightOf")?.To.Fire();
-            if (t.Label.Contains("0:k0"))
-            {
-                Thought c1 = module.GetCell(Angle.FromDegrees(45), 0);
-                module.BindObjectToCells("Fido", new List<Thought>() { c1 });
-            }
         }
     }
 

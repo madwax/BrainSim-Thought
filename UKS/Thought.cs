@@ -73,7 +73,7 @@ public class Thought
     public IReadOnlyList<Link> LinksTo
     {
         get
-        {
+        { 
             if (CheckExpiredAndMaybeDelete()) return Array.Empty<Link>();
             lock (_linksTo) { return new List<Link>(_linksTo.AsReadOnly()); }
         }
@@ -101,6 +101,10 @@ public class Thought
 
     public void Delete()
     {
+        if (LinksFrom.FindFirst(x=>x.LinkType.Label == "VLU") is not null)
+        {
+            //this Thought is the object of a sequence.  
+        }
         foreach (Link r in _linksTo.Where(x => (x.To as SeqElement)?.FRST == x.To))
         {
             UKS.theUKS.DeleteSequence((SeqElement)r.To);
@@ -126,6 +130,11 @@ public class Thought
 
     private bool CheckExpiredAndMaybeDelete()
     {
+        for (int i = 0; i < _linksTo.Count; i++)
+        {
+            if (_linksTo[i].CheckExpiredAndMaybeDelete())
+                i --;
+        }
         if (_timeToLive == TimeSpan.MaxValue) return false;
         if (LastFiredTime + _timeToLive > DateTime.Now) return false;
 
@@ -348,6 +357,8 @@ public class Thought
     /// </summary>
     public void Fire()
     {
+        if (Label.StartsWith("_attn"))
+        { }
         LastFiredTime = DateTime.Now;
         UseCount++;
         AddToRecentlyFired();
@@ -421,6 +432,7 @@ public class Thought
             LinkType = linkType,
             From = this,
             To = to,
+            LastFiredTime = DateTime.Now,
         };
         if (to is not null && linkType is not null)
         {

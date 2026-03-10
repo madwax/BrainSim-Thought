@@ -129,12 +129,6 @@ public partial class UKS
             if (t.Label.StartsWith("unl_"))
                 t.Label = "";
         }
-        ////This is a bit of a hack because the default AddStatement adds sequence elements to Unknown unnecessarily
-        //for (int i = 0; i < theUKS.AllThoughts.Count; i++)
-        //{
-        //    Thought t = AllThoughts[i];
-
-        //}
     }
 
     // Adds a link, 

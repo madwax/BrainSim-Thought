@@ -47,6 +47,8 @@ public partial class UKS
             i--;
         }
 
+        //This deletes all the labels then adds back in the ones still in the AtomicThoughts list
+
         ThoughtLabels.ClearLabelList();
         Thought.ClearRecentlyFiredQueue();
         foreach (Thought t in AtomicThoughts)

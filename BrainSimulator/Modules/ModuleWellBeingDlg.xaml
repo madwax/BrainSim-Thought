@@ -12,21 +12,20 @@
                 Minimum="-1" Maximum="1"
                 LargeChange="0.1" SmallChange="0.05"
                 TickFrequency="0.5" IsSnapToTickEnabled="False" TickPlacement="Both"
-                Height="40"
-                HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                Margin="20,20,20,60"
+                Height="40" VerticalAlignment="Top"
+                Margin="20,37,20,0"
                 ValueChanged="WellBeingSlider_ValueChanged"/>
 
         <Button x:Name="DecreaseButton" FontSize="24"
                 Content="-" Width="40" Height="30"
                 HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                Margin="80,0,0,40"
+                Margin="80,0,0,35"
                 Click="DecreaseButton_Click"/>
 
         <Button x:Name="IncreaseButton" FontSize="24"
                 Content="+" Width="40" Height="30"
                 HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                Margin="0,0,80,40"
+                Margin="0,0,86,35"
                 Click="IncreaseButton_Click"/>
     </Grid>
 </local:ModuleBaseDlg>

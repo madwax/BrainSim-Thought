@@ -205,7 +205,7 @@ public partial class UKS
     }
 
     //Adds a new element after prevElementIn) and links its value. Returns the new element.
-    private SeqElement AddElement(SeqElement prevElement, Thought value)
+    public SeqElement AddElement(SeqElement prevElement, Thought value)
     {
         SeqElement newNode = new()
         {
@@ -593,7 +593,7 @@ public partial class UKS
         float score = count / (Math.Max(seq.Count, targets.Count) - 1);
         return score;
     }
-    private List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> RawSearchExact(List<Thought> targets, bool skipPlusEntries = false)
+    public List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> RawSearchExact(List<Thought> targets, bool skipPlusEntries = false)
     {
         List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> searchCandidates = new();
         if (targets is null || targets.Count < 2) return searchCandidates;
@@ -673,13 +673,12 @@ public partial class UKS
     /// </summary>
     public List<Thought> FlattenSequence(SeqElement sequenceStart, bool skipPlusValues = false)
     {
-        if (sequenceStart.Label.StartsWith("abstr"))
-        { }
         //experimentating with an enumartor for sequences
         List<Thought> result = new();
         var e = EnumerateSequenceElements(sequenceStart, skipPlusValues).GetEnumerator();
         while (e.MoveNext())
-            result.Add(GetElementValue(e.Current));
+            if (GetElementValue(e.Current) is not null)
+                result.Add(GetElementValue(e.Current));
         //foreach (Thought t in EnumerateSequenceElements(sequenceStart))
         //    result.Add(t);
         return result;

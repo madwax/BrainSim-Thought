@@ -8,8 +8,7 @@
         Title="MentelModel Dialog Template" Height="220" Width="620" Background="Gray" ShowInTaskbar="False" >
 
     <Grid>
-
-        <Border Grid.Row="0" Background="DarkGray" ClipToBounds="True" Margin="0,0,0,45">
+        <Border Grid.Row="0" Background="DarkGray" ClipToBounds="True" Margin="0,0,0,65">
             <Canvas x:Name="theCanvas"
                     Background="DarkGray"
                     ClipToBounds="True"
@@ -27,7 +26,7 @@
             </Canvas>
         </Border>
 
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,25">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,35">
             <TextBlock Text="Zoom" Margin="0,0,6,0" VerticalAlignment="Center"/>
             <Slider x:Name="ZoomSlider"
                     Width="180"

@@ -12,6 +12,7 @@
  */
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace UKS;
@@ -300,13 +301,16 @@ public partial class UKS
                 if (st.target != -1) to = Labeled(UKSTemp[st.target].label);
 
                 Link newLink = from?.AddLink(linkType, to);
-                newLink.Weight = st.weight;
-                if (!st.label.StartsWith("unl")) newLink.Label = st.label;
-                newLink.V = st.V;
-                newLink.TimeToLive = TimeSpan.MaxValue;
-                if (newLink.LinkType.Label == "VLU")
-                {//this must a a sequence element, promote it to one.
-                    SeqElement newfrom = PromoteToSeqElement(newLink.From);
+                if (newLink is not null)
+                {
+                    newLink.Weight = st.weight;
+                    if (!st.label.StartsWith("unl")) newLink.Label = st.label;
+                    newLink.V = st.V;
+                    newLink.TimeToLive = TimeSpan.MaxValue;
+                    if (newLink.LinkType.Label == "VLU")
+                    {//this must a a sequence element, promote it to one.
+                        SeqElement newfrom = PromoteToSeqElement(newLink.From);
+                    }
                 }
             }
         }

@@ -23,28 +23,28 @@ public class ModuleWord : ModuleBase
 {
     //to put letters one by one into the mental Model
     DateTime lastLetterTime = DateTime.Now;
-    string remainingLetters = "";
+    readonly Queue<Thought> letterQueue = new();
     public ModuleWord()
     {
         Label = "Word";
     }
     public override void Fire()
     {
-        // Called periodically by the module engine
-        if (remainingLetters != "")
+        // Only stream letters when both MentalModel and Attention are active
+        if (!HasActiveMentalModelAndAttention(out var mm))
+            return;
+
+        if (letterQueue.Count > 0)
         {
             //add letters to the mental model one at a time
             if (lastLetterTime < DateTime.Now - TimeSpan.FromSeconds(1))
             {
-                if (MainWindow.theWindow.GetModuleByLabel("ModuleMentalModel0") is ModuleMentalModel mm)
-                {
-                    mm.RotateMentalModel(Angle.FromDegrees(5f), Angle.FromDegrees(0));
-                    Thought center = mm.GetCell(0, 0);
-                    Thought firstChar = theUKS.GetOrAddThought("c:" + char.ToUpper(remainingLetters[0]),"letter");
-                    mm.BindObjectToCells(firstChar, new List<Thought>() { center });
-                    lastLetterTime = DateTime.Now;
-                    remainingLetters = remainingLetters.Length > 0 ? remainingLetters[1..] : string.Empty;
-                }
+                mm.RotateMentalModel(Angle.FromDegrees(-5f), Angle.FromDegrees(0));
+                Thought center = mm.GetCell(0, 0);
+                Thought firstChar = letterQueue.Peek();
+                mm.BindThoughtToMentalModel(firstChar, center);
+                lastLetterTime = DateTime.Now;
+                letterQueue.Dequeue();
             }
         }
     }
@@ -64,7 +64,6 @@ public class ModuleWord : ModuleBase
 
     public string GetWordSuggestion(string word)
     {
-        
         List<Thought> letters = new List<Thought>();
         foreach (char c in word.ToUpper())
         {
@@ -90,8 +89,11 @@ public class ModuleWord : ModuleBase
 
         if (string.IsNullOrWhiteSpace(word)) return null;
 
-        //Set up one-by-one character reading
-        remainingLetters = word;
+        bool streamOnly = HasActiveMentalModelAndAttention(out _);
+
+        // When streaming mode is active, do not create words/sequences here
+        if (streamOnly)
+            return null;
 
         // Get or create the word thought
         Thought wordThought = theUKS.GetOrAddThought("w:" + word, "EnglishWord");
@@ -101,11 +103,10 @@ public class ModuleWord : ModuleBase
             return wordThought; // Spelling already exists, no need to add again
         }
         // Create list of letter thoughts
-        List<Thought> letters = new List<Thought>();
+        List<Thought> letters = new();
         foreach (char c in word.ToUpper())
         {
-            string letterLabel = c.ToString();
-            Thought letter = theUKS.GetOrAddThought("c:"+letterLabel, "letter");
+            Thought letter = theUKS.GetOrAddThought("c:" + c, "letter");
             letters.Add(letter);
         }
 
@@ -114,7 +115,7 @@ public class ModuleWord : ModuleBase
 
         // Add the sequence
         var t = theUKS.AddSequence(wordThought, spelledLinkType, letters);
-        wordThought.TimeToLive = TimeSpan.FromSeconds(1110);
+        wordThought.TimeToLive = TimeSpan.FromSeconds(10);
 
         return wordThought;
     }
@@ -146,5 +147,29 @@ public class ModuleWord : ModuleBase
         }
 
         return count;
+    }
+
+    private bool HasActiveMentalModelAndAttention(out ModuleMentalModel mm)
+    {
+        var mods = MainWindow.theWindow?.activeModules;
+        mm = mods?.OfType<ModuleMentalModel>().FirstOrDefault();
+        var attn = mods?.OfType<ModuleAttention>().FirstOrDefault();
+        return mm is not null && attn is not null;
+    }
+
+    public void EnqueueLetters(string added)
+    {
+        foreach (char c in added)
+        {
+            letterQueue.Enqueue(theUKS.GetOrAddThought("c:" + char.ToUpper(c), "letter"));
+        }
+    }
+    public void RebuildQueueFromCurrentText(string current)
+    {
+        letterQueue.Clear();
+        foreach (char c in current.ToUpper())
+        {
+            letterQueue.Enqueue(theUKS.GetOrAddThought("c:" + c, "letter"));
+        }
     }
 }

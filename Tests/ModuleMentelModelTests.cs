@@ -25,7 +25,7 @@ public class ModuleMentelModelTests
 
         Thought obj = uks.GetOrAddThought("obj");
         Thought startCell = module.GetCell(Angle.FromDegrees(0), Angle.FromDegrees(0));
-        module.BindObjectToCells(obj, new[] { startCell });
+        module.BindThoughtToMentalModel(obj,startCell);
 
         // ensure the loop in RotateMentalModel will see this cell
         startCell.AddLink("is-a", module.Root);

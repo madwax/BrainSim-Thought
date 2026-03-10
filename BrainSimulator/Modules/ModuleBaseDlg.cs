@@ -32,6 +32,7 @@ public class ModuleBaseDlg : Window
     private DispatcherTimer timer;
     public int UpdateMS = 100;
     public Label statusLabel;
+    private bool initializedLayout = false;
 
     public ModuleBaseDlg()
     {
@@ -40,61 +41,85 @@ public class ModuleBaseDlg : Window
 
     private void ModuleBaseDlg_Loaded(object sender, RoutedEventArgs e)
     {
-        // Create a help button and add it to the panel
+        if (initializedLayout) return;
+        initializedLayout = true;
+
+        // capture original content
+        UIElement? originalContent = this.Content as UIElement;
+
+        // create outer grid (single row) and overlay bottom bar at the bottom
+        Grid shell = new()
+        {
+            Margin = this.Margin
+        };
+        shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
+        if (originalContent is not null)
+        {
+            this.Content = null; // detach
+            Grid.SetRow(originalContent, 0);
+            shell.Children.Add(originalContent);
+        }
+
+        // bottom bar layout (overlay)
+        Grid bottomBar = new()
+        {
+            Margin = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Bottom,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // status stretch
+        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(35) });                    // src button
+        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });                    // help button
+
         Button helpButton = new Button
         {
             Content = "?",
             FontSize = 24,
             Width = 20,
             Height = 25,
-            Margin = new Thickness(5),
             Padding = new Thickness(0, -6, 0, 0),
             Name = "helpButton",
             ToolTip = "Show dialog help",
             HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Bottom
+            VerticalAlignment = VerticalAlignment.Center
         };
         helpButton.Click += HelpButton_Click;
+        Grid.SetColumn(helpButton, 2);
 
-
-        ////get the image for the source button icon
-        //var img = new Image
-        //{
-        //    Source = new BitmapImage(
-        //        new Uri("pack://application:,,,/Resources/icons/textFileIcon.png",
-        //                UriKind.Absolute)),
-        //    Stretch = Stretch.Uniform
-        //};
-
-        //create a button to show the source code
         Button sourceButton = new Button
         {
             Content = "src",
-            Width = 20,
+            Width = 33,
             Height = 25,
-            Margin = new Thickness(5, 5, 30, 5),
-            Padding = new Thickness(1),
             Name = "sourceButton",
             ToolTip = "Show dialog source",
             HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Bottom
+            VerticalAlignment = VerticalAlignment.Center
         };
         sourceButton.Click += SourceButton_Click;
-
-        // Add the button to the dialog
-        ((Panel)this.Content).Children.Add(helpButton);
-        ((Panel)this.Content).Children.Add(sourceButton);
+        Grid.SetColumn(sourceButton, 1);
 
         statusLabel = new()
         {
             Content = "OK",
             Name = "statusLabel",
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            Margin = new Thickness(10, 0, 60, 3),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(10, 0, 0, 0),
             FontSize = 18
         };
-        ((Panel)this.Content).Children.Add(statusLabel);
+        Grid.SetColumn(statusLabel, 0);
+
+        bottomBar.Children.Add(helpButton);
+        bottomBar.Children.Add(sourceButton);
+        bottomBar.Children.Add(statusLabel);
+
+        Grid.SetRow(bottomBar, 0);
+        shell.Children.Add(bottomBar);
+
+        // set new content
+        this.Content = shell;
     }
 
     /// <summary>
@@ -106,7 +131,6 @@ public class ModuleBaseDlg : Window
         if (!Directory.Exists(rootPath))
             throw new DirectoryNotFoundException($"Root path not found: {rootPath}");
 
-        // Enumerate all files recursively and compare names only
         return Directory.EnumerateFiles(rootPath, "*", SearchOption.AllDirectories)
                         .FirstOrDefault(f => string.Equals(
                             Path.GetFileName(f),
@@ -197,5 +221,9 @@ public class ModuleBaseDlg : Window
             statusLabel.Foreground = new SolidColorBrush((Color)c);
 
         statusLabel.Content = message;
+    }
+    public string GetStatus()
+    {
+        return statusLabel.Content.ToString();
     }
 }

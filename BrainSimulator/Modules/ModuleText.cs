@@ -77,6 +77,7 @@ public class ModuleText : ModuleBase
             theUKS.GetOrAddThought("Phrase");
             theUKS.GetOrAddThought("hasWords", "LinkType");
             Thought thePhrase = theUKS.GetOrAddThought("p*", "Phrase");
+            thePhrase.TimeToLive = TimeSpan.FromSeconds(30); // adjust as needed
             if (wordsInPhrase.Count > 1)
             {
                 theUKS.AddSequence(thePhrase, "hasWords", wordsInPhrase);
