@@ -19,7 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-//using System.Windows.Forms;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -39,6 +39,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
 
     private const int maxDepth = 20;
+    private const int rootHistoryLimit = 8;
+    private readonly List<string> _rootHistory = new();
     private int totalItemCount;
     private bool mouseInWindow; //prevent auto-update while the mouse is in the tree
     private bool busy;
@@ -212,7 +214,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             //show sequence content unless details are selected
             if (r.From is SeqElement)
             {
-                if (r.LinkType.Label == "VLU")
+                if (r.LinkType.Label == "VLU" || r.LinkType.Label == "duration")
                 {
                     header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
                     if (r.To.Label == "")
@@ -223,13 +225,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
-                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST" || r.LinkType.Label == "VLU")
+                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST")
                 {
                     header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
                 }
                 else
                 {
-                    var seqElementLabels = theUKS.FlattenSequence(s).Select(x => x.Label);
+                    var seqElementLabels = theUKS.FlattenSequence(s).Select(x => x?.Label);
                     seqElementLabels = seqElementLabels
                         .Select(s =>
                         {
@@ -506,7 +508,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             Thought tParent = (Thought)mi.GetValue(ThoughtObjectProperty);
             if (tParent is not null)
             {
-                textBoxRoot.Text = tParent.Label;
+                comboRoot.Text = tParent.Label;
                 Refresh();
             }
             Thought t = (Thought)m.GetValue(ThoughtObjectProperty);
@@ -541,6 +543,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                     break;
                 case "Fire":
                     t.Fire();
+                    t.AddParent("do");
                     break;
                 case "Delete":
                     theUKS.DeleteAllChildren(t);
@@ -558,7 +561,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                         parentThought.RemoveChild(t);
                     break;
                 case "Make Root":
-                    textBoxRoot.Text = t.Label;
+                    comboRoot.Text = t.Label;
+                    AddRootToHistory(t.Label);
                     Refresh();
                     break;
             }
@@ -582,24 +586,26 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     private bool _isTextChangingInternally;  //lockout so we can change the text without retriggering the event
     private void TextBoxRoot_KeyDown(object sender, KeyEventArgs e)
     {
+        var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+        if (tb is null) return;
         // Allow text changes when keys like backspace, delete are pressed
         if (e.Key == Key.Back || e.Key == Key.Delete)
         {
             _isTextChangingInternally = true;
-            int caretIndex = textBoxRoot.CaretIndex;
+            int caretIndex = tb.CaretIndex;
             if (e.Key == Key.Back) caretIndex--;
             if (caretIndex < 0) caretIndex = 0;
-            textBoxRoot.Text = textBoxRoot.Text.Substring(0, caretIndex);
-            textBoxRoot.CaretIndex = caretIndex;
+            comboRoot.Text = comboRoot.Text.Substring(0, caretIndex);
+            tb.CaretIndex = caretIndex;
             e.Handled = true;
             _isTextChangingInternally = false;
-            //get a new suggestion
             if (e.Key == Key.Back)
                 textBoxRoot_TextChanged(null, null);
         }
         if (e.Key == Key.Enter)
         {
-            textBoxRoot.SelectionLength = 0;
+            AddRootToHistory(comboRoot.Text);
+            tb.SelectionLength = 0;
         }
     }
     private void textBoxRoot_TextChanged(object sender, TextChangedEventArgs e)
@@ -607,36 +613,35 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if (_isTextChangingInternally)
             return;
 
-        string searchText = textBoxRoot.Text;
+        string searchText = comboRoot.Text;
         if (!string.IsNullOrEmpty(searchText))
         {
-            //get the first label
             var suggestion = ThoughtLabels.LabelList.Keys
                 .Where(key => key.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(key => key)
                 .FirstOrDefault();
-            //get the real label to get the capitalization right
             if (suggestion is not null) suggestion = ThoughtLabels.GetThought(suggestion).Label;
 
             if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
             {
-                int caretIndex = textBoxRoot.CaretIndex;
+                var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+                if (tb is null) return;
+                int caretIndex = tb.CaretIndex;
                 _isTextChangingInternally = true;
-                textBoxRoot.Text = suggestion;
-                textBoxRoot.CaretIndex = caretIndex;
-                textBoxRoot.SelectionStart = caretIndex;
-                textBoxRoot.SelectionLength = suggestion.Length - caretIndex;
-                textBoxRoot.SelectionOpacity = .4;
+                comboRoot.Text = suggestion;
+                tb.CaretIndex = caretIndex;
+                tb.SelectionStart = caretIndex;
+                tb.SelectionLength = suggestion.Length - caretIndex;
+                tb.SelectionOpacity = .4;
                 _isTextChangingInternally = false;
             }
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
         if (parent is null) return;
-        parent.SetSavedDlgAttribute("Root", textBoxRoot.Text);
+        parent.SetSavedDlgAttribute("Root", comboRoot.Text);
         Refresh();
 
     }
-
     //using the mouse-wheel while pressing ctrl key changes the font size
     private void theTreeView_MouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -743,7 +748,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         string root = parent.GetSavedDlgAttribute("Root");
         if (string.IsNullOrEmpty(root))
             root = "Thought";
-        textBoxRoot.Text = root;
+        comboRoot.Text = root;
         Refresh();
     }
 
@@ -766,11 +771,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 CollapseTreeviewItems(item);
         }
     }
-
     private void Dlg_Loaded(object sender, RoutedEventArgs e)
     {
         ModuleUKS parent = (ModuleUKS)ParentModule;
-        textBoxRoot.Text = parent.GetSavedDlgAttribute("Root");
+        LoadRootHistory(parent.GetSavedDlgAttribute("RootHistory"));
+        comboRoot.Text = parent.GetSavedDlgAttribute("Root");
     }
 
     private string Browse(bool open)
@@ -870,5 +875,34 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             Mouse.OverrideCursor = null;
         }
+    }
+
+    private void LoadRootHistory(string raw)
+    {
+        _rootHistory.Clear();
+        if (!string.IsNullOrEmpty(raw))
+            _rootHistory.AddRange(raw.Split('|').Where(x => !string.IsNullOrWhiteSpace(x)));
+        UpdateRootHistoryItems();
+    }
+
+    private void AddRootToHistory(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var existing = _rootHistory.FindIndex(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
+        if (existing >= 0) _rootHistory.RemoveAt(existing);
+        _rootHistory.Insert(0, value);
+        if (_rootHistory.Count > rootHistoryLimit)
+            _rootHistory.RemoveRange(rootHistoryLimit, _rootHistory.Count - rootHistoryLimit);
+        UpdateRootHistoryItems();
+        if (ParentModule is ModuleUKS parent)
+            parent.SetSavedDlgAttribute("RootHistory", string.Join("|", _rootHistory));
+    }
+
+    private void UpdateRootHistoryItems()
+    {
+        _isTextChangingInternally = true;
+        comboRoot.ItemsSource = null;
+        comboRoot.ItemsSource = _rootHistory.ToList();
+        _isTextChangingInternally = false;
     }
 }
