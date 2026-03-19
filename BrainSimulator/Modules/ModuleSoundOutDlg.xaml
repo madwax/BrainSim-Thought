@@ -9,16 +9,6 @@
 
     <Grid >
         <Button Content="Play Sound" Width="120" Height="30" Click="PlaySound_Click" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="200,10,0,0" VerticalAlignment="Top" Width="285" >
-            <Button Content="C" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="D" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="E" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="F" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="G" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="A" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="B" Height="24" Width="24" Click="PitchButton_Click"/>
-            <Button Content="C+" Height="24" Width="24" Click="PitchButton_Click"/>
-        </StackPanel>
 
         <!-- Add these after existing controls -->
         <StackPanel Orientation="Horizontal" Margin="81,48,0,0" HorizontalAlignment="Left" Width="270" Height="23" VerticalAlignment="Top">

@@ -13,7 +13,9 @@
             <ColumnDefinition Width="499*"/>
         </Grid.ColumnDefinitions>
         <TextBlock HorizontalAlignment="Left" Margin="18,10,0,0" FontSize="14" VerticalAlignment="Top" Grid.ColumnSpan="2">
-            Keyboard Layout:
+            <Run FontWeight ="Bold"> Click on Dialog to Activate</Run>
+            <LineBreak/>
+            Keyboard Layout (bottom row(s):
             <LineBreak/>
             &#160;&#160;s&#160;&#160;d&#160;&#160;&#160;&#160;&#160;g&#160;&#160;h&#160;&#160;j&#160;&#160;&#160;&#160;&#160;l&#160;&#160;;
             <LineBreak/>

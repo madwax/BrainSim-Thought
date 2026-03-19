@@ -40,13 +40,8 @@ public class ModuleAttentionS : ModuleBase
             if (l.HasLink(l,"handled", null) is not null) continue; //only handle this event once
             l.AddLink("handled", null);
 
-            Thought theNote = l.From;
-            if (prediction.Contains(theNote)) //raise well-being;
-                ModuleWellBeing.Increase();
-            else if (prediction.Count > 0)
-                ModuleWellBeing.Decrease();
-
             //Add the new node to the phrase sequence
+            Thought theNote = l.From;
             if (currentSeq is null)
             {
                 theUKS.GetOrAddThought("phrase", "musicalPhrase");
@@ -55,7 +50,12 @@ public class ModuleAttentionS : ModuleBase
             else
             {
                 AddDurationToSeqStep();
+                //This code could be modified so that the sequences stored deltas rather than note values
+                //var deltaNote = GetIntAfterColon(theNote.Label)-GetIntAfterColon(currentSeq.VLU.Label) ;
+                //Thought theInterval = theUKS.GetOrAddThought($"interval:{deltaNote}", "musicalNote");
+                //currentSeq.AddLink("VLU", theInterval);
                 currentSeq = theUKS.AddElement(currentSeq, theNote);
+
             }
             _lastEventTime = DateTime.Now;
 
@@ -90,13 +90,26 @@ public class ModuleAttentionS : ModuleBase
                 int totalTime = 5000;
                 foreach (SeqElement t in theUKS.EnumerateSequenceElements(currentSeq.FRST))
                     totalTime += ModuleSoundOut.GetDurationMs(t) * 3;
-                newThought.From.TimeToLive = TimeSpan.FromMilliseconds(totalTime);
+                Debug.WriteLine($"new phrase heard {newThought.Label}");
+                //newThought.From.TimeToLive = TimeSpan.FromMilliseconds(totalTime);
+                newThought.From.TimeToLive = TimeSpan.MaxValue;
+                // Notify ModuleAction of the new context
+                var moduleAction = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
+                moduleAction?.NewContext(newThought.From);
             }
             else
             {
-                var foundPhrase = existing[0].seqNode.LinksFrom.FindFirst(x => x.LinkType.Label == "soundAs")?.From;
+                var foundPhrase = existing[0].seqNode.FRST.LinksFrom.FindFirst(x => x.LinkType.Label == "soundAs")?.From;
+                foundPhrase?.Fire();
+                // Notify ModuleAction of the new context
+                Debug.WriteLine($"phrase recognized {foundPhrase.Label}");
+
+                var moduleAction = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
+                moduleAction.NewContext(foundPhrase);
                 theUKS.DeleteSequence(currentSeq.FRST);
+                ModuleWellBeing.Increase();  //we're happy we recognized something
             }
+
             currentSeq = null;
             prediction.Clear();
             _lastEventTime = DateTime.MinValue;
@@ -105,11 +118,18 @@ public class ModuleAttentionS : ModuleBase
         UpdateDialog();
     }
 
+/*  
+    //useful for deltas
+    static int GetIntAfterColon(string s)
+    {
+        int idx = s.IndexOf(':');
+        if (idx < 0 || idx == s.Length - 1) return 0;
+        return int.TryParse(s[(idx + 1)..], out var val) ? val : 0;
+    }
+  */
     private void AddDurationToSeqStep()
     {
-        TimeSpan delta = _lastEventTime == DateTime.MinValue
-            ? TimeSpan.Zero
-            : DateTime.Now - _lastEventTime;
+        TimeSpan delta = _lastEventTime == DateTime.MinValue ? TimeSpan.Zero : DateTime.Now - _lastEventTime;
         var dt = theUKS.GetOrAddThought($"dt:{(int)delta.TotalMilliseconds}", "duration"); // Keep duration helper intact
         currentSeq.AddLink("duration", dt);
     }
@@ -123,7 +143,6 @@ public class ModuleAttentionS : ModuleBase
     public override void UKSInitializedNotification()
     {
         EnsureSequenceRoots();
-        theUKS.GetOrAddThought("do", "Action");
         _lastEventTime = DateTime.MinValue;
     }
 

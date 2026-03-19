@@ -357,8 +357,6 @@ public class Thought
     /// </summary>
     public void Fire()
     {
-        if (Label.StartsWith("_attn"))
-        { }
         LastFiredTime = DateTime.Now;
         UseCount++;
         AddToRecentlyFired();
@@ -529,6 +527,10 @@ public class Thought
         r.Delete();
     }
 
+    public Thought GetTargetOfFirstLinkOfType(Thought linkType)
+    {
+        return LinksTo.FindFirst(x => x.LinkType == linkType)?.To;
+    }
     private Link HasLink(Thought linkType, Thought to)
     {
         foreach (Link r in _linksTo)

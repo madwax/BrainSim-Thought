@@ -11,7 +11,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,7 +18,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -66,8 +64,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         Refresh();
         return true;
     }
-
-
 
     private void LoadContentToTreeView()
     {
@@ -249,9 +245,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             header = child.ToString();
             if (header == "")
                 header = "\u25A1"; //put in a small empty box--if the header is unlabeled, so you can right-click 
-            //if (showConditionals.IsChecked == true && r.LinkType?.Label == "is-a") //hack to show conditions on is-a links
-            //    foreach (Thought r1 in r.LinksTo)
-            //        header += "  " + r1.ToString();
         }
 
         header = AddDetails(t, header);
@@ -470,6 +463,9 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         ContextMenu menu = new ContextMenu();
         menu.SetValue(LinkObjectProperty, r);
         MenuItem mi = new();
+        mi.Header = $"Weight:{r.Weight.ToString("0.00")}";
+        menu.Items.Add(mi);
+        mi = new();
         mi.Click += Mi_Click;
         mi.Header = "Delete";
         menu.Items.Add(mi);
@@ -543,7 +539,9 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                     break;
                 case "Fire":
                     t.Fire();
-                    t.AddParent("do");
+                    var ActionModule = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
+                    if (ActionModule is not null)
+                        ActionModule.TakeActrion(t);
                     break;
                 case "Delete":
                     theUKS.DeleteAllChildren(t);
@@ -638,7 +636,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
         if (parent is null) return;
-        parent.SetSavedDlgAttribute("Root", comboRoot.Text);
+        //parent.SetSavedDlgAttribute("Root", comboRoot.Text); //why?
         Refresh();
 
     }

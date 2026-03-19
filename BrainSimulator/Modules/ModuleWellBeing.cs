@@ -12,6 +12,7 @@
  */
 
 using System;
+using System.Linq;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -49,11 +50,18 @@ public class ModuleWellBeing : ModuleBase
     {
         if (!decayAlreadyApplied) ApplyDecay();
 
-        float delta = _state - target;
-        TimeSpan recency = TimeSpan.FromSeconds(Math.Abs(delta) * 200);
-        Thought.FireAllRecentlyFiredThoughts(recency);
+        float clampedTarget = Math.Clamp(target, MinState, MaxState);
+        float appliedDelta = clampedTarget - _state; // positive = better, negative = worse
 
-        _state = Math.Clamp(target, MinState, MaxState);
+        TimeSpan recency = TimeSpan.FromSeconds(Math.Abs(appliedDelta) * 200);
+        //Thought.FireAllRecentlyFiredThoughts(recency);
+
+        // Notify ModuleAction of the well-being change
+        var moduleAction = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
+        moduleAction?.NewResult(appliedDelta);
+
+        _state = clampedTarget;
+
         return _state;
     }
 

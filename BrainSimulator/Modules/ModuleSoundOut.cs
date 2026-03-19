@@ -66,80 +66,6 @@ public class ModuleSoundOut : ModuleBase
     public override void Fire()
     {
         Init();
-
-        // fire held-note input thoughts and (re)bind them into the mental model
-        //OLD search for phrase based on note sequence
-        //if (lastNotePressed is not null && DateTime.Now > lastNotePressed + TimeSpan.FromMilliseconds(2000))
-        //{
-        //    if (tuneToSearch.Count > 1)
-        //    {
-        //        var tunesFound = theUKS.HasSequence(tuneToSearch, null, true);
-        //        if (tunesFound.Count > 0)
-        //        {
-        //            var phrase = tunesFound[0].seqNode.LinksFrom.FindFirst(x => x.LinkType.Label == "soundAs")?.From;
-        //            phrase.Fire();
-        //        }
-        //    }
-        //    tuneToSearch = null;
-        //    lastNotePressed = null;
-        //}
-
-        var muscialPhrase = ((Thought)"MusicalPhrase");
-        if (muscialPhrase is not null)
-            foreach (Link phrase in muscialPhrase.LinksFrom.Where(x => x.Label != "is-a"))
-            {
-                if (phrase.From.LastFiredTime < lastFiredTime) continue;
-                if (!phrase.From.HasAncestor("Do")) continue;
-                phrase.From.RemoveParent("Do");
-
-                if (phrase.From.Label.StartsWith("phrase"))
-                {
-                    SeqElement seqStart = (SeqElement) phrase.From.LinksTo.FindFirst(x => x.LinkType.Label == "soundAs")?.To;
-                    PlayThePhrase(seqStart);
-                }
-                else //old version without durations
-                {
-                    var seqStart = phrase.From.LinksTo.FindFirst(x => x.LinkType.Label == "soundAs")?.To;
-                    if (!theUKS.IsSequenceElement(seqStart))
-                        seqStart = phrase.LinksTo.FindFirst(x => theUKS.IsSequenceElement(x.To))?.To;
-
-                    enumerator = theUKS.EnumerateSequenceElements(seqStart as SeqElement).GetEnumerator();
-                }
-            }
-
-        if (DateTime.Now > lastCadenceTime + TimeSpan.FromMilliseconds(Cadence) && enumerator is not null)
-        {
-            lastCadenceTime = DateTime.Now;
-            if (enumerator.MoveNext())
-                theUKS.GetElementValue(enumerator.Current).Fire();
-            else
-                enumerator = null;
-        }
-
-
-        Thought musicalNote = "MusicalNoteOut";
-        if (musicalNote is not null)
-            foreach (var note1 in ((Thought)"MusicalNoteOut")?.Children)
-            {
-                if (note1.LastFiredTime <= lastFiredTime) continue;
-                if (note1.Label == "+") continue;
-                string pitch = note1.Label[5..];
-                int note = pitch switch
-                {
-                    "C" => 60,
-                    "D" => 62,
-                    "E" => 64,
-                    "F" => 65,
-                    "G" => 67,
-                    "A" => 69,
-                    "B" => 71,
-                    "C+" => 72,
-                    _ => 60
-                };
-                note += PitchOffset;
-                PlayNote(note);
-            }
-
         lastFiredTime = DateTime.Now;
         UpdateDialog();
     }
@@ -150,7 +76,11 @@ public class ModuleSoundOut : ModuleBase
     public override void Initialize()
     {
     }
-
+    public void PlayThePhrase(Thought phrase)
+    {
+        SeqElement seqStart = (SeqElement)phrase.GetTargetOfFirstLinkOfType("soundAs");
+        PlayThePhrase(seqStart);
+    }
     private CancellationTokenSource _phraseCts;
     private Task _phraseTask;
 
@@ -178,14 +108,9 @@ public class ModuleSoundOut : ModuleBase
                 if (value?.Label is { } lbl && lbl.StartsWith("noteInput:", StringComparison.OrdinalIgnoreCase))
                     if (int.TryParse(lbl.AsSpan(10), out int noteNum))
                     {
-//                        PlaceNoteInMentalModel(noteNum, value);
-                        _ = Task.Delay(500).ContinueWith(_ =>
-                        {
-//                            ClearNoteFromMentalModel(noteNum);
-                        });
                         PlayNote(noteNum);
                     }
-                value?.Fire();
+                //value?.Fire();
 
                 int delayMs = GetDurationMs(elem);
                 if (delayMs <= 0) delayMs = Cadence;
@@ -223,43 +148,11 @@ public class ModuleSoundOut : ModuleBase
         theUKS.GetOrAddThought("MusicalPhrase");
         theUKS.GetOrAddThought("MusicalNoteOut", "MusicalPhrase");
         theUKS.GetOrAddThought("MusicalNoteIn", "MusicalPhrase");
-  //      EnsureNoteInputs();
-        theUKS.GetOrAddThought("pitchC", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchD", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchE", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchF", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchG", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchA", "MusicalNoteOut");
-        theUKS.GetOrAddThought("pitchB", "MusicalNote");
-        theUKS.GetOrAddThought("pitchC+", "MusicalNoteOut");
-        theUKS.GetOrAddThought("+", "MusicalNoteOut");
-
         var s = theUKS.GetOrAddThought("soundAs", "Action");
-
-//        theUKS.AddSequence(theUKS.GetOrAddThought("Triad", "MusicalPhrase"), s, new List<Thought> { "pitchC", "+", "pitchE", "+", "pitchG", "+" });
-        theUKS.AddSequence(theUKS.GetOrAddThought("ThreeBlindMice", "MusicalPhrase"), s, new List<Thought> { "pitchE", "+", "+", "pitchD", "+", "+", "pitchC", "+", "+", "+", "+", "+" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("SeeHowTheyRun", "MusicalPhrase"), s, new List<Thought> { "pitchG", "+", "+", "pitchF", "+", "pitchF", "pitchE", "+", "+", "+", "+", "+" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("TheyAllRanAfter", "MusicalPhrase"), s,
-        //    new List<Thought> { "pitchG", "pitchC+", "+", "pitchC+", "pitchB", "pitchA", "pitchB", "pitchC+", "+", "pitchG", "pitchG", "+" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("TBL2", "MusicalPhrase"), s, new List<Thought> { "ThreeBlindMice-seq0", "ThreeBlindMice-seq0" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("SHTR2", "MusicalPhrase"), s, new List<Thought> { "SeeHowTheyRun-seq0", "SeeHowTheyRun-seq0" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("TARA3", "MusicalPhrase"), s, new List<Thought> { "TheyAllRanafter-seq0", "TheyAllRanafter-seq0", "TheyAllRanafter-seq0" });
-        //theUKS.AddSequence(theUKS.GetOrAddThought("TBLSong", "MusicalPhrase"), s,
-        //    new List<Thought> { "TBL2-seq0", "SHTR2-seq0", "TARA3-seq0", "+", "pitchF", "ThreeBlindMice-seq0" });
-
         lastFiredTime = DateTime.Now;
     }
 
 
-    public void FireNote(string noteLabel)
-    {
-        Thought note = "pitch" + noteLabel;
-        if (tuneToSearch == null) tuneToSearch = new();
-        tuneToSearch.Add(note);
-        lastNotePressed = DateTime.Now;
-        if (note is not null)
-            note.Fire();
-    }
 
     public async void PlayCMajorTriad(int durationMs = 300)
     {
@@ -287,11 +180,17 @@ public class ModuleSoundOut : ModuleBase
         Midi.Send(MidiMessage.StopNote(g, 0, channel).RawData);
     }
 
+    bool listenToOutput = true;
     public void PlayNote(int midiNote, int durationMs = 500)
     {
+        var listener = MainWindow.theWindow?.activeModules.OfType<ModuleSoundIn>().FirstOrDefault();
+        if (listenToOutput)
+            listener.StartNote(midiNote);
         Midi.Send(MidiMessage.StartNote(midiNote, MidiVelocity, MidiChannel).RawData);
         _ = Task.Delay(durationMs).ContinueWith(_ =>
         {
+            if (listenToOutput)
+                listener.StopNote(midiNote);
             Midi.Send(MidiMessage.StopNote(midiNote, 0, MidiChannel).RawData);
         });
     }

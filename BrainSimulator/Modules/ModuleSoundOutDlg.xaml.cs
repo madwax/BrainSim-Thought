@@ -10,16 +10,10 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
+
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using UKS;
 
 namespace BrainSimulator.Modules;
 
@@ -50,25 +44,6 @@ public partial class ModuleSoundOutDlg : ModuleBaseDlg
         if (module != null)
         {
             module.PlayCMajorTriad(1000);
-        }
-    }
-
-
-    private void PitchButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button button)
-        {
-            string pitch = button.Content.ToString();
-            PlayNote(pitch);
-        }
-    }
-
-    private void PlayNote(string pitch)
-    {
-        var module = ParentModule as ModuleSoundOut;
-        if (module != null)
-        {
-            module.FireNote(pitch);
         }
     }
 
