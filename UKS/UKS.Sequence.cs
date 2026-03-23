@@ -166,7 +166,7 @@ public partial class UKS
         Thought retVal = s.LinksTo.FindFirst(x => x.LinkType?.Label == "VLU")?.To;
         return retVal;
     }
-    private int GetSequenceLength(SeqElement firstNode)
+    public int GetSequenceLength(SeqElement firstNode)
     {
         return FlattenSequence(firstNode).Count;
     }
@@ -727,6 +727,13 @@ public partial class UKS
             if (current == sequenceStart) break;  //BROKEN?
         }
         visitedSequences.Pop();
+    }
+    public List<Thought> GetReferringThoughts(SeqElement s, Thought linkType)
+    {
+        List<Thought> retVal = new();
+        foreach (Link l in s.LinksFrom.Where(x => x.LinkType == linkType))
+            retVal.Add(l.From);
+        return retVal;
     }
     /// <summary>
     /// Recursively finds all sequences that reference the given sequence.

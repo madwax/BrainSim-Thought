@@ -336,6 +336,79 @@ public class ModuleMentalModel : ModuleBase
             }
         }
     }
+
+    public void MoveMentalModel(float distanceForward)
+    {
+        // Treat forward as +Z. When the center moves forward by +distanceForward,
+        // objects appear to move by -distanceForward in Z.
+        Thought allCells = theUKS.Labeled("_mm:cell");
+        if (allCells is null || distanceForward == 0f) return;
+
+        var moves = new List<(Thought fromCell, Thought obj, TimeSpan ttl, float weight, double dist)>();
+
+        foreach (var cell in allCells.Children)
+        {
+            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains).ToList())
+            {
+                // Skip the attention singleton unless the cell contains more than one object
+                if (l.To?.Label == "attention" && cell.LinksTo.Count(x => x.LinkType == _ltContains) == 1)
+                    continue;
+
+                double d = GetDistanceFromLink(l);
+                moves.Add((cell, l.To, l.TimeToLive, l.Weight, d));
+            }
+        }
+
+        foreach (var move in moves)
+        {
+            var angles = GetAnglesFromCell(move.fromCell);
+            // Spherical (r = distance, az = XZ-plane, el = Y elevation)
+            double r = move.dist > 1 ? move.dist : 1.0; // default to 1 if no stored distance
+            double azRad = angles.azimuth.Degrees * Math.PI / 180.0;
+            double elRad = angles.elevation.Degrees * Math.PI / 180.0;
+
+            double cosEl = Math.Cos(elRad);
+            double x = r * cosEl * Math.Sin(azRad);
+            double y = r * Math.Sin(elRad);
+            double z = r * cosEl * Math.Cos(azRad);
+
+            // Move center forward => objects move backward along +Z
+            z -= distanceForward;
+
+            double newR = Math.Sqrt(x * x + y * y + z * z);
+            if (newR < 1e-6) newR = 1e-6; // avoid zero; keep direction
+
+            double newAz = Math.Atan2(x, z) * 180.0 / Math.PI;
+            double newEl = Math.Atan2(y, Math.Sqrt(x * x + z * z)) * 180.0 / Math.PI;
+
+            Thought newPosition = GetCell(Angle.FromDegrees((float)newAz), Angle.FromDegrees((float)newEl));
+            if (newPosition is null) continue;
+
+            move.fromCell.RemoveLink(_ltContains, move.obj);
+            Link newLink = newPosition.AddLink(_ltContains, move.obj);
+            newLink.TimeToLive = move.ttl;
+            newLink.Weight = move.weight;
+
+            // Update distance link
+            Thought distThought = theUKS.GetOrAddThought($"distance:{newR}", "distance");
+            // remove old distance links
+            foreach (var dl in newLink.LinksTo.Where(x => x.LinkType.Label == "distance").ToList())
+                newLink.RemoveLink(dl);
+            newLink.AddLink("distance", distThought);
+        }
+    }
+
+    private double GetDistanceFromLink(Link l)
+    {
+        // Distance is stored as a link from the binding thought to a distance:* thought
+        var dLink = l.LinksTo.FirstOrDefault(x => x.LinkType.Label == "distance");
+        if (dLink?.To?.Label?.StartsWith("distance:") == true)
+        {
+            if (double.TryParse(dLink.To.Label["distance:".Length..], out double val))
+                return val;
+        }
+        return 0;
+    }
 }
 
 //non-linear spatial sheet settings
@@ -344,8 +417,8 @@ public sealed class SpatialSheetConfig
     public int Rings { get; init; } = 6;
     public int BaseRays { get; init; } = 16;
     public float Growth { get; init; } = 1.35f;
-    public float FrontBias { get; init; } = 1.0f;
-    public List<float> ElevationEdges { get; init; } = new() { 0f, 1.5f, 5f, 10f, 20f, 35f, 60f, 90f };
+    public float FrontBias { get; init; } = 2.0f;
+    public List<float> ElevationEdges { get; init; } = new() { 0f, 1.5f, 5f, 10f, 17f, 30f, 50f, 90f };
 
     public int RaysPerRing(int ring)
     {

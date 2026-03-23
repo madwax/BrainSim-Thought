@@ -79,6 +79,8 @@ public class ModuleSoundOut : ModuleBase
     public void PlayThePhrase(Thought phrase)
     {
         SeqElement seqStart = (SeqElement)phrase.GetTargetOfFirstLinkOfType("soundAs");
+        if (seqStart is null && phrase is SeqElement s)
+            seqStart = s; //handle passing in a starting point
         PlayThePhrase(seqStart);
     }
     private CancellationTokenSource _phraseCts;
@@ -108,12 +110,10 @@ public class ModuleSoundOut : ModuleBase
                 if (value?.Label is { } lbl && lbl.StartsWith("noteInput:", StringComparison.OrdinalIgnoreCase))
                     if (int.TryParse(lbl.AsSpan(10), out int noteNum))
                     {
-                        PlayNote(noteNum);
+                        PlayNote(noteNum + PitchOffset);
                     }
-                //value?.Fire();
 
-                int delayMs = GetDurationMs(elem);
-                if (delayMs <= 0) delayMs = Cadence;
+                int delayMs = (int)((GetDurationMs(elem) * Cadence) / 100f);
                 if (delayMs > 0)
                     await Task.Delay(delayMs, token);
             }
@@ -180,7 +180,7 @@ public class ModuleSoundOut : ModuleBase
         Midi.Send(MidiMessage.StopNote(g, 0, channel).RawData);
     }
 
-    bool listenToOutput = true;
+    bool listenToOutput = false;
     public void PlayNote(int midiNote, int durationMs = 500)
     {
         var listener = MainWindow.theWindow?.activeModules.OfType<ModuleSoundIn>().FirstOrDefault();

@@ -38,8 +38,12 @@ public class ModuleAction : ModuleBase
         for (int i = 0; i < doRoot.Children.Count; i++)
         {
             Thought actionToTake = doRoot.Children[i];
-            if (actionToTake.HasAncestor("musicalPhrase"))
-            {
+            bool isMusic = actionToTake.HasAncestor("musicalPhrase");
+            if (!isMusic && actionToTake is SeqElement s)
+                isMusic = s.VLU.HasAncestor("musicalPhrase");
+
+            if (isMusic)
+            { 
                 var soundOutModule = MainWindow.theWindow?.activeModules.OfType<ModuleSoundOut>().FirstOrDefault();
                 if (soundOutModule is not null)  //we need a case statement to dispatch different action types to different modules,
                                                  //but for now we just have one action type and one module that can handle it
@@ -58,8 +62,8 @@ public class ModuleAction : ModuleBase
     public void TakeActrion(Thought action)
     {
         Thought doRoot = theUKS.GetOrAddThought("do");
-        action.AddParent(doRoot);
         _lastSelectedAction = action;
+        action.AddParent(doRoot);
     }
 
     public override void Initialize()
@@ -77,14 +81,15 @@ public class ModuleAction : ModuleBase
         _lastSelectedAction = null;
     }
 
-
     public void NewAction(Thought action)
     {
         Debug.WriteLine($"New action: {action.Label}");
         SetResponseLink(_lastContext, action, 0);
-        action.AddParent("possibleAction");
+        if (action is not SeqElement)
+            action.AddParent("possibleAction");
         _lastSelectedAction = action;
     }
+
     public void NewContext(Thought context)
     {
         if (context == _lastSelectedAction)
@@ -117,12 +122,14 @@ public class ModuleAction : ModuleBase
     {
         if (context == actionTaken) return null; //You can't respond with a replay
         //first check if it already exists
-        foreach (Link l in context.LinksTo.Where(x=>x.LinkType.Label != "response" && x.To == actionTaken))
+        foreach (Link l in context.LinksTo.Where(x=>x.LinkType.Label == "response" && x.To == actionTaken))
         {
             if (delta == 0f) return l.From;
             float oldDelta = l.Weight;
             float newDelta = oldDelta + delta;
             l.Weight = newDelta;
+            if (newDelta < 0) 
+                l.From.RemoveLink(l);
             return l.From;
         }
         Thought actionRecord = context;
@@ -130,7 +137,6 @@ public class ModuleAction : ModuleBase
         if (actionTaken is not null)
         {
             actionRecord.AddLink(_ltResponse, actionTaken).Weight = delta;
-            //actionRecord.Fire();
         }
         return actionRecord;
     }
@@ -141,10 +147,6 @@ public class ModuleAction : ModuleBase
     /// </summary>
     public Thought SelectAction(Thought newContext)
     {
-        //_lastContext = CaptureCurrentContext();
-        //if (_lastContext is null)
-        //    _lastContext = newContext;
-
         if (newContext is null) return null;
 
         Thought bestAction = null;
@@ -182,16 +184,9 @@ public class ModuleAction : ModuleBase
         if (theUKS is null) return;
 
         theUKS.GetOrAddThought("do", "Action");
-
-//        _actionRoot = theUKS.GetOrAddThought("actionTriples", "Action");
         _contextRoot = theUKS.GetOrAddThought("context","Action");
-        //        _deltaRoot = theUKS.GetOrAddThought("Delta");
-
-        //        _ltContextOf = theUKS.GetOrAddThought("contextOf", "LinkType");
         _ltResponse = theUKS.GetOrAddThought("response", "LinkType");
         theUKS.GetOrAddThought("possibleAction", "Action");
-        //        _ltDeltaOf = theUKS.GetOrAddThought("deltaOf", "LinkType");
-        //        _ltContextItem = theUKS.GetOrAddThought("contextItem", "LinkType");
     }
 
     private Thought CaptureCurrentContext()
@@ -274,7 +269,7 @@ public class ModuleAction : ModuleBase
             .Distinct()
             .ToList();
 
-        if (options.Count == 0)
+        if (options.Count < 2)
             return null; // fallback default
 
         return options[_rng.Next(options.Count)];

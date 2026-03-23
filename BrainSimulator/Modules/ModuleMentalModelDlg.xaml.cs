@@ -11,7 +11,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using Microsoft.Msagl.Drawing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,7 +68,7 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
         List<double> edges = BuildElevationEdges(parent, ringCount);
         double yAcc = 0;
 
-        for (int r = 0; r < ringCount; r++)
+        for (int r = ringCount-1; r >= 0; r--)
         {
             if (cells[r] is null || cells[r].Length == 0) continue;
 
@@ -120,7 +119,8 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
                     rect.Fill = Brushes.Yellow;
                     if (ThoughtAtLocation.To.Label == "attention") rect.Fill = Brushes.Green;
 
-                    rect.ToolTip = string.Join("\r\n", t.LinksTo.Where(x => x.LinkType.Label == "_mm:contains")?.Select(x=>x.To?.Label));
+                    var containsLinks = t.LinksTo.Where(x => x.LinkType.Label == "_mm:contains").ToList();
+                    rect.ToolTip = string.Join("\r\n", containsLinks.Select(FormatContainsTooltip));
                 }
                 Canvas.SetLeft(rect, xLeft);
                 Canvas.SetTop(rect, y);
@@ -196,6 +196,34 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
         CanvasScale.ScaleY = 1;
     }
 
+    private void RotateLeft_Click(object sender, RoutedEventArgs e)
+    {
+        if (ParentModule is not ModuleMentalModel module) return;
+        module.RotateMentalModel(Angle.FromDegrees(15), Angle.FromDegrees(0));
+        Draw(false);
+    }
+
+    private void RotateRight_Click(object sender, RoutedEventArgs e)
+    {
+        if (ParentModule is not ModuleMentalModel module) return;
+        module.RotateMentalModel(Angle.FromDegrees(-15), Angle.FromDegrees(0));
+        Draw(false);
+    }
+
+    private void RotateUp_Click(object sender, RoutedEventArgs e)
+    {
+        if (ParentModule is not ModuleMentalModel module) return;
+        module.MoveMentalModel(5f);
+        Draw(false);
+    }
+
+    private void RotateDown_Click(object sender, RoutedEventArgs e)
+    {
+        if (ParentModule is not ModuleMentalModel module) return;
+        module.MoveMentalModel(-5f);
+        Draw(false);
+    }
+
     private void TheCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
     {
         double delta = e.Delta > 0 ? 0.1 : -0.1;
@@ -257,5 +285,23 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
 
         CanvasScale.ScaleX = newScale;
         CanvasScale.ScaleY = newScale;
+    }
+
+    private string FormatContainsTooltip(Link l)
+    {
+        string label = l.To?.Label ?? "(null)";
+        double d = GetDistanceFromLink(l);
+        if (d > 0)
+            return $"{label} (d={d:0.})";
+        return label;
+    }
+
+    private double GetDistanceFromLink(Link l)
+    {
+        var dLink = l.LinksTo.FirstOrDefault(x => x.LinkType?.Label == "distance");
+        if (dLink?.To?.Label?.StartsWith("distance:") == true &&
+            double.TryParse(dLink.To.Label["distance:".Length..], out double val))
+            return val;
+        return 0;
     }
 }

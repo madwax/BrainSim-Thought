@@ -37,6 +37,10 @@
                     IsSnapToTickEnabled="True"
                     ValueChanged="ZoomSlider_ValueChanged" />
             <Button Content="Reset" Width="70" Margin="10,0,0,0" Click="ResetView_Click"/>
+            <Button Content="←" Width="32" Margin="10,0,0,0" Click="RotateLeft_Click"/>
+            <Button Content="↑" Width="32" Margin="6,0,0,0" Click="RotateUp_Click"/>
+            <Button Content="↓" Width="32" Margin="6,0,0,0" Click="RotateDown_Click"/>
+            <Button Content="→" Width="32" Margin="6,0,0,0" Click="RotateRight_Click"/>
             <TextBlock Text="Pan: drag   Zoom: wheel/slider" Margin="14,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
     </Grid>

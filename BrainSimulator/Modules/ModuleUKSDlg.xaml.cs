@@ -22,6 +22,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using UKS;
+using Microsoft.Win32;
 
 namespace BrainSimulator.Modules;
 
@@ -407,6 +408,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
         menu.Opened += Menu_Opened;
         menu.Closed += Menu_Closed;
+        ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -463,7 +465,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         ContextMenu menu = new ContextMenu();
         menu.SetValue(LinkObjectProperty, r);
         MenuItem mi = new();
-        mi.Header = $"Weight:{r.Weight.ToString("0.00")}";
+        mi.Header = $"Weight:  {r.Weight.ToString("0.00")}";
+        mi.IsEnabled = false;
+        menu.Items.Add(mi);
+        mi = new();
+        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
+        mi.Header = $"TTL: {timeToLive}";
+        mi.IsEnabled = false;
         menu.Items.Add(mi);
         mi = new();
         mi.Click += Mi_Click;
@@ -492,6 +500,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         mi.SetValue(ThoughtObjectProperty, r.To);
         menu.Items.Add(mi);
 
+        ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -581,7 +590,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         Title = "The Universal Knowledgs Store (UKS)  --  File: " + Path.GetFileNameWithoutExtension(theUKS.FileName);
     }
 
-    private bool _isTextChangingInternally;  //lockout so we can change the text without retriggering the event
+    private bool _isTextChangingInternally = true;  //lockout so we can change the text without retriggering the event
     private void TextBoxRoot_KeyDown(object sender, KeyEventArgs e)
     {
         var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
@@ -636,7 +645,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
         if (parent is null) return;
-        //parent.SetSavedDlgAttribute("Root", comboRoot.Text); //why?
+        parent.SetSavedDlgAttribute("Root", comboRoot.Text); //why?
         Refresh();
 
     }
@@ -902,5 +911,53 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         comboRoot.ItemsSource = null;
         comboRoot.ItemsSource = _rootHistory.ToList();
         _isTextChangingInternally = false;
+    }
+
+    private static bool IsDarkMode()
+    {
+        const string personalize = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        object? value = Registry.GetValue(personalize, "AppsUseLightTheme", 1);
+        return value is int i && i == 0;
+    }
+
+    private void ApplyContextMenuTheme(ContextMenu menu)
+    {
+        if (menu is null || !IsDarkMode()) return;
+
+        var bg = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+        var fg = Brushes.White;
+        var disabled = Brushes.LightGray;
+
+        menu.Background = bg;
+        menu.Foreground = fg;
+
+        foreach (var item in menu.Items.OfType<FrameworkElement>())
+        {
+            if (item is MenuItem mi)
+            {
+                if (mi.IsEnabled == false)
+                {
+                    mi.IsEnabled = true;
+                    mi.Focusable = false;
+                    mi.StaysOpenOnClick = true;
+                    mi.IsHitTestVisible = false;
+                    mi.Foreground = disabled;
+                }
+                else
+                {
+                    mi.Foreground = fg;
+                }
+                mi.Background = bg;
+                mi.BorderThickness = new Thickness(0);
+                if (mi.Header is TextBox tbHeader)
+                {
+                    tbHeader.Background = bg;
+                    tbHeader.Foreground = fg;
+                    tbHeader.BorderBrush = bg;
+                    tbHeader.CaretBrush = fg;
+                    tbHeader.SelectionBrush = fg;
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Diagnostics;
+
 namespace UKS;
 
 public class Link : Thought
@@ -138,6 +140,7 @@ public class Thought
         if (_timeToLive == TimeSpan.MaxValue) return false;
         if (LastFiredTime + _timeToLive > DateTime.Now) return false;
 
+        //Debug.WriteLine($"Thought forgotten: {this.ToString()}");
         // Expired: remove self
         if (this is Link l)
         {
