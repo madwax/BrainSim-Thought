@@ -11,7 +11,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
 using Pluralize.NET;
 using System;
 using System.Collections.Generic;
@@ -21,7 +20,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using UKS;
-
 
 namespace BrainSimulator.Modules;
 

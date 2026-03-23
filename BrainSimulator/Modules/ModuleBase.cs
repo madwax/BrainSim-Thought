@@ -173,21 +173,8 @@ abstract public class ModuleBase
             dlg.Width = dlgSize.X;
             dlg.Height = dlgSize.Y;
         }
-
-
-
-#if !DEBUG
-        if (GetType().ToString() != "BrainSimulator.Modules.ModuleUserInterface" && !GetType().ToString().StartsWith("BrainSimulator.Modules.ModuleUI_"))
-            dlg.WindowState = WindowState.Minimized;
-#endif
-
         dlg.Show();
         dlgIsOpen = true;
-
-#if !DEBUG
-        if (GetType().ToString() != "BrainSimulator.Modules.ModuleUserInterface" && !GetType().ToString().StartsWith("BrainSimulator.Modules.ModuleUI_"))
-        dlg.Hide();
-#endif
     }
 
     public  string GetSavedDlgAttribute(string attribName)

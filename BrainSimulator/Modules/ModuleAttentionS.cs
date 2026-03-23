@@ -97,8 +97,8 @@ public class ModuleAttentionS : ModuleBase
                 foreach (SeqElement t in theUKS.EnumerateSequenceElements(currentSeq.FRST))
                     totalTime += ModuleSoundOut.GetDurationMs(t) * 3;
                 Debug.WriteLine($"new phrase heard {newThought.Label}");
-                //newThought.From.TimeToLive = TimeSpan.FromMilliseconds(totalTime*3);
-                newThought.From.TimeToLive = TimeSpan.MaxValue; //permanent for debugging
+                newThought.From.TimeToLive = TimeSpan.FromMilliseconds(totalTime*3);
+                //newThought.From.TimeToLive = TimeSpan.MaxValue; //permanent for debugging
                 // Notify ModuleAction of the new context
                 var moduleAction = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
                 moduleAction?.NewContext(newThought.From);

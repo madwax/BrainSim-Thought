@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BrainSimulator.Modules"
         mc:Ignorable="d"
-        Title="Well-Being" Height="170" Width="560" Background="Gray" ShowInTaskbar="False" >
+        Title="Well-Being" Height="170" Width="360" Background="Gray" ShowInTaskbar="False" FontSize="16" >
 
     <Grid >
         <Slider x:Name="WellBeingSlider"

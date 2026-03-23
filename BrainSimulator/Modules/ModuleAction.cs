@@ -24,9 +24,6 @@ public class ModuleAction : ModuleBase
 {
     private readonly Random _rng = new();
 
-    private Thought _ltResponse;
-    private Thought _contextRoot;
-
     public Thought _lastContext;
     public Thought _lastSelectedAction;
 
@@ -50,9 +47,9 @@ public class ModuleAction : ModuleBase
                 {
                     Debug.WriteLine($"play phrase {actionToTake.Label}");
                     soundOutModule.PlayThePhrase(actionToTake);
-                    NewAction(actionToTake);
                 }
             }
+            NewAction(actionToTake);
             actionToTake.RemoveParent(doRoot);
             i--;
         }
@@ -121,6 +118,7 @@ public class ModuleAction : ModuleBase
     public Thought SetResponseLink(Thought context, Thought actionTaken, float delta)
     {
         if (context == actionTaken) return null; //You can't respond with a replay
+        if (actionTaken is SeqElement s) return null;  // you don't save a partial
         //first check if it already exists
         foreach (Link l in context.LinksTo.Where(x=>x.LinkType.Label == "response" && x.To == actionTaken))
         {
@@ -133,10 +131,10 @@ public class ModuleAction : ModuleBase
             return l.From;
         }
         Thought actionRecord = context;
-        actionRecord.AddParent(_contextRoot);
+        actionRecord.AddParent("context");
         if (actionTaken is not null)
         {
-            actionRecord.AddLink(_ltResponse, actionTaken).Weight = delta;
+            actionRecord.AddLink("response", actionTaken).Weight = delta;
         }
         return actionRecord;
     }
@@ -168,9 +166,7 @@ public class ModuleAction : ModuleBase
 
         if (bestDelta > 0 && bestAction is not null)
         {
-            //bestAction.From.AddParent("do");
-            //_lastSelectedAction = bestAction;
-                TakeActrion(bestAction); //???
+                TakeActrion(bestAction);
                 return bestAction;
         }
 
@@ -184,22 +180,25 @@ public class ModuleAction : ModuleBase
         if (theUKS is null) return;
 
         theUKS.GetOrAddThought("do", "Action");
-        _contextRoot = theUKS.GetOrAddThought("context","Action");
-        _ltResponse = theUKS.GetOrAddThought("response", "LinkType");
+        theUKS.GetOrAddThought("context","Action");
+        theUKS.GetOrAddThought("response", "LinkType");
         theUKS.GetOrAddThought("possibleAction", "Action");
+        theUKS.GetOrAddThought("noAction", "possibleAction");
     }
 
+    //This will be needed to AND mu;ltiple contextx
     private Thought CaptureCurrentContext()
     {
         EnsureSchema();
         List<Thought> items = GetActiveInputs();
         if (items.Count == 0) return null;
+        var contextRoot = theUKS.GetOrAddThought("context");
 
-        foreach (Thought existing in _contextRoot.Children)
+        foreach (Thought existing in contextRoot.Children)
             if (ContextEquals(existing, items))
                 return existing;
 
-        Thought ctx = theUKS.GetOrAddThought("context:*", _contextRoot);
+        Thought ctx = theUKS.GetOrAddThought("context:*", contextRoot);
         //foreach (Thought item in items)
         //    ctx.AddLink(_ltContextItem, item);
         return ctx;

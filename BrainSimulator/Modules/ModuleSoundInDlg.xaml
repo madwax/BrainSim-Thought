@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BrainSimulator.Modules"
         mc:Ignorable="d"
-        Title="Sound In" Height="170" Width="560" Background="Gray" ShowInTaskbar="False"  PreviewKeyDown ="Dlg_PreviewKeyDown" PreviewKeyUp="Dlg_PreviewKeyUp" >
+        Title="Sound In" Height="170" Width="360" Background="Gray" ShowInTaskbar="False"  PreviewKeyDown ="Dlg_PreviewKeyDown" PreviewKeyUp="Dlg_PreviewKeyUp" >
 
     <Grid >
         <Grid.ColumnDefinitions>
