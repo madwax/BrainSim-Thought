@@ -118,7 +118,7 @@ public partial class UKS
             //if one of the linkypes contains negation and not the other
             Thought r1Not = r1LinkiProps.FindFirst(x => x.Label == "not" || x.Label == "no");
             Thought r2Not = r2LinkProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-            if ((r1.From.Ancestors.Contains(r2.From) ||
+            if ((r1.From == r2.From || r1.From.Ancestors.Contains(r2.From) ||
                 r2.From.Ancestors.Contains(r1.From)) &&
                 r1.To == r2.To &&
                 (r1Not is null && r2Not is not null || r1Not is not null && r2Not is null))

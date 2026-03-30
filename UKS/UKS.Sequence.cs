@@ -14,7 +14,6 @@
 using static UKS.UKS;
 
 namespace UKS;
-
 public class SeqElement : Thought
 {
     /// <summary>
@@ -83,8 +82,6 @@ public class SeqElement : Thought
 
 public partial class UKS
 {
-
-
     //The structure of a sequence is a series (linked list) of elements, each with 3 links.
     //"NXT" with a To of the next element in the sequence
     //"VLU" to the actual Thought in the sequence
@@ -99,13 +96,13 @@ public partial class UKS
     // seq1 ->NXT -> seq2
     // seq1 ->FRST-> seq0
     // seq1 ->VLU--> A
-    // seq2 ->NXT -> null  (or has no NXT entry)
     // seq2 ->FRST-> seq0
     // seq2 ->VLU--> T
     // NOTE: the elements seq* need not have labels at all, they are just used here for clarity
     // each seq* element must also have a FRST releationship back to the owner Thought
     // The Thought ToString() method will automatically follow the sequences and return cat->spelled->^cat
     // VLU targets may be other sequences
+    //the last element has no NXT link
 
     // A few Special cases can be detected by comparing targets
     // Is a sequence element:  Has a FRST link
@@ -366,6 +363,20 @@ public partial class UKS
         return rawSequence;
     }
 
+    public List<(Thought result, float confidence)> HasSequence2(List<Thought> targets, Thought linkType,
+    bool skipPlusEntries = false, bool mustMatchFirst = false, bool mustMatchLast = false, bool circularSearch = false, bool allowOutOfOrder = false)
+    {
+        var result1 = HasSequence(targets, linkType, skipPlusEntries = false, mustMatchFirst = false, mustMatchLast = false, circularSearch = false, allowOutOfOrder = false);
+        List<(Thought result, float confidence)> retVal = new();
+        foreach (var result in result1)
+        {
+            foreach (Link l in result.seqNode.LinksFrom.Where(x=>x.LinkType == linkType))
+            {
+                retVal.Add(new(l.From,result.confidence));
+            }
+        }
+        return retVal;
+    }
     //TODO: make mustMatchLast, circularSearch & allowOutOfOrder work
     /// <summary>
     /// Finds sequences matching the ordered targets and returns candidate links with confidence scores.

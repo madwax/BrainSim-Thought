@@ -119,7 +119,7 @@ public partial class UKS
 			Link existingLink = newSource.LinksTo[i];
 			if (existingLink == newLink)
 			{
-				newLink.Weight += (1 - newLink.Weight) / 2.0f;
+				newLink.Weight += (1 - newLink.Weight) / 4.0f;
 				newLink.Fire();
 			}
 			else if (LinksAreExclusive(newLink, existingLink))
@@ -134,6 +134,7 @@ public partial class UKS
 				}
 				else
 				{
+					
 					if (newLink.Weight == 1 && existingLink.Weight == 1)
 						existingLink.Weight = .5f;
 					else
