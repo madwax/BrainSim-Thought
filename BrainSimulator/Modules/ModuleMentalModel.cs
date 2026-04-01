@@ -317,9 +317,13 @@ public class ModuleMentalModel : ModuleBase
         {
             foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains).ToList())
             {
-                var dist = l.LinksTo.FirstOrDefault(x => x.LinkType.Label == "distance").To;
-                if (l.To?.Label != "attention" || cell.LinksTo.Count(x => x.LinkType == _ltContains) > 1)
-                    moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight,dist));
+                var foundItem = l.LinksTo.FirstOrDefault( x => x.LinkType.Label == "distance" );
+                if( foundItem != null )
+                {
+                    var dist = foundItem.To;
+                    if( l.To?.Label != "attention" || cell.LinksTo.Count( x => x.LinkType == _ltContains ) > 1 )
+                        moves.Add( (fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight, dist) );
+                }
             }
         }
 
