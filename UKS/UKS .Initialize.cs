@@ -87,7 +87,6 @@ public partial class UKS
         AddStatement("is-part-of", "is-a", "LinkType");
         AddStatement("contains", "inverseOf", "is-part-of");
         AddStatement("has", "is-a", "LinkType");
-        AddStatement("not", "is-a", "LinkType");
 
         //properties are internal capabilities of Thoughts
         AddStatement("Property", "is-a", "LinkType");
@@ -133,6 +132,7 @@ public partial class UKS
         AddStatement("AND", "is-a", "ClauseType");
         AddStatement("OR", "is-a", "ClauseType");
         AddStatement("NOT", "is-a", "ClauseType");
+        AddStatement("NO", "is-a", "ClauseType");
         AddStatement("FRST", "is-a", "ClauseType");
 
         //Numbers

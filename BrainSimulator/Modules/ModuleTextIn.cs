@@ -41,6 +41,10 @@ public class ModuleTextIn : ModuleBase
         theUKS.GetOrAddThought("SpanishWord", "language");
         theUKS.GetOrAddThought("means", "LinkType");
         theUKS.GetOrAddThought("contains", "LinkType");
+        theUKS.GetOrAddThought("w:no", "EnglishWord").AddLink("means", theUKS.Labeled("no"));
+        theUKS.GetOrAddThought("w:not", "EnglishWord").AddLink("means", theUKS.Labeled("not"));
+        theUKS.GetOrAddThought("w:can", "EnglishWord").AddLink("means", theUKS.Labeled("can"));
+
         Thought t = theUKS.GetOrAddThought("p:is|a", "phrase");
         theUKS.AddSequence(t, "contains", new List<Thought> { theUKS.GetOrAddThought("w:is", "EnglishWord"), theUKS.GetOrAddThought("w:a", "EnglishWord") });
         t.AddLink("means", "is-a");
@@ -183,8 +187,13 @@ public class ModuleTextIn : ModuleBase
         //assuming that word 1 is the link type
         string label1 = keywords[1].Label[2..];
         string label2 = keywords[2].Label[2..];
-        if (int.TryParse(label2, out int val) || label2 == "not" || label2 == "no" || label1 == "can")
+        bool numeric = false;
+        if (int.TryParse(label2, out int val)) numeric = true;
+        if (numeric || label2 == "not" || label2 == "no" || label1 == "can")
         {
+            //make sure the individual words have meanings
+            if (numeric) keywords[2].AddLink("means", theUKS.Labeled(val.ToString()));
+            
             Thought tLinkType = theUKS.CreateThoughtFromMultipleAttributes(label1 + " " + label2, true);
             Thought newPhrase = theUKS.GetOrAddThought("p:" + tLinkType.Label.Replace(".", "|"), "Phrase");
             newPhrase.AddLink("means", tLinkType);

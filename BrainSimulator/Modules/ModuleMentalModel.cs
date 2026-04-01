@@ -198,37 +198,6 @@ public class ModuleMentalModel : ModuleBase
         return signedRing + cfg.Rings;
     }
 
-    public void RotateMentalModel(Angle azimuth, Angle elevation)
-    {
-        Thought allCells = theUKS.Labeled("_mm:cell");
-        if (allCells is null) return;
-
-        var moves = new List<(Thought fromCell, Thought obj, TimeSpan ttl, float weight)>();
-
-        foreach (var cell in allCells.Children)
-        {
-            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains ).ToList())
-            {
-                if (l.To?.Label != "attention" || cell.LinksTo.Count(x => x.LinkType == _ltContains) > 1)
-                    moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight));
-            }
-        }
-
-        foreach (var move in moves)
-        {
-            var angles = GetAnglesFromCell(move.fromCell);
-            angles.azimuth += azimuth;
-            angles.elevation += elevation;
-
-            Thought newPosition = GetCell(angles.azimuth, angles.elevation);
-            if (newPosition == move.fromCell) continue;
-
-            move.fromCell.RemoveLink(_ltContains, move.obj);
-            Link newLink = newPosition.AddLink(_ltContains, move.obj);
-            newLink.TimeToLive = move.ttl;
-            newLink.Weight = move.weight;
-        }
-    }
 
     /// <summary>
     /// Inverse of GetBinFromElevation: returns the band center elevation for a bin.
@@ -337,6 +306,39 @@ public class ModuleMentalModel : ModuleBase
         }
     }
 
+    public void RotateMentalModel(Angle azimuth, Angle elevation)
+    {
+        Thought allCells = theUKS.Labeled("_mm:cell");
+        if (allCells is null) return;
+
+        var moves = new List<(Thought fromCell, Thought obj, TimeSpan ttl, float weight, Thought distThought)>();
+
+        foreach (var cell in allCells.Children)
+        {
+            foreach (Link l in cell.LinksTo.Where(x => x.LinkType == _ltContains).ToList())
+            {
+                var dist = l.LinksTo.FirstOrDefault(x => x.LinkType.Label == "distance").To;
+                if (l.To?.Label != "attention" || cell.LinksTo.Count(x => x.LinkType == _ltContains) > 1)
+                    moves.Add((fromCell: cell, obj: l.To, ttl: l.TimeToLive, weight: l.Weight,dist));
+            }
+        }
+
+        foreach (var move in moves)
+        {
+            var angles = GetAnglesFromCell(move.fromCell);
+            angles.azimuth += azimuth;
+            angles.elevation += elevation;
+
+            Thought newPosition = GetCell(angles.azimuth, angles.elevation);
+            if (newPosition == move.fromCell) continue;
+
+            move.fromCell.RemoveLink(_ltContains, move.obj);
+            Link newLink = newPosition.AddLink(_ltContains, move.obj);
+            newLink.TimeToLive = move.ttl;
+            newLink.Weight = move.weight;
+            newLink.AddLink("distance", move.distThought);
+        }
+    }
     public void MoveMentalModel(float distanceForward)
     {
         // Treat forward as +Z. When the center moves forward by +distanceForward,

@@ -108,9 +108,10 @@ public partial class ModuleTextInDlg : ModuleBaseDlg
         if (string.IsNullOrWhiteSpace(key)) return;
 
         if (_parsedInputHistory.TryGetValue(key, out var original))
+        {
             InputBox.Text = original;
-        //else
-        //    InputBox.Text = key;
+            InputBox.Focus();
+        }
     }
 
     private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
