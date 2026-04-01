@@ -59,10 +59,10 @@ public class ModuleAttributeBubble : ModuleBase
     {
         public Thought linkType;
         public Thought target;
-        public List<Thought> links = new();
+        public List<Link> links = new();
         public LinkDest()
         { }
-        public LinkDest(Thought r)
+        public LinkDest(Link r)
         {
             linkType = r.LinkType;
             target = r.To;
@@ -77,7 +77,7 @@ public class ModuleAttributeBubble : ModuleBase
     public void DoTheWork()
     {
         debugString = "Bubbler Started\n";
-        foreach (Thought t in theUKS.AllThoughts)
+        foreach (Thought t in theUKS.AtomicThoughts)
         {
             if (t.Label == "Animal")
             { }
@@ -96,7 +96,7 @@ public class ModuleAttributeBubble : ModuleBase
         List<LinkDest> itemCounts = new();
         foreach (Thought t1 in t.ChildrenWithSubclasses)
         {
-            foreach (Thought r in t1.LinksTo)
+            foreach (Link r in t1.LinksTo)
             {
                 if (r.LinkType == Thought.IsA) continue;
                 Thought useLinkType = GetInstanceType(r.LinkType);
@@ -121,7 +121,7 @@ public class ModuleAttributeBubble : ModuleBase
             if (excludeTypes.Contains(rr.linkType.Label, comparer: StringComparer.OrdinalIgnoreCase)) continue;
 
             //find an existing link
-            Thought r = theUKS.GetLink(t, rr.linkType, rr.target);
+            Link r = theUKS.GetLink(t, rr.linkType, rr.target);
             float currentWeight = (r is not null) ? r.Weight : 0f;
 
             //We need 1) count for this Thought, 2) count for any conflicting, 3) count without a reference
@@ -183,14 +183,14 @@ public class ModuleAttributeBubble : ModuleBase
                     else
                     {
                         //bubble the property
-                        r = t.AddLink(rr.target, rr.linkType);
+                        r = t.AddLink(rr.linkType, rr.target);
                         r.Weight = newWeight;
                         r.Fire();
                         debugString += $"Added  {r.ToString()}   {r.Weight.ToString(".0")} \n";
 
                         foreach (Thought t1 in t.Children)
                         {
-                            Thought rrr = t1.RemoveLink(rr.target, rr.linkType);
+                            Thought rrr = t1.RemoveLink(rr.linkType,rr.target);
                             debugString += $"Removed {rrr.ToString()} \n";
                         }
                         //if there is a conflicting link, delete it

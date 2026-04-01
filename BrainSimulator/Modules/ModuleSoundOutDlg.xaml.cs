@@ -10,22 +10,16 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
+
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using UKS;
 
 namespace BrainSimulator.Modules;
 
-public partial class ModuleSoundDlg : ModuleBaseDlg
+public partial class ModuleSoundOutDlg : ModuleBaseDlg
 {
-    public ModuleSoundDlg()
+    public ModuleSoundOutDlg()
     {
         InitializeComponent();
     }
@@ -35,7 +29,7 @@ public partial class ModuleSoundDlg : ModuleBaseDlg
         if (!base.Draw(checkDrawTimer)) return false;
         //this has a timer so that no matter how often you might call draw, the dialog
         //only updates 10x per second
-        ModuleSound parent = (ModuleSound)base.ParentModule;
+        ModuleSoundOut parent = (ModuleSoundOut)base.ParentModule;
         return true;
     }
 
@@ -46,35 +40,16 @@ public partial class ModuleSoundDlg : ModuleBaseDlg
 
     private void PlaySound_Click(object sender, RoutedEventArgs e)
     {
-        var module = ParentModule as ModuleSound;
+        var module = ParentModule as ModuleSoundOut;
         if (module != null)
         {
             module.PlayCMajorTriad(1000);
         }
     }
 
-
-    private void PitchButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button button)
-        {
-            string pitch = button.Content.ToString();
-            PlayNote(pitch);
-        }
-    }
-
-    private void PlayNote(string pitch)
-    {
-        var module = ParentModule as ModuleSound;
-        if (module != null)
-        {
-            module.FireNote(pitch);
-        }
-    }
-
     private void cbCadence_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (ParentModule is ModuleSound module && cbCadence.SelectedItem is ComboBoxItem item)
+        if (ParentModule is ModuleSoundOut module && cbCadence.SelectedItem is ComboBoxItem item)
         {
             if (int.TryParse(item.Content.ToString(), out int value))
             {
@@ -85,7 +60,7 @@ public partial class ModuleSoundDlg : ModuleBaseDlg
 
     private void cbPitchOffset_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (ParentModule is ModuleSound module && cbPitchOffset.SelectedItem is ComboBoxItem item)
+        if (ParentModule is ModuleSoundOut module && cbPitchOffset.SelectedItem is ComboBoxItem item)
         {
             if (int.TryParse(item.Content.ToString(), out int value))
             {

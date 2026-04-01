@@ -14,8 +14,7 @@ namespace UKS;
 
 
 /// <summary>
-/// Contains a collection of Thoughts linked by Links to implement Common Sense and general knowledge.
-/// This file has methods related to determining if two links are mutually exclusive, and other related methods.
+/// This file contains the methods needed to determine if links are in conflict with one another
 /// TODO: the entire process can be simplified an made more accurate.
 /// </summary>
 public partial class UKS
@@ -31,9 +30,14 @@ public partial class UKS
         return false;
     }
 
+#if DEBUG
+    // Test hook: exposes the private exclusivity check to the test assembly (IVT is set in UKS.csproj).
+    internal bool LinksAreExclusive_ForTests(Link r1, Link r2) => LinksAreExclusive(r1, r2);
+#endif
+
 
     //TODO: This method has gotten out of hand and needs a rewrite
-    private bool LinksAreExclusive(Thought r1, Thought r2)
+    private bool LinksAreExclusive(Link r1, Link r2)
     {
         //are two links mutually exclusive?
         //yes if they differ by a single component property
@@ -114,7 +118,7 @@ public partial class UKS
             //if one of the linkypes contains negation and not the other
             Thought r1Not = r1LinkiProps.FindFirst(x => x.Label == "not" || x.Label == "no");
             Thought r2Not = r2LinkProps.FindFirst(x => x.Label == "not" || x.Label == "no");
-            if ((r1.From.Ancestors.Contains(r2.From) ||
+            if ((r1.From == r2.From || r1.From.Ancestors.Contains(r2.From) ||
                 r2.From.Ancestors.Contains(r1.From)) &&
                 r1.To == r2.To &&
                 (r1Not is null && r2Not is not null || r1Not is not null && r2Not is null))
@@ -136,7 +140,7 @@ public partial class UKS
         return false;
     }
 
-    private bool LinkTypesAreExclusive(Thought r1, Thought r2)
+    private bool LinkTypesAreExclusive(Link r1, Link r2)
     {
         IReadOnlyList<Thought> r1RelProps = r1.LinkType.GetAttributes();
         IReadOnlyList<Thought> r2RelProps = r2.LinkType.GetAttributes();
@@ -151,7 +155,7 @@ public partial class UKS
     private bool HasAttribute(Thought t, string name)
     {
         if (t is null) return false;
-        foreach (Thought r in t.LinksTo)
+        foreach (Link r in t.LinksTo)
         {
             if (r.LinkType is not null && r.LinkType.Label == "is" && r.To.Label == name)
                 return true;

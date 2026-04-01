@@ -12,6 +12,7 @@
  */
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace UKS;
@@ -104,11 +105,14 @@ public partial class UKS
             {
                 index = UKSTemp.Count,
                 label = t.Label,
-                source = GetIndex(t.From),
-                linkType = GetIndex(t.LinkType),
-                target = GetIndex(t.To),
                 V = t.V,
             };
+            if (t is Link lnk)
+            {
+                st.source = GetIndex(lnk.From);
+                st.linkType = GetIndex(lnk.LinkType);
+                st.target = GetIndex(lnk.To);
+            }
             index = UKSTemp.Count;
             UKSTemp.Add(st);
         }
@@ -125,9 +129,9 @@ public partial class UKS
             string label = t.Label;
             if (string.IsNullOrWhiteSpace(label))  // Put the GUID into the label only when it's unlabeled
                 label = $"unl_{Guid.NewGuid().ToString("N")[..8]}";
-            int from = GetIndex(t.From);
-            int sType = GetIndex(t.LinkType);
-            int to = GetIndex(t.To);
+            int from = GetIndex((t as Link)?.From);
+            int sType = GetIndex((t as Link)?.LinkType);
+            int to = GetIndex((t as Link)?.To);
             if (UKSTemp.Count >= 170)
             { }
 
@@ -226,22 +230,22 @@ public partial class UKS
         Thought hasChild = Labeled("has-child");
         if (hasChild is not null)
         {
-            hasChild.AddLink("is-a", "inverseOf");
-            hasChild.RemoveLink("isTransitive", "hasProperty");
-            hasChild.RemoveLink("inheritable", "hasProperty");
+            hasChild.AddLink("inverseOf", "is-a");
+            hasChild.RemoveLink("hasProperty", "isTransitive");
+            hasChild.RemoveLink("hasProperty", "inheritable");
         }
         Thought isA = Labeled("is-a");
         if (isA is not null)
         {
-            isA.AddLink("inheritable", "hasProperty");
-            isA.AddLink("isTransitive", "hasProperty");
-            isA.RemoveLink("has-child", "inverseOf");
-            isA.RemoveLink(null, "hasProperty");
+            isA.AddLink("hasProperty", "inheritable");
+            isA.AddLink("hasProperty", "isTransitive");
+            isA.RemoveLink("inverseOf", "has-child");
+            isA.RemoveLink("hasProperty", null);
         }
         Thought has = Labeled("has");
         if (has is not null)
         {
-            has.AddLink("inheritable", "hasProperty");
+            has.AddLink("hasProperty", "inheritable");
         }
         return true;
     }
@@ -271,42 +275,44 @@ public partial class UKS
 
     private void DeFormatContentAfterLoading()
     {
-        AllThoughts.Clear();
+        AtomicThoughts.Clear();
         ThoughtLabels.ClearLabelList();
         //get all the thoughts
         foreach (sThought st in UKSTemp)
         {
-            if (st.label.ToLower() == "r0")
-            { }
-            Thought t = new()
+            if (st.source == -1 || st.linkType == -1)
             {
-                Label = st.label,
-                Weight = st.weight,
-                V = st.V,
-            };
-            if (st.source != -1)
-                t.From = theUKS.Labeled(UKSTemp[st.source].label);
-            if (st.linkType != -1)
-                t.LinkType = theUKS.Labeled(UKSTemp[st.linkType].label);
-            if (st.target != -1)
-                t.To = theUKS.Labeled(UKSTemp[st.target].label);
-            AllThoughts.Add(t);
-            t.From?.LinksToWriteable.Add(t);
-        }
+                Thought t = new()
+                {
+                    Label = st.label,
+                    Weight = st.weight,
+                    V = st.V,
+                };
+                t.TimeToLive = TimeSpan.MaxValue;
+                AtomicThoughts.Add(t);
+            }
+            else //this must be a link
+            {
+                Thought from = null;
+                Thought linkType = null;
+                Thought to = null;
+                from = Labeled(UKSTemp[st.source].label);
+                linkType = Labeled(UKSTemp[st.linkType].label);
+                if (st.target != -1) to = Labeled(UKSTemp[st.target].label);
 
-        //re-create reverse links
-        foreach (Thought t in AllThoughts)
-        {
-            foreach (Thought r in t.LinksTo)
-            {
-                Thought t1 = r.To;
-                if (t1 is not null)
-                    if (!t1.LinksFromWriteable.Contains(r))
-                        t1.LinksFromWriteable.Add(r);
+                Link newLink = from?.AddLink(linkType, to);
+                if (newLink is not null)
+                {
+                    newLink.Weight = st.weight;
+                    if (!st.label.StartsWith("unl")) newLink.Label = st.label;
+                    newLink.V = st.V;
+                    newLink.TimeToLive = TimeSpan.MaxValue;
+                    if (newLink.LinkType.Label == "VLU")
+                    {//this must a a sequence element, promote it to one.
+                        SeqElement newfrom = PromoteToSeqElement(newLink.From);
+                    }
+                }
             }
         }
-
-        RemoveTempLabels("Thought");
-        RemoveTempLabels("BrainSim");
     }
 }

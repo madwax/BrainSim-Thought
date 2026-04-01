@@ -10,7 +10,7 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
+
 
 using System;
 using System.Collections.Generic;
@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -49,8 +50,8 @@ public class ModuleText : ModuleBase
 
     public static string AddPhrase(string phrase)
     {
-
         var theUKS = MainWindow.theUKS;
+        theUKS.GetOrAddThought("EnglishWord", "Thought");
         char[] trimChars = { '.', ',', ';', ':', '!', '?', '"', '\'', '(', ')', '[', ']', '{', '}' };
 
         int attempted = 0;
@@ -62,21 +63,27 @@ public class ModuleText : ModuleBase
             {
                 string clean = token.Trim(trimChars).ToLowerInvariant();
                 if (string.IsNullOrEmpty(clean)) continue;
-
+                if (clean.Any(ch => !char.IsLetterOrDigit(ch))) continue;
+                if (clean.Count(char.IsDigit) > 2) continue;
                 attempted++;
-                var wordThought = ModuleWord.AddWordSpelling(clean);
-                wordsInPhrase.Add(wordThought);
+                if (MainWindow.theWindow.GetModuleByLabel("ModuleWord0") is ModuleWord mw)
+                {
+                    var wordThought = mw.AddWordSpelling(clean);
+                    wordsInPhrase.Add(wordThought);
+                }
                 ingested++;
             }
 
             theUKS.GetOrAddThought("Phrase");
             theUKS.GetOrAddThought("hasWords", "LinkType");
             Thought thePhrase = theUKS.GetOrAddThought("p*", "Phrase");
-            theUKS.AddSequence(thePhrase, "hasWords", wordsInPhrase);
-
-            //create bigrams
-            CreateBigrams(wordsInPhrase);
-
+            thePhrase.TimeToLive = TimeSpan.FromSeconds(30); // adjust as needed
+            if (wordsInPhrase.Count > 1)
+            {
+                theUKS.AddSequence(thePhrase, "hasWords", wordsInPhrase);
+                //create bigrams
+                CreateBigrams(wordsInPhrase);
+            }
             return $"Processed {attempted} tokens; ingested {ingested} words.";
         }
         catch (Exception ex)
@@ -93,7 +100,7 @@ public class ModuleText : ModuleBase
         theUKS.GetOrAddThought("followedBy", "LinkType");
         for (int i = 0; i < wordsInPhrase.Count - 1; i++)
         {
-            var bigram = wordsInPhrase[i].LinksTo.FindFirst(x => x.LinkType == "followedBy" && x.To == wordsInPhrase[i + 1]);
+            Link bigram = wordsInPhrase[i].LinksTo.FindFirst(x => x.LinkType == "followedBy" && x.To == wordsInPhrase[i + 1]);
             if (bigram is null)
             {  //does not exist, create a new pair.
                 {
@@ -127,6 +134,8 @@ public class ModuleText : ModuleBase
 
     public static string AddText(string text)
     {
+        var theUKS = MainWindow.theUKS;
+        theUKS.GetOrAddThought("EnglishWord", "Thought");
         if (string.IsNullOrWhiteSpace(text)) return "Null input";
 
         string[] sentences = Regex.Split(text, @"(?<=[\.!\?])\s+");
@@ -177,7 +186,7 @@ public class ModuleText : ModuleBase
     // Incremental file-load state
     private StreamReader _phraseReader;
     private string _phraseReaderPath;
-    public int LoadTextFromFile(string filePath, int phrasesPerCall = 200)
+    public async Task<int> LoadTextFromFile(string filePath, int phrasesPerCall = 500)
     {
         if (phrasesPerCall <= 0) phrasesPerCall = 1;
         if (!File.Exists(filePath))
@@ -238,9 +247,11 @@ public class ModuleText : ModuleBase
             ResetPhraseReader();
             return 0;
         }
-    }    /// <summary>
-         /// Cancels any in-progress incremental load.
-         /// </summary>
+    }
+
+    /// <summary>
+    /// Cancels any in-progress incremental load.
+    /// </summary>
     public void CancelIncrementalLoad()
     {
         ResetPhraseReader();
@@ -268,14 +279,15 @@ public class ModuleText : ModuleBase
         // Iterate all existing bigram link-thoughts
         foreach (Thought t in ((Thought)"bigram").Children)
         {
+            if (t is not Link lnk) continue;
             // Expect: t is a followedBy link from A -> B
-            Thought a = t.From;
-            Thought b = t.To;
+            Thought a = lnk.From;
+            Thought b = lnk.To;
 
             if (a == null || b == null) continue;
 
             // Find B --followedBy--> C (second bigram)
-            foreach (Thought l in b.LinksTo.Where(x => x.LinkType.Label == "followedBy"))
+            foreach (Link l in b.LinksTo.Where(x => x.LinkType.Label == "followedBy"))
             {
                 Thought c = l.To;
                 if (c == null) continue;
@@ -289,21 +301,20 @@ public class ModuleText : ModuleBase
                 // Build a deterministic trigram key (prefer IDs if stable)
                 string trigramKey = $"tg_{a.Label}_{b.Label}_{c.Label}";
 
-                bool created = (theUKS.Labeled(trigramKey) is null);
-
-                Thought tg = theUKS.GetOrAddThought(trigramKey, "trigram");
-
-                // Link to components (idempotent if AddStatement de-dupes)
-                theUKS.AddStatement(tg, "first", a);
-                theUKS.AddStatement(tg, "second", b);
-                theUKS.AddStatement(tg, "third", c);
-
-                // Set / reinforce trigram weight (use avg or min; min is more conservative)
-                float w = MathF.Min(t.Weight, l.Weight);     // conservative
-                //float w = 0.5f * (t.Weight + l.Weight);   // alternative
-
-                if (created)
+                Thought tg = theUKS.Labeled(trigramKey);
+                if (tg is null)
                 {
+                    tg = theUKS.GetOrAddThought(trigramKey, "trigram");
+
+                    // Link to components (idempotent if AddStatement de-dupes)
+                    theUKS.AddStatement(tg, "first", a);
+                    theUKS.AddStatement(tg, "second", b);
+                    theUKS.AddStatement(tg, "third", c);
+
+                    // Set / reinforce trigram weight (use avg or min; min is more conservative)
+                    float w = MathF.Min(t.Weight, l.Weight);     // conservative
+                    //float w = 0.5f * (t.Weight + l.Weight);   // alternative
+
                     tg.Weight = MathF.Min(tg.Weight, 0.10f * w); // start small but proportional
                     retVal++;
                 }
@@ -318,8 +329,8 @@ public class ModuleText : ModuleBase
         }
         Thought trigrams = theUKS.Labeled("trigram");
         var topTrigrams = trigrams.Children.OrderByDescending(x => x.Weight).ToList();
-        for (int i = 20; i < topTrigrams.Count; i++)
-        { theUKS.DeleteThought(topTrigrams[i]); }
+        for (int i = 50; i < topTrigrams.Count; i++)
+            topTrigrams[i].Delete();
         return retVal;
     }
 

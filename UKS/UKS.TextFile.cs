@@ -57,11 +57,15 @@ public partial class UKS
     private void RemoveTempLabels(Thought Root)
     {
         if (Root is null) return;
+        var v = AtomicThoughts;
+
         //remove unnecessary "unl_..."  labels
         foreach (var t in Root.EnumerateSubThoughts())
         {
             if (t.Label.ToLower() == "fido")
             { }
+            int i = AtomicThoughts.IndexOf(t);
+
             if (t.Label.StartsWith("unl_"))
                 t.Label = "";
         }
@@ -80,18 +84,17 @@ public partial class UKS
         string retVal = t.Label.PadRight(15);
         if (t.V is not null)
             retVal += " V: " + t.V.ToString();
-
-        if (t.From is null || t.LinkType is null)
-            return retVal;
-
-        retVal += "[";
-        if (t.From is not null)
-            retVal += t.From?.Label;
-        if (t.LinkType is not null)
-            retVal += ((retVal == "") ? "" : "->") + t.LinkType?.Label;
-        if (t.To is not null)
-            retVal += ((retVal == "") ? "" : "->") + ((t.To.Label == "") ? t.To?.Label : t.To.Label);
-        retVal += "]";
+        if (t is Link r)
+        {
+            retVal += "[";
+            if (r.From is not null)
+                retVal += r.From?.Label;
+            if (r.LinkType is not null)
+                retVal += ((retVal == "") ? "" : "->") + r.LinkType?.Label;
+            if (r.To is not null)
+                retVal += ((retVal == "") ? "" : "->") + ((r.To.Label == "") ? r.To?.Label : r.To.Label);
+            retVal += "]";
+        }
         return retVal;
     }
 
@@ -124,25 +127,16 @@ public partial class UKS
         foreach (var t in ((Thought)"Thought").EnumerateSubThoughts())
         {
             if (t.Label.StartsWith("unl_"))
-            {
                 t.Label = "";
-            }
-        }
-        //This is a bit of a hack because the default AddStatement adds sequence elements to Unknown unnecessarily
-        for (int i = 0; i < theUKS.AllThoughts.Count; i++)
-        {
-            Thought t = AllThoughts[i];
-            if (IsSequenceElement(t))
-                t.RemoveLink("Unknown", "is-a");
         }
     }
 
     // Adds a link, 
     private Thought AddLinkStmt(string label, List<string> linkParts, string sWeight)
     {
-        if (linkParts[0].Contains("seq2"))
+        if (linkParts[0].Contains("seq0"))
         { }
-        Thought r = null;
+        Link r = null;
         if (linkParts.Count < 2) return null;
         if (r is null)
         {
@@ -153,7 +147,8 @@ public partial class UKS
                 int index = linkParts[0].IndexOf("_V:");
                 value = linkParts[0][(index + 3)..];
                 linkParts[0] = linkParts[0][..index];
-                DeleteThought(linkParts[0]);
+                Thought t1 = Labeled(linkParts[0]);
+                t1?.Delete();
             }
             //if (r1 or r2 are set, use them instead here
             Thought from = Labeled(linkParts[0]);
@@ -174,8 +169,12 @@ public partial class UKS
             if (label != "" && !label.StartsWith("unl_"))
             {
                 r.Label = label.Trim();
-                if (!AllThoughts.Contains(r))
-                    AllThoughts.Add(r);
+                if (!AtomicThoughts.Contains(r))
+                    AtomicThoughts.Add(r);
+            }
+            if (linkType.Label == "VLU")
+            {//this must a a sequence element, promote it to one.
+                var newfrom = PromoteToSeqElement(from);
             }
         }
         if (sWeight is { } n)

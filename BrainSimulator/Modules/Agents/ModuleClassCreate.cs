@@ -61,9 +61,9 @@ public class ModuleClassCreate : ModuleBase
     public void DoTheWork()
     {
         debugString = "Agent Started\n";
-        for (int i = 0; i < theUKS.AllThoughts.Count; i++)
+        for (int i = 0; i < theUKS.AtomicThoughts.Count; i++)
         {
-            Thought t = theUKS.AllThoughts[i];
+            Thought t = theUKS.AtomicThoughts[i];
             if (t.HasAncestor("Object") && !t.Label.Contains(".") && !t.Label.Contains("unknown"))
             {
                 HandleClassWithCommonAttributes(t);
@@ -80,7 +80,7 @@ public class ModuleClassCreate : ModuleBase
         List<LinkDest> attributes = new();
         foreach (Thought t1 in t.ChildrenWithSubclasses)
         {
-            foreach (Thought r in t1.LinksTo)
+            foreach (Link r in t1.LinksTo)
             {
                 if (r.LinkType == Thought.IsA) continue;
                 Thought useLinkType = GetInstanceType(r.LinkType);
@@ -101,9 +101,9 @@ public class ModuleClassCreate : ModuleBase
             if (key.links.Count >= minCommonAttributes)
             {
                 Thought newParent = theUKS.GetOrAddThought(t.Label + "." + key.linkType + "." + key.target, t);
-                newParent.AddLink(key.target, key.linkType);
+                newParent.AddLink(key.linkType, key.target);
                 debugString += "Created new subclass " + newParent;
-                foreach (Thought r in key.links)
+                foreach (Link r in key.links)
                 {
                     Thought tChild = (Thought)r.From;
                     tChild.AddParent(newParent);

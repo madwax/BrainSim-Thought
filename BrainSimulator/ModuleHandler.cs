@@ -71,10 +71,10 @@ public class ModuleHandler
         if (t is null) return;
         for (int i = 0; i < t.LinksTo.Count; i++)
         {
-            Thought r = t.LinksTo[i];
-            theUKS.DeleteThought(r.To);
+            Link r = t.LinksTo[i];
+            r.To.Delete();
         }
-        theUKS.DeleteThought(t);
+        t.Delete();
 
         return;
     }

@@ -22,6 +22,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using UKS;
+using Microsoft.Win32;
 
 namespace BrainSimulator.Modules;
 
@@ -37,6 +38,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
 
     private const int maxDepth = 20;
+    private const int rootHistoryLimit = 8;
+    private readonly List<string> _rootHistory = new();
     private int totalItemCount;
     private bool mouseInWindow; //prevent auto-update while the mouse is in the tree
     private bool busy;
@@ -63,17 +66,15 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         return true;
     }
 
-
-
     private void LoadContentToTreeView()
     {
         //get the parameters
         ModuleUKS parent = (ModuleUKS)ParentModule;
         expandAll = parent.GetSavedDlgAttribute("ExpandAll");
         string root = parent.GetSavedDlgAttribute("Root");
-		//root = "BrainSim";
-		Thought Root = theUKS.Labeled(root);
-  
+        //root = "BrainSim";
+        Thought Root = theUKS.Labeled(root);
+
         if (Root is null) Root = (Thought)"Thought";
         string sizeString = parent.GetSavedDlgAttribute("fontSize");
         int.TryParse(sizeString, out int fontSize);
@@ -94,9 +95,10 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
         else if (string.IsNullOrEmpty(root)) //search for unattached Thoughts
         {
-            for (int i = 0; i < theUKS.AllThoughts.Count; i++)
+            for (
+                int i = 0; i < theUKS.AtomicThoughts.Count; i++)
             {
-                Thought t1 = theUKS.AllThoughts[i];
+                Thought t1 = theUKS.AtomicThoughts[i];
                 if (t1.Parents.Count == 0)
                 {
                     TreeViewItem tvi = new() { Header = t1.Label };
@@ -112,12 +114,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         depth++;
         if (depth > maxDepth) return;
 
-        List<Thought> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
+        List<Link> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
         theChildren = theChildren.OrderBy(x => x.From.Label).ToList();
-        if (detailsCB.IsChecked == true) 
+        if (detailsCB.IsChecked == true)
             theChildren = theChildren.OrderByDescending(x => x.From.Weight).ToList();
 
-        foreach (Thought l in theChildren)
+        foreach (Link l in theChildren)
         {
             //"l" is the link defining the is-a link so child is the from of it
             var child = l.From;
@@ -141,7 +143,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddLinks(Thought t, TreeViewItem tvi, int depth, string parentLabel)
     {
-        if (t.LinksTo.Count == 0 && t.From is null && t.To is null) return;
+        if (t.LinksTo.Count == 0 && t is not Link lnk) return;
 
         //build the entry for the tabel of expanded items
         string currentLabel = "|" + parentLabel + "|" + t.Label;
@@ -154,7 +156,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         var sortedLinks = t.LinksTo.OrderBy(x => x?.LinkType?.Label).ToList();
         if (detailsCB.IsChecked == false)
             sortedLinks = t.LinksTo.Where(x => x.LinkType.Label != "is-a").OrderBy(x => x?.LinkType?.Label).ToList();
-        foreach (Thought l in sortedLinks)
+        foreach (Link l in sortedLinks)
         {
             if (showConditionals.IsChecked != true)
                 if (l.HasProperty("isCondition") || l.HasProperty("isResult")) continue; //hide conditionals
@@ -174,7 +176,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddLinksFrom(Thought t, TreeViewItem tvi, string parentLabel)
     {
-        if (t.LinksFrom.Count == 0 && t.From is null && t.To is null) return;
+        if (t.LinksFrom.Count == 0 && t is not Link lnk) return;
 
         //add the entry to the entry of expanded items
         parentLabel = "|" + parentLabel + "|" + t.ToString();
@@ -183,7 +185,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         //add each of the links as a "child" of the parent entry
         //display is-a links if deteails are requested
         var sortedLinks = t.LinksFrom.OrderBy(x => x?.LinkType?.Label).ToList();
-        foreach (Thought r in sortedLinks)
+        foreach (Link r in sortedLinks)
         {
             if (showConditionals.IsChecked != true)
                 if (r.HasProperty("isCondition") || r.HasProperty("isResult")) continue; //hide conditionals
@@ -196,33 +198,57 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
 
     //build and format the TreeView item for this Thought
-    private TreeViewItem GetTreeChildFormatted(string parentLabel, Thought r)
+    private TreeViewItem GetTreeChildFormatted(string parentLabel, Thought t)
     {
-        Thought child = r;
+        Thought child = t;
         string header = "";
-        if (r.LinkType is null && r.To is null)
-        {
-            //Format a node-like line in the treeview
-            header = child.ToString();
-            if (header == "") header = "\u25A1"; //put in a small empty box--if the header is unlabeled, so you can right-click 
-            if (showConditionals.IsChecked == true && r.LinkType?.Label == "is-a") //hack to show conditions on is-a links
-                foreach (Thought r1 in r.LinksTo)
-                    header += "  " + r1.ToString();
-        }
-        else
+        if (t is SeqElement s1)
+        { }
+        else if (t is Link r)
         {
             //format a link-like line in the treeview
             header = r.ToString();
             //show sequence content unless details are selected
-            if (detailsCB.IsChecked == false && theUKS.IsSequenceElement(r.To))
+            if (r.From is SeqElement)
+            {
+                if (r.LinkType.Label == "VLU" || r.LinkType.Label == "duration")
+                {
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
+                    if (r.To.Label == "")
+                        header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.ToString()}]";
+                }
+            }
+            if (r.To is SeqElement s)
             {
                 string joinCharacter = " ";
                 if (r.LinkType.Label == "events") joinCharacter = "\n\t\t"; //hack for better dieplay of longer items
-                string sequence = "^" + string.Join(joinCharacter, theUKS.FlattenSequence(r.To));
-                header = $"[{r.From.Label}->{r.LinkType.Label}->{sequence}]";
+                if (r.LinkType.Label == "NXT" || r.LinkType.Label == "FRST")
+                {
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{r.To.Label}]";
+                }
+                else
+                {
+                    var seqElementLabels = theUKS.FlattenSequence(s).Select(x => x?.Label);
+                    seqElementLabels = seqElementLabels
+                        .Select(s =>
+                        {
+                            int i = s.IndexOf(':');
+                            return i >= 0 ? s[(i + 1)..] : s;
+                        }).ToList();
+                    string sequence = "^" + string.Join(joinCharacter, seqElementLabels);
+                    header = $"[{r.From.Label}→{r.LinkType.Label}→{sequence}]";
+                }
             }
         }
-        header = AddDetails(r, header);
+        else
+        {
+            //Format a node-like line in the treeview
+            header = child.ToString();
+            if (header == "")
+                header = "\u25A1"; //put in a small empty box--if the header is unlabeled, so you can right-click 
+        }
+
+        header = AddDetails(t, header);
 
         //create the treeview entry
         TreeViewItem tviChild = new() { Header = header };
@@ -231,7 +257,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         tviChild.SetValue(ThoughtObjectProperty, child);
         if (child.LastFiredTime > DateTime.Now - TimeSpan.FromMilliseconds(500))
             tviChild.Background = new SolidColorBrush(Colors.LightGreen);
-        if (r.TimeToLive != TimeSpan.MaxValue && r.LastFiredTime + r.TimeToLive < DateTime.Now + TimeSpan.FromSeconds(3))
+        if (child.TimeToLive != TimeSpan.MaxValue && child.LastFiredTime + child.TimeToLive < DateTime.Now + TimeSpan.FromSeconds(3))
             tviChild.Background = new SolidColorBrush(Colors.LightYellow);
 
         //is this expanded?
@@ -249,16 +275,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
 
     //if the "details" box is checked, add the details
-    private string AddDetails(Thought r, string header)
+    private string AddDetails(Thought t, string header)
     {
+
         if (detailsCB.IsChecked == false) return header;
-        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
-        if (r.Weight != 1f || r.TimeToLive != TimeSpan.MaxValue)
-            header = $"<{r.Weight.ToString("f2")}, {timeToLive}> " + header;
-        if (r.LinkType?.HasLink(null, null, theUKS.Labeled("not")) is not null) //prepend ! for negative  children
-            header = "!" + header;
-        header += ": Children:" + r.Children.Count;
-        header += " Links:" + r.LinksTo.Count;
+        string timeToLive = (t.TimeToLive == TimeSpan.MaxValue ? "∞" : (t.LastFiredTime + t.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
+        if (t.Weight != 1f || t.TimeToLive != TimeSpan.MaxValue)
+            header = $"<{t.Weight.ToString("f2")}, {timeToLive}> " + header;
+        if (t is Link r)
+        {
+            if (r.LinkType?.HasLink(null, null, theUKS.Labeled("not")) is not null) //prepend ! for negative  children
+                header = "!" + header;
+        }
+        header += ": Children:" + t.Children.Count;
+        header += " Links:" + t.LinksTo.Count;
         return header;
     }
 
@@ -280,7 +310,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 tvi1 = tvi2;
                 Thought t1 = (Thought)tvi1.GetValue(ThoughtObjectProperty);
-                parentLabel = "|" + (string.IsNullOrEmpty(t1?.Label)?t1?.ToString():t1?.Label) + parentLabel;
+                parentLabel = "|" + (string.IsNullOrEmpty(t1?.Label) ? t1?.ToString() : t1?.Label) + parentLabel;
                 depth++;
             }
             if (!expandedItems.Contains(parentLabel))
@@ -293,8 +323,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 AddLinks(t, tvi, 1, parentLabel);
             if (reverseCB.IsChecked == true && t.LinksFrom.Count > 0)
                 AddLinksFrom(t, tvi, parentLabel);
-            if (theUKS.IsSequenceElement(t.To))
-                AddLinks(t.To, tvi, 1, parentLabel);
+            if (theUKS.IsSequenceElement((t as Link)?.To))
+                AddLinks((t as Link)?.To, tvi, 1, parentLabel);
             e.Handled = true;
         }
     }
@@ -317,7 +347,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         ContextMenu menu = new ContextMenu();
         menu.SetValue(ThoughtObjectProperty, t);
         menu.SetValue(TreeViewItemProperty, tvi);
-        int ID = theUKS.AllThoughts.IndexOf(t);
+        int ID = theUKS.AtomicThoughts.IndexOf(t);
         MenuItem mi = new();
         string thoughtLabel = "___";
         if (t is not null)
@@ -378,6 +408,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
         menu.Opened += Menu_Opened;
         menu.Closed += Menu_Closed;
+        ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -429,11 +460,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
     }
 
-    private ContextMenu GetLinkContextMenu(Thought r)
+    private ContextMenu GetLinkContextMenu(Link r)
     {
         ContextMenu menu = new ContextMenu();
         menu.SetValue(LinkObjectProperty, r);
         MenuItem mi = new();
+        mi.Header = $"Weight:  {r.Weight.ToString("0.00")}";
+        mi.IsEnabled = false;
+        menu.Items.Add(mi);
+        mi = new();
+        string timeToLive = (r.TimeToLive == TimeSpan.MaxValue ? "∞" : (r.LastFiredTime + r.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
+        mi.Header = $"TTL: {timeToLive}";
+        mi.IsEnabled = false;
+        menu.Items.Add(mi);
+        mi = new();
         mi.Click += Mi_Click;
         mi.Header = "Delete";
         menu.Items.Add(mi);
@@ -460,6 +500,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         mi.SetValue(ThoughtObjectProperty, r.To);
         menu.Items.Add(mi);
 
+        ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -472,13 +513,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             Thought tParent = (Thought)mi.GetValue(ThoughtObjectProperty);
             if (tParent is not null)
             {
-                textBoxRoot.Text = tParent.Label;
+                comboRoot.Text = tParent.Label;
                 Refresh();
             }
             Thought t = (Thought)m.GetValue(ThoughtObjectProperty);
             if (t is null)
             {
-                Thought r = (Thought)m.GetValue(LinkObjectProperty);
+                Link r = m.GetValue(LinkObjectProperty) as Link;
                 (r.From as Thought).RemoveLink(r);
                 //force a repaint
                 Refresh();
@@ -507,10 +548,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                     break;
                 case "Fire":
                     t.Fire();
+                    var ActionModule = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
+                    if (ActionModule is not null)
+                        ActionModule.TakeActrion(t);
                     break;
                 case "Delete":
                     theUKS.DeleteAllChildren(t);
-                    theUKS.DeleteThought(t);
+                    t.Delete();
                     break;
                 case "Delete Child":
                     //figure out which item (and its parent) clicked us
@@ -524,7 +568,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                         parentThought.RemoveChild(t);
                     break;
                 case "Make Root":
-                    textBoxRoot.Text = t.Label;
+                    comboRoot.Text = t.Label;
+                    AddRootToHistory(t.Label);
                     Refresh();
                     break;
             }
@@ -541,49 +586,33 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void UpdateStatusLabel()
     {
-        int childCount = 0;
-        int refCount = 0;
-        Thought t = null;
-        try
-        {
-            foreach (Thought t1 in theUKS.AllThoughts)
-            {
-                t = t1;
-                childCount += t1.Children.Count;
-                refCount += t1.LinksTo.Count - t1.Children.Count;
-            }
-        }
-
-        catch (Exception ex)
-        {
-            //you might get this exception if there is a collision
-            return;
-        }
-        statusLabel.Content = theUKS.AllThoughts.Count + " Thoughts  " + (childCount + refCount) + " Links.";
+        statusLabel.Content = ThoughtLabels.GetLabelCount() + " Thoughts  " + ThoughtLabels.GetLinksCount() + " Links.";
         Title = "The Universal Knowledgs Store (UKS)  --  File: " + Path.GetFileNameWithoutExtension(theUKS.FileName);
     }
 
-    private bool _isTextChangingInternally;  //lockout so we can change the text without retriggering the event
+    private bool _isTextChangingInternally = true;  //lockout so we can change the text without retriggering the event
     private void TextBoxRoot_KeyDown(object sender, KeyEventArgs e)
     {
+        var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+        if (tb is null) return;
         // Allow text changes when keys like backspace, delete are pressed
         if (e.Key == Key.Back || e.Key == Key.Delete)
         {
             _isTextChangingInternally = true;
-            int caretIndex = textBoxRoot.CaretIndex;
+            int caretIndex = tb.CaretIndex;
             if (e.Key == Key.Back) caretIndex--;
             if (caretIndex < 0) caretIndex = 0;
-            textBoxRoot.Text = textBoxRoot.Text.Substring(0, caretIndex);
-            textBoxRoot.CaretIndex = caretIndex;
+            comboRoot.Text = comboRoot.Text.Substring(0, caretIndex);
+            tb.CaretIndex = caretIndex;
             e.Handled = true;
             _isTextChangingInternally = false;
-            //get a new suggestion
             if (e.Key == Key.Back)
                 textBoxRoot_TextChanged(null, null);
         }
         if (e.Key == Key.Enter)
         {
-            textBoxRoot.SelectionLength = 0;
+            AddRootToHistory(comboRoot.Text);
+            tb.SelectionLength = 0;
         }
     }
     private void textBoxRoot_TextChanged(object sender, TextChangedEventArgs e)
@@ -591,36 +620,35 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if (_isTextChangingInternally)
             return;
 
-        string searchText = textBoxRoot.Text;
+        string searchText = comboRoot.Text;
         if (!string.IsNullOrEmpty(searchText))
         {
-            //get the first label
             var suggestion = ThoughtLabels.LabelList.Keys
                 .Where(key => key.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(key => key)
                 .FirstOrDefault();
-            //get the real label to get the capitalization right
             if (suggestion is not null) suggestion = ThoughtLabels.GetThought(suggestion).Label;
 
             if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
             {
-                int caretIndex = textBoxRoot.CaretIndex;
+                var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+                if (tb is null) return;
+                int caretIndex = tb.CaretIndex;
                 _isTextChangingInternally = true;
-                textBoxRoot.Text = suggestion;
-                textBoxRoot.CaretIndex = caretIndex;
-                textBoxRoot.SelectionStart = caretIndex;
-                textBoxRoot.SelectionLength = suggestion.Length - caretIndex;
-                textBoxRoot.SelectionOpacity = .4;
+                comboRoot.Text = suggestion;
+                tb.CaretIndex = caretIndex;
+                tb.SelectionStart = caretIndex;
+                tb.SelectionLength = suggestion.Length - caretIndex;
+                tb.SelectionOpacity = .4;
                 _isTextChangingInternally = false;
             }
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
         if (parent is null) return;
-        parent.SetSavedDlgAttribute("Root", textBoxRoot.Text);
+        parent.SetSavedDlgAttribute("Root", comboRoot.Text); //why?
         Refresh();
 
     }
-
     //using the mouse-wheel while pressing ctrl key changes the font size
     private void theTreeView_MouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -665,12 +693,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         RefreshButton.Visibility = Visibility.Visible;
     }
 
-    private void CheckBoxDetails_Checked(object sender, RoutedEventArgs e)
+    private void CheckBox_Checked(object sender, RoutedEventArgs e)
     {
         Draw(false);
     }
 
-    private void CheckBoxDetails_Unchecked(object sender, RoutedEventArgs e)
+    private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
     {
         Draw(false);
     }
@@ -727,7 +755,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         string root = parent.GetSavedDlgAttribute("Root");
         if (string.IsNullOrEmpty(root))
             root = "Thought";
-        textBoxRoot.Text = root;
+        comboRoot.Text = root;
         Refresh();
     }
 
@@ -750,11 +778,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 CollapseTreeviewItems(item);
         }
     }
-
     private void Dlg_Loaded(object sender, RoutedEventArgs e)
     {
         ModuleUKS parent = (ModuleUKS)ParentModule;
-        textBoxRoot.Text = parent.GetSavedDlgAttribute("Root");
+        LoadRootHistory(parent.GetSavedDlgAttribute("RootHistory"));
+        comboRoot.Text = parent.GetSavedDlgAttribute("Root");
     }
 
     private string Browse(bool open)
@@ -853,6 +881,83 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         finally
         {
             Mouse.OverrideCursor = null;
+        }
+    }
+
+    private void LoadRootHistory(string raw)
+    {
+        _rootHistory.Clear();
+        if (!string.IsNullOrEmpty(raw))
+            _rootHistory.AddRange(raw.Split('|').Where(x => !string.IsNullOrWhiteSpace(x)));
+        UpdateRootHistoryItems();
+    }
+
+    private void AddRootToHistory(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var existing = _rootHistory.FindIndex(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
+        if (existing >= 0) _rootHistory.RemoveAt(existing);
+        _rootHistory.Insert(0, value);
+        if (_rootHistory.Count > rootHistoryLimit)
+            _rootHistory.RemoveRange(rootHistoryLimit, _rootHistory.Count - rootHistoryLimit);
+        UpdateRootHistoryItems();
+        if (ParentModule is ModuleUKS parent)
+            parent.SetSavedDlgAttribute("RootHistory", string.Join("|", _rootHistory));
+    }
+
+    private void UpdateRootHistoryItems()
+    {
+        _isTextChangingInternally = true;
+        comboRoot.ItemsSource = null;
+        comboRoot.ItemsSource = _rootHistory.ToList();
+        _isTextChangingInternally = false;
+    }
+
+    private static bool IsDarkMode()
+    {
+        const string personalize = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        object? value = Registry.GetValue(personalize, "AppsUseLightTheme", 1);
+        return value is int i && i == 0;
+    }
+
+    private void ApplyContextMenuTheme(ContextMenu menu)
+    {
+        if (menu is null || !IsDarkMode()) return;
+
+        var bg = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+        var fg = Brushes.White;
+        var disabled = Brushes.LightGray;
+
+        menu.Background = bg;
+        menu.Foreground = fg;
+
+        foreach (var item in menu.Items.OfType<FrameworkElement>())
+        {
+            if (item is MenuItem mi)
+            {
+                if (mi.IsEnabled == false)
+                {
+                    mi.IsEnabled = true;
+                    mi.Focusable = false;
+                    mi.StaysOpenOnClick = true;
+                    mi.IsHitTestVisible = false;
+                    mi.Foreground = disabled;
+                }
+                else
+                {
+                    mi.Foreground = fg;
+                }
+                mi.Background = bg;
+                mi.BorderThickness = new Thickness(0);
+                if (mi.Header is TextBox tbHeader)
+                {
+                    tbHeader.Background = bg;
+                    tbHeader.Foreground = fg;
+                    tbHeader.BorderBrush = bg;
+                    tbHeader.CaretBrush = fg;
+                    tbHeader.SelectionBrush = fg;
+                }
+            }
         }
     }
 }

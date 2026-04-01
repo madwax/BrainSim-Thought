@@ -15,19 +15,38 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using UKS;
+using System.Linq;
 
 namespace BrainSimulator.Modules;
 
 public class ModuleWord : ModuleBase
 {
+    //to put letters one by one into the mental Model
+    DateTime lastLetterTime = DateTime.Now;
+    readonly Queue<Thought> letterQueue = new();
     public ModuleWord()
     {
         Label = "Word";
     }
-
     public override void Fire()
     {
-        // Called periodically by the module engine
+        // Only stream letters when both MentalModel and Attention are active
+        if (!HasActiveMentalModelAndAttention(out var mm))
+            return;
+
+        if (letterQueue.Count > 0)
+        {
+            //add letters to the mental model one at a time
+            if (lastLetterTime < DateTime.Now - TimeSpan.FromSeconds(1))
+            {
+                mm.RotateMentalModel(Angle.FromDegrees(-5f), Angle.FromDegrees(0));
+                Thought center = mm.GetCell(0, 0);
+                Thought firstChar = letterQueue.Peek();
+                mm.BindThoughtToMentalModel(firstChar, center);
+                lastLetterTime = DateTime.Now;
+                letterQueue.Dequeue();
+            }
+        }
     }
     public override void Initialize()
     {
@@ -35,18 +54,13 @@ public class ModuleWord : ModuleBase
 
     public override void SetUpAfterLoad()
     {
-        base.SetUpAfterLoad();
+    }
+    public override void UKSInitializedNotification()
+    {
+        theUKS.GetOrAddThought("EnglishWord", "Object");
+        theUKS.GetOrAddThought("letter", "Object");
     }
 
-    public override void ShowDialog()
-    {
-        if (dlg == null)
-        {
-            dlg = new ModuleWordDlg();
-            dlg.Owner = MainWindow.theWindow;
-        }
-        base.ShowDialog();
-    }
 
     public string GetWordSuggestion(string word)
     {
@@ -54,34 +68,45 @@ public class ModuleWord : ModuleBase
         foreach (char c in word.ToUpper())
         {
             string letterLabel = c.ToString();
-            Thought letter = theUKS.GetOrAddThought(letterLabel, "letter");
+            Thought letter = theUKS.GetOrAddThought("c:"+letterLabel, "letter");
             letters.Add(letter);
         }
         string retVal = word;
         var suggestions = theUKS.HasSequence(letters,"spelled",true,true);
         if (suggestions.Count > 0)
-            retVal = suggestions[0].r.From?.Label;
+        {
+            var suggestionList = theUKS.FlattenSequence(suggestions[0].seqNode);
+            string suggestionString = string.Join("", suggestionList.Select(x => x.Label[2..]));
+            retVal = suggestionString;
+        }
         return retVal;
     }
 
-    public static Thought AddWordSpelling(string word)
+    public Thought AddWordSpelling(string word)
     {
         var theUKS = MainWindow.theUKS;
+        word = word.Trim();
+
         if (string.IsNullOrWhiteSpace(word)) return null;
 
-        word = word.Trim();
-        theUKS.GetOrAddThought("Word", "Thought");
-        theUKS.GetOrAddThought("letter", "Object");
+        bool streamOnly = HasActiveMentalModelAndAttention(out _);
+
+        // When streaming mode is active, do not create words/sequences here
+        if (streamOnly)
+            return null;
 
         // Get or create the word thought
-        Thought wordThought = theUKS.GetOrAddThought(word, "Word");
-
-        // Create list of letter cognemes
-        List<Thought> letters = new List<Thought>();
+        Thought wordThought = theUKS.GetOrAddThought("w:" + word, "EnglishWord");
+        if (wordThought.LinksTo.FindFirst(x => x.LinkType.Label == "spelled") is not null)
+        {
+            wordThought.Fire();
+            return wordThought; // Spelling already exists, no need to add again
+        }
+        // Create list of letter thoughts
+        List<Thought> letters = new();
         foreach (char c in word.ToUpper())
         {
-            string letterLabel = c.ToString();
-            Thought letter = theUKS.GetOrAddThought(letterLabel, "letter");
+            Thought letter = theUKS.GetOrAddThought("c:" + c, "letter");
             letters.Add(letter);
         }
 
@@ -89,7 +114,8 @@ public class ModuleWord : ModuleBase
         Thought spelledLinkType = theUKS.GetOrAddThought("spelled", "LinkType");
 
         // Add the sequence
-        theUKS.AddSequence(wordThought, spelledLinkType, letters);
+        var t = theUKS.AddSequence(wordThought, spelledLinkType, letters);
+        wordThought.TimeToLive = TimeSpan.FromSeconds(10);
 
         return wordThought;
     }
@@ -104,7 +130,6 @@ public class ModuleWord : ModuleBase
         {
             string[] lines = File.ReadAllLines(filePath);
             foreach (string line in lines)
-            //Parallel.ForEach (lines, line=>
             {
                 string word = line.Trim();
                 var splits = word.Split("\t");
@@ -114,7 +139,6 @@ public class ModuleWord : ModuleBase
                     AddWordSpelling(word);
                     count++;
                 }
-                //    });
             }
         }
         catch (Exception ex)
@@ -123,5 +147,29 @@ public class ModuleWord : ModuleBase
         }
 
         return count;
+    }
+
+    private bool HasActiveMentalModelAndAttention(out ModuleMentalModel mm)
+    {
+        var mods = MainWindow.theWindow?.activeModules;
+        mm = mods?.OfType<ModuleMentalModel>().FirstOrDefault();
+        var attn = mods?.OfType<ModuleAttention>().FirstOrDefault();
+        return mm is not null && attn is not null;
+    }
+
+    public void EnqueueLetters(string added)
+    {
+        foreach (char c in added)
+        {
+            letterQueue.Enqueue(theUKS.GetOrAddThought("c:" + char.ToUpper(c), "letter"));
+        }
+    }
+    public void RebuildQueueFromCurrentText(string current)
+    {
+        letterQueue.Clear();
+        foreach (char c in current.ToUpper())
+        {
+            letterQueue.Enqueue(theUKS.GetOrAddThought("c:" + c, "letter"));
+        }
     }
 }

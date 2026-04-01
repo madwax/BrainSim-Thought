@@ -1,0 +1,31 @@
+﻿<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleSoundInDlg"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BrainSimulator.Modules"
+        mc:Ignorable="d"
+        Title="Sound In" Height="170" Width="360" Background="Gray" ShowInTaskbar="False"  PreviewKeyDown ="Dlg_PreviewKeyDown" PreviewKeyUp="Dlg_PreviewKeyUp" >
+
+    <Grid >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="61*"/>
+            <ColumnDefinition Width="499*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock HorizontalAlignment="Left" Margin="18,10,0,0" FontSize="14" VerticalAlignment="Top" Grid.ColumnSpan="2">
+            <Run FontWeight ="Bold"> Click on Dialog to Activate</Run>
+            <LineBreak/>
+            Keyboard Layout (bottom row(s):
+            <LineBreak/>
+            &#160;&#160;s&#160;&#160;d&#160;&#160;&#160;&#160;&#160;g&#160;&#160;h&#160;&#160;j&#160;&#160;&#160;&#160;&#160;l&#160;&#160;;
+            <LineBreak/>
+            z&#160;&#160;x&#160;&#160;c&#160;&#160;v&#160;&#160;b&#160;&#160;n&#160;&#160;m&#160; ,&#160;&#160;&#160;. &#160;&#160;/
+            <LineBreak/>
+            Notes:
+            <LineBreak/>
+            c&#160;&#160;d&#160;&#160;e&#160;&#160;f&#160;&#160;g&#160;&#160;a&#160;&#160;b&#160;&#160;c&#160;&#160;d&#160;&#160;e
+        </TextBlock>
+
+        <!-- Add these after existing controls -->
+    </Grid>
+</local:ModuleBaseDlg>

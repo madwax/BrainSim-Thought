@@ -11,7 +11,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
 using Pluralize.NET;
 using System;
 using System.Collections.Generic;
@@ -21,8 +20,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
-
 
 namespace BrainSimulator.Modules;
 
@@ -96,7 +93,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         var sourceParts = UKSStatement.Singular(fromString.Split(" ", StringSplitOptions.RemoveEmptyEntries));
         if (sourceParts.Length == 3)
         {
-            Thought r2 = new()
+            Link r2 = new()
             {
                 From = UKSStatement.theUKS.GetOrAddThought(sourceParts[0]),
                 LinkType = UKSStatement.theUKS.GetOrAddThought(sourceParts[1]),
@@ -119,8 +116,8 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
                 foreach (var t in existing)
                 {
                     string toolTipText = "";
-                    foreach (var r in t.LinksTo.Where(x=>x.LinkType.Label != "is-a"))
-                        toolTipText += r.ToString() +  "\n";
+                    foreach (var r in t.LinksTo.Where(x => x.LinkType.Label != "is-a"))
+                        toolTipText += r.ToString() + "\n";
                     if (!string.IsNullOrEmpty(toolTipText))
                         toolTipText = toolTipText[..^1];
 
@@ -142,16 +139,23 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         }
 
 
-        Thought r1 = UKSStatement.AddLink(tSource, linkTypeString, toString);
+        Link r1 = UKSStatement.AddLink(tSource, linkTypeString, toString);
 
+
+        //set the duration
         if (r1 is not null && setConfCB.IsChecked == true)
         {
-            r1.Weight = confidence;
-            r1.TimeToLive = duration;
+            if (r1.UseCount == 1)
+            {
+                r1.Weight = confidence;
+                r1.TimeToLive = duration;
+            }
+            if (r1.From.UseCount == 1) r1.From.TimeToLive = duration;
+            if (r1.LinkType.UseCount == 1) r1.LinkType.TimeToLive = duration;
+            if (r1.To.UseCount == 1) r1.To.TimeToLive = duration;
         }
         if (r1 is not null && eventCB.IsChecked == true)
         {
-            r1.Fire();
             Thought subject = r1.From;
             UKSStatement.theUKS.GetOrAddThought("events", "LinkType");
             Thought previousEvents = subject.LinksTo.FindFirst(x => x.LinkType.Label == "events");
@@ -160,17 +164,17 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             {
                 Thought t1 = UKSStatement.theUKS.CreateFirstElement(subject, r1);
                 subject.RemoveLinks("events");
-                subject.AddLink(t1, "events");
+                subject.AddLink("events", t1);
             }
             else
             {
-                Thought t1 = UKSStatement.theUKS.InsertElement(theSequence, r1);
+                Thought t1 = UKSStatement.theUKS.InsertElement((SeqElement)theSequence, r1);
             }
         }
 
-        CheckThoughtExistence(targetText);
-        CheckThoughtExistence(sourceText);
-        CheckThoughtExistence(linkText);
+        SetTextbosBackground(targetText);
+        SetTextbosBackground(sourceText);
+        SetTextbosBackground(linkText);
 
         tSource = null;
     }
@@ -197,7 +201,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
     }
 
     // Check for thought existence and set background color of the textbox and the error message accordingly.
-    private bool CheckThoughtExistence(object sender)
+    private bool SetTextbosBackground(object sender)
     {
         if (sender is TextBox tb)
         {
@@ -233,7 +237,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
     // thoughtText_TextChanged is called when the thought textbox changes
     private void Text_TextChanged(object sender, TextChangedEventArgs e)
     {
-        CheckThoughtExistence(sender);
+        SetTextbosBackground(sender);
     }
 
     // Check for parent existence and set background color of the textbox and the error message accordingly.

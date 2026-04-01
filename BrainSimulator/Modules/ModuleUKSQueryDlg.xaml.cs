@@ -21,6 +21,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Input;
 using UKS;
 using static BrainSimulator.Modules.ModuleAttributeBubble;
 
@@ -70,6 +71,12 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 }
                 QueryByAttributes();
             }
+            if (b.Content.ToString() == "New")
+            {
+                string newText = typeText1.Text + "," + targetText1.Text;
+                queryText1.Text = newText;
+                QueryByAttributes();
+            }
             if (b.Content.ToString() == "Clear")
             {
                 queryText1.Text = "";
@@ -89,9 +96,9 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         string filter = filterText.Text;
 
         List<Thought> thoughts;
-        List<Thought> links;
+        List<Link> links;
         ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
-        var results1 = UKSQuery.QueryUKS(source, type, target, filter, out thoughts, out links);
+        var results1 = UKSQuery.GetAttributes(source, type, target, filter, out thoughts, out links);
 
         if (results1 is not null)
         {
@@ -131,7 +138,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
                 BtnLearn.IsEnabled = true;
             else
                 BtnLearn.IsEnabled = false;
-            UKSQuery.theUKS.DeleteThought(queryThought);
+            queryThought.Delete();
             return;
         }
         BtnNo.IsEnabled = true;
@@ -149,7 +156,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             UpdateMostRecent(allResults[0].t);
         }
 
-        theUKS.DeleteThought(queryThought);
+        queryThought.Delete();
     }
 
     private Thought CreateTheQueryThought()
@@ -184,7 +191,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
 
                 float conf = .9f;
                 if (relParams.Length > 2) float.TryParse(relParams[2], out conf);
-                Thought r1 = queryThought.AddLink(relTarget, linkType);
+                Thought r1 = queryThought.AddLink(linkType, relTarget);
                 r1.Weight = conf;
             }
         }
@@ -206,7 +213,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         if (queryThought is null)
         {
             SetStatus("Could not create query");
-            theUKS.DeleteThought(queryThought);
+            queryThought.Delete();
             return;
         }
         SetStatus("OK");
@@ -217,9 +224,9 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         if (allResults.Count == 0)
         {
             //case 1: no results, create a new Thought
-            lock (theUKS.AllThoughts)
+            lock (theUKS.AtomicThoughts)
             {
-                theUKS.AllThoughts.Add(queryThought);
+                theUKS.AtomicThoughts.Add(queryThought);
             }
             queryThought.Label = "Unl*";
             queryThought.AddParent("Unknown");
@@ -241,9 +248,9 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         if (matchingTopEntries > 1)
         {
             //add the thought to UKS
-            lock (theUKS.AllThoughts)
+            lock (theUKS.AtomicThoughts)
             {
-                theUKS.AllThoughts.Add(queryThought);
+                theUKS.AtomicThoughts.Add(queryThought);
             }
             queryThought.Label = "Unl*";
             for (i = 0; i < matchingTopEntries; i++)
@@ -273,8 +280,8 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             }
             if (newChildNeeded)
             {
-                lock (theUKS.AllThoughts)
-                    theUKS.AllThoughts.Add(queryThought);
+                lock (theUKS.AtomicThoughts)
+                    theUKS.AtomicThoughts.Add(queryThought);
                 queryThought.Label = "Unl*";
                 Thought r1 = queryThought.AddParent(topResult);
                 r1.Weight = .9f;
@@ -289,7 +296,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         bool bubbleNeeded = false;
         foreach (var r in missingAttributes)
         {
-            var r1 = topResult.AddLink(r.To, r.LinkType);
+            var r1 = topResult.AddLink(r.LinkType, r.To);
             r1.Weight = r.Weight;
             bubbleNeeded = true;
         }
@@ -326,7 +333,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             }
         }
 
-        theUKS.DeleteThought(queryThought);
+        queryThought.Delete();
     }
 
     private void BubbleCommonAttributes(Thought queryThought)
@@ -342,7 +349,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         foreach (var key in attributes)
         {
             if (key.links.Count < 2 || key.links.Count < parent.Children.Count) continue;
-            parent.AddLink(key.target, key.linkType).Weight = .9f;
+            parent.AddLink(key.linkType, key.target).Weight = .9f;
         }
         foreach (var child in parent.Children)
         {
@@ -356,7 +363,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         //remove any attributes which are common to all parents
         for (int i = 0; i < queryThought.LinksTo.Count; i++)
         {
-            Thought r = queryThought.LinksTo[i];
+            Link r = queryThought.LinksTo[i];
             if (r.LinkType.Label == "is-a") continue;
             bool linkIsCommonToAllParents = true;
             foreach (Thought parent in queryThought.Parents)
@@ -369,21 +376,21 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             }
             if (linkIsCommonToAllParents)
             {
-                queryThought.RemoveLink(r.To, r.LinkType);
+                queryThought.RemoveLink(r.LinkType, r.To);
                 i--;
                 //Thread.Sleep(1000);
             }
         }
     }
 
-    List<Thought> GetMissingAttributes(Thought queryThought, Thought foundThought)
+    List<Link> GetMissingAttributes(Thought queryThought, Thought foundThought)
     {
         ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
         var theUKS = UKSQuery.theUKS;
 
-        List<Thought> missingAttributes = new();
+        List<Link> missingAttributes = new();
         var inheritableLinks = theUKS.GetAllLinks(new List<Thought> { foundThought });
-        foreach (Thought r in queryThought.LinksTo)
+        foreach (Link r in queryThought.LinksTo)
         {
             if (inheritableLinks.FindFirst(x => x.LinkType == r.LinkType && x.To == r.To) is null)
                 missingAttributes.Add(r);
@@ -397,7 +404,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         Thought mostRecent = UKSQuery.theUKS.GetOrAddThought("mostRecent", "LinkType");
         //delete any previous mostRecent links
         mostRecent.RemoveLinks("is");
-        mostRecent.AddLink(t, "is");
+        mostRecent.AddLink("is", t);
     }
 
     private void BtnNo_Click(object sender, RoutedEventArgs e)
@@ -415,7 +422,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         {
             SetStatus("Could not create query");
             if (queryThought is not null)
-                theUKS.DeleteThought(queryThought);
+                queryThought.Delete();
             return;
         }
         SetStatus("OK");
@@ -424,7 +431,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         if (allResults.Count == 0)
         {
             if (queryThought is not null)
-                theUKS.DeleteThought(queryThought);
+                queryThought.Delete();
             return;
         }
 
@@ -432,7 +439,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
 
         // does the query thought have all the same links as the result?
         bool allMatch = true;
-        foreach (Thought r in queryThought.LinksTo)
+        foreach (Link r in queryThought.LinksTo)
         {
             if (topResult.HasLink(topResult, r.LinkType, r.To) is null)
             {
@@ -444,7 +451,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         if (allMatch)
         {
             SetStatus("Query matches existing object");
-            theUKS.DeleteThought(queryThought);
+            queryThought.Delete();
             return;
         }
 
@@ -452,9 +459,9 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         {
             //case 1: no results
             //add the thought to UKS
-            lock (theUKS.AllThoughts)
+            lock (theUKS.AtomicThoughts)
             {
-                theUKS.AllThoughts.Add(queryThought);
+                theUKS.AtomicThoughts.Add(queryThought);
             }
             queryThought.Label = "Unl*";
             queryThought.AddParent("Unknown");
@@ -469,7 +476,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             });
             return;
         }
-        theUKS.DeleteThought(queryThought);
+        queryThought.Delete();
         SetStatus("OK");
     }
 
@@ -494,8 +501,8 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
             {
                 if (newParent is null)
                     newParent = UKSQuery.theUKS.GetOrAddThought("newParent", tExisting.Parents[0]);
-                newParent.AddLink(key.target, key.linkType);
-                foreach (Thought r in key.links)
+                newParent.AddLink(key.linkType, key.target);
+                foreach (Link r in key.links)
                 {
                     Thought tChild = (Thought)r.From;
                     Thought rp = tChild.AddParent(newParent);
@@ -511,7 +518,7 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
 
     private static void CountAttributes(Thought tExisting, List<LinkDest> attributes)
     {
-        foreach (Thought r in tExisting.LinksTo)
+        foreach (Link r in tExisting.LinksTo)
         {
             if (r.LinkType == Thought.IsA) continue;
             Thought useLinkType = GetInstanceType(r.LinkType);
@@ -538,22 +545,22 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         }
         foreach (var r1 in r)
         {
-            if (r1 is ValueTuple<Thought, float> tuple)
+            if (r1 is ValueTuple<Link, float> tuple)
             {
                 var r3 = tuple.Item1;
                 var conf = tuple.Item2;
-                if (r3.To?.LinkType?.Label == "NXT")
+                if ((r3.To as Link)?.LinkType?.Label == "NXT")
                 {
                     ModuleUKSQuery UKSQuery = (ModuleUKSQuery)ParentModule;
                     var theUKS = UKSQuery.theUKS;
-                    var seq = theUKS.FlattenSequence(r3.To);
+                    var seq = theUKS.FlattenSequence((SeqElement)r3.To);
                     foreach (Thought t in seq) resultString += t.Label + " ";
                     resultString += $"{conf.ToString("0.00")}\n";
                 }
                 else
                     resultString += $"{r3.From.ToString()} {r3.LinkType.ToString()} {r3.To.ToString()}  ({conf.ToString("0.00")})\n";
             }
-            else if (r1 is Thought r2)
+            else if (r1 is Link r2)
             {
                 if (noSource && fullCB.IsChecked == false)
                     resultString += $"{r2.LinkType?.ToString()} {r2.To.ToString()}  ({r2.Weight.ToString("0.00")})\n";
@@ -581,6 +588,15 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         return theSource;
     }
 
+    private void Text_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            string newText = typeText1.Text + "," + targetText1.Text;
+            queryText1.Text = newText;
+            QueryByAttributes();
+        }
+    }
     // thoughtText_TextChanged is called when the thought textbox changes
     private void Text_TextChanged(object sender, TextChangedEventArgs e)
     {
@@ -612,4 +628,5 @@ public partial class ModuleUKSQueryDlg : ModuleBaseDlg
         }
         return null;
     }
+
 }

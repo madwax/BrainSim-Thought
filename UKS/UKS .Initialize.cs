@@ -10,29 +10,50 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
+using System.Xml;
+
 namespace UKS;
 
 public partial class UKS
 {
+    public void CreateMinimumStructureForTests()
+    {
+        AtomicThoughts.Clear();
+        ClearSequenceCache();
+        ThoughtLabels.ClearLabelList();
+        AddThought("Thought", null);
+        Thought isA = AddThought("is-a", null);
+        Thought linkType = AddThought("LinkType", "Thought");
+        isA.AddParent(linkType);
+        GetOrAddThought("Unknown", "Thought");
+        GetOrAddThought("VLU", "LinkType");
+        GetOrAddThought("NXE", "LinkType");
+        GetOrAddThought("FRST", "LinkType");
+    }
+
 
     public void CreateInitialStructure()
     {
         //this hack is needed to preserve the info relating to module layout
-        for (int i = 0; i < AllThoughts.Count; i++)
+        for (int i = 0; i < AtomicThoughts.Count; i++)
         {
-            Thought t = AllThoughts[i];
+            Thought t = AtomicThoughts[i];
             if (t.Label == "BrainSim") continue;
             if (t.HasAncestor("BrainSim")) continue;
             if (t.Label == "is-a") continue;
             if (t.Label == "hasAttribute") continue;
 
-            DeleteThought(t);
+            t.Delete();
             i--;
         }
 
+        //This deletes all the labels then adds back in the ones still in the AtomicThoughts list
+
         ThoughtLabels.ClearLabelList();
-        foreach (Thought t in AllThoughts)
+        Thought.ClearRecentlyFiredQueue();
+        foreach (Thought t in AtomicThoughts)
             ThoughtLabels.AddThoughtLabel(t.Label, t);
+        ClearSequenceCache();
 
         //Bootstrapping is needed for is-a, Unknown, and the root: Thought
         //because AddStatement and GetOrAddThing won't work without them
@@ -66,7 +87,6 @@ public partial class UKS
         AddStatement("is-part-of", "is-a", "LinkType");
         AddStatement("contains", "inverseOf", "is-part-of");
         AddStatement("has", "is-a", "LinkType");
-        AddStatement("not", "is-a", "LinkType");
 
         //properties are internal capabilities of Thoughts
         AddStatement("Property", "is-a", "LinkType");
@@ -112,6 +132,7 @@ public partial class UKS
         AddStatement("AND", "is-a", "ClauseType");
         AddStatement("OR", "is-a", "ClauseType");
         AddStatement("NOT", "is-a", "ClauseType");
+        AddStatement("NO", "is-a", "ClauseType");
         AddStatement("FRST", "is-a", "ClauseType");
 
         //Numbers
@@ -128,6 +149,8 @@ public partial class UKS
         AddStatement("isSimilarTo", "hasProperty", "isCommutative");
         AddStatement("hasDigit", "is-a", "has");
 
+
+        //put in letters
 
         //put in digits
         GetOrAddThought("some", "number");

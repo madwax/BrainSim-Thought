@@ -71,7 +71,7 @@ namespace BrainSimulator.Modules
             Thought theRoot = parent.theUKS.Labeled(root);
             foreach (Thought t in theRoot.Descendants)
             {
-                foreach (Thought r in t.LinksTo)
+                foreach (Link r in t.LinksTo)
                 {
                     if (r.From == theRoot) continue;
                     string label = r.LinkType.Label;

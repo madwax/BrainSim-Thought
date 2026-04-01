@@ -59,19 +59,40 @@ public partial class ModuleWordDlg : ModuleBaseDlg
     {
         if (_isTextChangingInternally)
             return;
+        if (sender is null || e is null) return;
+
+        var module = ParentModule as ModuleWord;
+        if (module is null) return;
+
+        foreach (var change in e.Changes)
+        {
+            // change.Offset: starting index
+            // change.AddedLength: chars added
+            // change.RemovedLength: chars removed
+            if (change.AddedLength > 0)
+            {
+                string added = txtWord.Text.Substring(change.Offset, change.AddedLength);
+                module.EnqueueLetters(added);
+            }
+            if (change.RemovedLength > 0)
+            {
+                // handle removals (e.g., rebuild queue or remove that range)
+                module.RebuildQueueFromCurrentText(txtWord.Text);
+            }
+        }
 
         string searchText = txtWord.Text;
         if (!string.IsNullOrEmpty(searchText))
         {
             //get the first suggestion
-            var module = ParentModule as ModuleWord;
-            if (module is null) return;
             string suggestion = module.GetWordSuggestion(txtWord.Text);
             //get the real label to get the capitalization right
-            if (suggestion is not null) suggestion = ThoughtLabels.GetThought(suggestion)?.Label;
+            if (suggestion is not null) suggestion = ThoughtLabels.GetThought("w:" + suggestion)?.Label;
 
             if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
             {
+                //this sets up the suggesstion in the textbox so it can be easily overwritten
+                suggestion = suggestion[2..];
                 int caretIndex = txtWord.CaretIndex;
                 _isTextChangingInternally = true;
                 txtWord.Text = suggestion;
@@ -99,9 +120,9 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         var module = ParentModule as ModuleWord;
         if (module != null)
         {
-            ModuleWord.AddWordSpelling(word);
+            module.AddWordSpelling(word);
             SetStatus($"Spelling added: {word}", Colors.Black);
-            txtWord.Clear();
+            //txtWord.Clear();
             txtWord.Focus();
         }
         else

@@ -11,8 +11,74 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using static UKS.UKS;
 
 namespace UKS;
+public class SeqElement : Thought
+{
+    /// <summary>
+    /// Default constructor for sequence element placeholder.
+    /// </summary>
+    public SeqElement() { }
+    public SeqElement? FRST
+    {
+        get
+        {
+            Link? nxt = LinksToWriteable.FindFirst(x => x.LinkType?.Label == "FRST");
+            return nxt?.To as SeqElement;
+        }
+        set
+        {
+            // Remove existing links
+            RemoveLinks("FRST");
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("FRST", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public SeqElement? NXT
+    {
+        get
+        {
+            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "NXT");
+            return nxt?.To as SeqElement;
+        }
+        set
+        {
+            // Remove existing links
+            RemoveLinks("NXT");
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("NXT", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public Thought? VLU
+    {
+        get
+        {
+            Link? nxt = LinksTo.FindFirst(x => x.LinkType?.Label == "VLU");
+            return nxt?.To;
+        }
+        set
+        {
+            // Remove existing links ??
+            RemoveLinks("VLU");  //Removing this would allow for multiple values per element , but would require changes to the search and flattening functions
+            if (value is null) return;
+
+            Thought nxtType = theUKS.GetOrAddThought("VLU", "LinkType");
+            AddLink(nxtType, value);
+        }
+    }
+    public override string ToString()
+    {
+        string retVal = "";
+        var valuList = theUKS.FlattenSequence(this);
+        retVal = "^" + string.Join(" ", valuList);
+        return retVal;
+    }
+}
 
 public partial class UKS
 {
@@ -30,13 +96,13 @@ public partial class UKS
     // seq1 ->NXT -> seq2
     // seq1 ->FRST-> seq0
     // seq1 ->VLU--> A
-    // seq2 ->NXT -> null  (or has no NXT entry)
     // seq2 ->FRST-> seq0
     // seq2 ->VLU--> T
     // NOTE: the elements seq* need not have labels at all, they are just used here for clarity
     // each seq* element must also have a FRST releationship back to the owner Thought
     // The Thought ToString() method will automatically follow the sequences and return cat->spelled->^cat
     // VLU targets may be other sequences
+    //the last element has no NXT link
 
     // A few Special cases can be detected by comparing targets
     // Is a sequence element:  Has a FRST link
@@ -54,38 +120,33 @@ public partial class UKS
     /// <returns>True if the thought has a FRST link; otherwise false.</returns>
     public bool IsSequenceElement(Thought t)
     {
-        return (t?.LinksTo.FindFirst(x => x.LinkType?.Label == "FRST") != null);
+        return (t is SeqElement);
     }
-    private bool IsSequenceFirstElement(Thought t)
+    public bool IsSequenceFirstElement(Thought t)
     {
-        if (!IsSequenceElement(t)) return false;
-        Thought t1 = GetFirstElement(t);
+        if (t is not SeqElement s) return false;
+        SeqElement t1 = s.FRST;
         return object.ReferenceEquals(t1, t); //use this to check for same object becaue == is be overloaded
     }
-    private bool IsSequenceLastElement(Thought t)
+    private bool IsSequenceLastElement(SeqElement s)
     {
-        if (!IsSequenceElement(t)) return false;
-        return (t.To is null);
+        return (s.NXT is null);
     }
-    private Thought GetNextElement(Thought t)
+    private SeqElement GetNextElement(SeqElement s)
     {
-        Thought retVal = null;
-        retVal = t?.LinksTo.FindFirst(x => x.LinkType.Label == "NXT")?.To;
-        return retVal;
+        return s.NXT;
     }
-    private Thought GetFirstElement(Thought t)
+    private SeqElement GetFirstElement(SeqElement s)
     {
-        if (!IsSequenceElement(t)) return null;
-        return t?.LinksTo.FindFirst(x => x.LinkType.Label == "FRST")?.To;
+        return s.FRST;
     }
-    private Thought GetLastlement(Thought t)
+    private SeqElement GetLastlement(SeqElement s)
     {
-        if (!IsSequenceElement(t)) return null;
-        Thought retVal = t;
-        Thought next = t;
+        SeqElement retVal = s;
+        SeqElement next = s.NXT;
         while (next is not null)
         {
-            next = GetNextElement(retVal);
+            next = retVal.NXT;
             if (next is not null) retVal = next;
         }
         return retVal;
@@ -96,23 +157,14 @@ public partial class UKS
     /// </summary>
     /// <param name="t">Sequence element to read.</param>
     /// <returns>The linked VLU value, or null if none.</returns>
-    public Thought GetElementValue(Thought t)  //assuming there is only one
+    public Thought GetElementValue(SeqElement s)  //assuming there is only one
     {
-        if (!IsSequenceElement(t)) return null;
-        Thought retVal = t?.LinksTo.FindFirst(x => x.LinkType.Label == "VLU")?.To;
+        if (s is null) return null;
+        Thought retVal = s.LinksTo.FindFirst(x => x.LinkType?.Label == "VLU")?.To;
         return retVal;
-
     }
-    private List<Thought> GetElementValues(Thought t)  //there could be more than one
+    public int GetSequenceLength(SeqElement firstNode)
     {
-        if (!IsSequenceElement(t)) return null;
-        var retVal = t?.LinksTo.Where(x => x.LinkType.Label == "VLU").Select(x => x.To)?.ToList();
-        return retVal;
-
-    }
-    private int GetSequenceLength(Thought firstNode)
-    {
-        if (firstNode is null) return 0;
         return FlattenSequence(firstNode).Count;
     }
 
@@ -122,24 +174,25 @@ public partial class UKS
     /// <param name="prevElementIn">Current first sequence element.</param>
     /// <param name="value">Value to insert as the new first element.</param>
     /// <returns>The (updated) first element of the sequence.</returns>
-    public Thought InsertElement(Thought prevElementIn, Thought value)
+    public SeqElement InsertElement(SeqElement prevElementIn, Thought value)
     {
-        Thought first = prevElementIn;
+        SeqElement first = prevElementIn;
         if (IsSequenceFirstElement(prevElementIn))
         {
             //this is a bit tricky...
             //it actually adds a 2nd element but then copies old 1st element values to the 2nd element and puts the new value on the old first
             //why? all the FRST links and external pointers to the sequence will still be correct without modification
-            Thought newNode = new Thought() { Label = prevElementIn.Label + "*" };  //the label will auto-increment.
-            newNode.AddLink(first, "FRST");
-            newNode.AddLink(first.LinksTo.FindFirst(x => x.LinkType.Label == "VLU").To, "VLU");
-            Thought? existingNXT = first.LinksTo.FindFirst(x => x.LinkType.Label == "NXT")?.To;
-            if (existingNXT is not null)
-                newNode.AddLink(existingNXT, "NXT");
-            first.RemoveLinks("VLU");
-            first.RemoveLinks("NXT");
-            first.AddLink(value, "VLU");
-            first.AddLink(newNode, "NXT");
+            SeqElement newNode = new()
+            {
+                Label = prevElementIn.Label + "*", //the label will auto-increment.
+                FRST = first,
+                NXT = first.NXT,
+            };
+            Thought origValue = GetElementValue(first);
+            newNode.AddLink("VLU", origValue);
+            first.RemoveLink("VLU", origValue);
+            first.AddLink("VLU", value);
+            first.NXT = newNode;
         }
         else
         {
@@ -148,62 +201,104 @@ public partial class UKS
         return first;
     }
 
-    //Adds a new element to the end of the sequence
-    private Thought AddElement(Thought prevElementIn, Thought value)
+    //Adds a new element after prevElementIn) and links its value. Returns the new element.
+    public SeqElement AddElement(SeqElement prevElement, Thought value)
     {
-        Thought prevElement = GetLastlement(prevElementIn);
-        Thought newNode = new Thought() { Label = prevElement.Label + "*" };  //the label will auto-increment.
-        newNode.AddLink(GetFirstElement(prevElement), "FRST");
-        newNode.AddLink(value, "VLU");
-        prevElement.AddLink(newNode, "NXT");
+        SeqElement newNode = new()
+        {
+            Label = prevElement.Label + "*",
+            FRST = prevElement.FRST,
+            NXT = prevElement.NXT,
+        };  //the label will auto-increment.
+        newNode.AddLink("VLU", value);
+        prevElement.NXT = newNode;
         return newNode;
     }
     /// <summary>
     /// Creates the first sequence element for a source Thought and links its value.
     /// </summary>
-    public Thought CreateFirstElement(Thought source, Thought value)
+    public SeqElement CreateFirstElement(Thought source, Thought value)
     {
-        Thought firstNode = new Thought() { Label = source.Label.ToLower() + "-seq0" };
-        firstNode.AddLink(firstNode, "FRST"); // Points to source as first node
-        firstNode.AddLink(value, "VLU");
+        SeqElement firstNode = new()
+        {
+            Label = source?.Label.ToLower() + "-seq0",
+        };
+        firstNode.AddLink("VLU", value);
+        firstNode.FRST = firstNode; //points to itself as the first element
         return firstNode;
     }
-    private void DeleteSequence(Thought t)
+    public void DeleteSequence(SeqElement s)
     {
         //make sure there's only one reference to this sequence
-        if (!IsSequenceFirstElement(t)) return;
-        if (t.LinksFrom.Count(x => x.LinkType.Label != "FRST") > 1) return;
+        if (!IsSequenceFirstElement(s)) return;
+        if (s.LinksFrom.Count(x => x.LinkType.Label != "FRST") > 1) return;
+        if (!s.Label.StartsWith("thequery"))  //queries don't have cache entries
+        {        //delete it from the cache
+            var sequenceContent = FlattenSequence(s);
+            SequenceCache.Remove(sequenceContent);
+        }
         //follow the chain and delete the elements.
-        Thought current = t;
-        Thought next = t.To;
+        SeqElement current = s;
         while (current is not null)
-        {  //This replicates DeleteThought but eliminates problems of re-entrance
-            next = current.To;
-            foreach (Thought r in current.LinksTo)
-                t.RemoveLink(r);
-            foreach (Thought r in current.LinksFrom)
-                r.From.RemoveLink(r);
+        {
+            //This replicates DeleteThought but eliminates problems of re-entrance
+            SeqElement next = GetNextElement(current);
+            //recursively delete subsequences which are no longer used anywhere else
+            var subsequences = current.VLU?.LinksFrom.Where(x => x.LinkType.Label != "FRST");
+            if (subsequences?.Count() == 1 && subsequences.First().To is SeqElement s1)
+                DeleteSequence(s1);
+            foreach (Link lnk in current.LinksTo)
+                current.RemoveLink(lnk);
             ThoughtLabels.RemoveThoughtLabel(current.Label);
-            lock (AllThoughts)
-                AllThoughts.Remove(current);
+            lock (AtomicThoughts)
+                AtomicThoughts.Remove(current);
             current = next;
         }
     }
-    private Thought CreateRawSequence(List<Thought> targets, string baseLabel = "seq*")
+    //This unconditionally creates a (no-subsequenccs) sequence of Thoughts
+    private SeqElement CreateRawSequence(List<Thought> targets, string baseLabel = "seq*")
     {
         if (targets.Count < 1) return null;
         Thought newTarget = targets[0];
 
-        Thought firstElement = CreateFirstElement(baseLabel, newTarget);
-        Thought prevElement = firstElement;
+        SeqElement firstElement = CreateFirstElement(baseLabel, newTarget);
+        SeqElement prevElement = firstElement;
 
         for (int i = 1; i < targets.Count; i++)
         {
             newTarget = targets[i];
-            Thought newElement = AddElement(prevElement, newTarget);
+            SeqElement newElement = AddElement(prevElement, newTarget);
             prevElement = newElement;
         }
         return firstElement;
+    }
+
+    //the sequence cache
+    private Dictionary<IReadOnlyList<Thought>, Thought> SequenceCache = new(new ThoughtListComparer());
+    public void ClearSequenceCache()
+    {
+        SequenceCache.Clear();
+    }
+
+    // Reference-only comparer for a list of Thought
+    sealed class ThoughtListComparer : IEqualityComparer<IReadOnlyList<Thought>>
+    {
+        public bool Equals(IReadOnlyList<Thought> sequenceContent, IReadOnlyList<Thought> y)
+        {
+            if (ReferenceEquals(sequenceContent, y)) return true;
+            if (sequenceContent is null || y is null || sequenceContent.Count != y.Count) return false;
+            for (int i = 0; i < sequenceContent.Count; i++)
+                if (!ReferenceEquals(sequenceContent[i], y[i])) return false;
+            return true;
+        }
+
+        public int GetHashCode(IReadOnlyList<Thought> list)
+        {
+            if (list is null) return 0;
+            var hc = new HashCode();
+            foreach (var t in list) hc.Add(t); // reference-based hash
+            return hc.ToHashCode();
+        }
     }
 
     /// <summary>
@@ -214,40 +309,36 @@ public partial class UKS
     /// <param name="targets">Targets in order; can be sequence start nodes.</param>
     /// <param name="baseWeight">Base weight for the links (currently unused).</param>
     /// <returns>The first node of the created or reused sequence, or null if insufficient targets.</returns>
-    public Thought AddSequence(Thought source, Thought linkType, List<Thought> targets, float baseWeight = 1.0f)
+    public SeqElement AddSequence(Thought source, Thought linkType, List<Thought> targets, float baseWeight = 1.0f)
     {
         if (targets.Count < 1) return null;  //a sequence must have at least 2 elements
 
         //clear out any existing sequence links of this type
         source.RemoveLinks(linkType);  //TODO delete the sequence
 
-        List<Thought> resolvedTargets = new();
-        //do any of the targets point to thoughts which have sequences of the same LinkType
-        foreach (Thought target in targets)
+        List<Thought> resolvedTargets = new(targets);
+
+        // does sequence one already exist?
+        var existingSequences = RawSearchExact(resolvedTargets);
+        foreach (var t in existingSequences)
         {
-            Thought t1 = target.LinksTo.FindFirst(x => x.LinkType == linkType)?.To;
-            if (!IsSequenceElement(target) && IsSequenceElement(t1))
-                resolvedTargets.Add(t1);
-            else
-                resolvedTargets.Add(target);
+            if (IsSequenceFirstElement(t.seqNode) && GetSequenceLength(t.seqNode) == targets.Count)
+            {
+                source.AddLink(linkType, t.seqNode);
+                return t.seqNode;
+            }
         }
 
-        //check for any existing sequences which begins with the targets[stargIndes]
+
+        //check for any existing sequences which begins with the targets[startIndes]
         (Thought seqStart, int length) FindExistingSubsequence(int startIndex)
         {
-            int remaining = targets.Count - startIndex;
-            for (int len = remaining; len >= 2; len--)
+            int remaining = resolvedTargets.Count - startIndex;
+            for (int len = remaining; len > 1; len--)
             {
-                List<Thought> slice = targets.GetRange(startIndex, len);
-                var matches = HasSequence(slice, linkType);
-                foreach (var match in matches)
-                {
-                    Thought seqStartNode = match.r?.To;
-                    if (seqStartNode is null || !IsSequenceElement(seqStartNode)) continue;
-                    if (match.confidence < 1.0f) continue;
-                    if (GetSequenceLength(seqStartNode) != len) continue; // exact-length match
-                    return (seqStartNode, len);
-                }
+                var testSequence = resolvedTargets.GetRange(startIndex, len);
+                if (SequenceCache.TryGetValue(testSequence, out Thought existing) && existing is not null)
+                    return (existing, len);
             }
             return (null, 0);
         }
@@ -264,24 +355,28 @@ public partial class UKS
                 continue;
             }
         }
-
-        // does this one already exist?
-        var existingSequences = RawSearch(resolvedTargets);
-        foreach (var t in existingSequences)
-        {
-            if (IsSequenceFirstElement(t.seqNode) && IsSequenceLastElement(t.curPos.Current))
-            {
-                source.AddLink(t.seqNode, linkType);
-                return t.seqNode;
-            }
-        }
-
         //Finally, create the sequence and link to it
-        Thought rawSequence = CreateRawSequence(resolvedTargets, source.Label);
-        source.AddLink(rawSequence, linkType);
+        SeqElement rawSequence = CreateRawSequence(resolvedTargets, source.Label);
+        source.AddLink(linkType, rawSequence);
+        var newSequence = FlattenSequence(rawSequence);
+        SequenceCache[newSequence] = rawSequence;
         return rawSequence;
     }
 
+    public List<(Thought result, float confidence)> HasSequence2(List<Thought> targets, Thought linkType,
+    bool skipPlusEntries = false, bool mustMatchFirst = false, bool mustMatchLast = false, bool circularSearch = false, bool allowOutOfOrder = false)
+    {
+        var result1 = HasSequence(targets, linkType, skipPlusEntries = false, mustMatchFirst = false, mustMatchLast = false, circularSearch = false, allowOutOfOrder = false);
+        List<(Thought result, float confidence)> retVal = new();
+        foreach (var result in result1)
+        {
+            foreach (Link l in result.seqNode.LinksFrom.Where(x=>x.LinkType == linkType))
+            {
+                retVal.Add(new(l.From,result.confidence));
+            }
+        }
+        return retVal;
+    }
     //TODO: make mustMatchLast, circularSearch & allowOutOfOrder work
     /// <summary>
     /// Finds sequences matching the ordered targets and returns candidate links with confidence scores.
@@ -293,8 +388,8 @@ public partial class UKS
     /// <param name="circularSearch">Reserved for circular search (not implemented).</param>
     /// <param name="allowOutOfOrder">Reserved for out-of-order search (not implemented).</param>
     /// <returns>List of candidate links with confidence values.</returns>
-    public List<(Thought r, float confidence)> HasSequence(List<Thought> targets, Thought linkType,
-        bool mustMatchFirst = false, bool mustMatchLast = false, bool circularSearch = false, bool allowOutOfOrder = false)
+    public List<(SeqElement seqNode, float confidence)> HasSequence(List<Thought> targets, Thought linkType,
+        bool skipPlusEntries = false, bool mustMatchFirst = false, bool mustMatchLast = false, bool circularSearch = false, bool allowOutOfOrder = false)
     {
         //this function searches the UKS for sequences matching the specified pattern in targets. 
 
@@ -321,18 +416,31 @@ public partial class UKS
         // a perfect match will have a Final Next link back to the source Thought and the source thought will have a link of linkType to the first element in the sequence
         // return the list of source thoughts and their confidence values
 
-        List<(Thought r, float confidence)> retVal = new();
+        List<(SeqElement seqNode, float confidence)> retVal = new();
 
         // Handle edge cases
-        if (targets is null || targets.Count == 0) return retVal;
+        if (targets is null || targets.Count <2) return retVal;
         if (targets[0] is null) return retVal;
 
         // Step 1: Find all sequence nodes that have targets[0] as their VLU
         // These are potential starting points for matching sequences
 
         // When this returns, seqNode is the first matching node.  curPos.Current is the last
-        List<(Thought seqNode, IEnumerator<Thought>? curPos, int matchCount)> searchCandidates = RawSearch(targets);
+        List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> searchCandidates = RawSearchExact(targets, skipPlusEntries);
         if (searchCandidates.Count == 0) return retVal;
+
+        //Do we want to follow up the chain of referrers?
+        if (true)
+        {
+            for (int j = 0; j < searchCandidates.Count; j++)
+            {
+                SeqElement current = searchCandidates[j].seqNode;
+                var referrers = current.FRST.LinksFrom.Where(x => x.LinkType.Label == "VLU");
+                foreach (Link referrer in referrers)
+                    searchCandidates.Add(new((SeqElement)referrer.From, null, searchCandidates[j].matchCount));
+            }
+        }
+
 
         if (mustMatchFirst)
         {
@@ -342,9 +450,7 @@ public partial class UKS
                     searchCandidates.RemoveAt(j);
                     j--;
                 }
-            searchCandidates = searchCandidates
-                .Where(c => IsSequenceFirstElement(c.seqNode))
-                .ToList();
+            searchCandidates = searchCandidates.Where(c => IsSequenceFirstElement(c.seqNode)).ToList();
         }
 
 
@@ -363,19 +469,18 @@ public partial class UKS
         foreach (var candidate in searchCandidates)
         {
             // Find FRST link from the candidate node to get the sequence's first node
-            Thought firstSeqNode = (Thought)candidate.seqNode.LinksTo.FindFirst(r => r.LinkType?.Label == "FRST")?.To;
+            SeqElement firstSeqNode = (SeqElement)candidate.seqNode.FRST;
 
             if (firstSeqNode is null) continue;
 
             // Find all Thoughts that reference this sequence (have links pointing to firstSeqNode)
-            var referencingThoughts = firstSeqNode.LinksFrom
-                ?.Where(r => ((linkType is null || r.LinkType == linkType) && r.LinkType?.Label != "FRST"))
+            var referencingThoughts = firstSeqNode.LinksFrom?.Where(r => (linkType is null || r.LinkType == linkType))
                 .ToList();
 
             // Recursively add sequences that reference these
             if (referencingThoughts is not null)
             {
-                var allReferencingThoughts = new List<Thought>(referencingThoughts);
+                var allReferencingThoughts = new List<Link>(referencingThoughts);
                 AddReferencingSequences(referencingThoughts, linkType, allReferencingThoughts);
                 referencingThoughts = allReferencingThoughts;
             }
@@ -386,7 +491,7 @@ public partial class UKS
                 {
                     if (refRel.From is not null)
                     {
-                        firstSeqNode = refRel.To;
+                        firstSeqNode = (SeqElement)refRel.To;
                         // Calculate confidence
                         float confidence;
                         if (candidate.matchCount == targets.Count)
@@ -407,7 +512,7 @@ public partial class UKS
                         }
 
                         // Add the link from the referencing Thought to the sequence
-                        retVal.Add((refRel, confidence));
+                        retVal.Add(new(firstSeqNode, confidence));
                     }
                 }
             }
@@ -415,7 +520,7 @@ public partial class UKS
 
         // Sort by confidence descending and remove duplicates
         retVal = retVal
-            .GroupBy(x => x.r)
+            .GroupBy(x => x.seqNode)
             .Select(g => g.OrderByDescending(x => x.confidence).First())
             .OrderByDescending(x => x.confidence)
             .ToList();
@@ -423,12 +528,86 @@ public partial class UKS
         return retVal;
     }
 
-    // searches for a sequence given a list of targets
-    private List<(Thought seqNode, IEnumerator<Thought>? curPos, int matchCount)> RawSearch(List<Thought> targets)
+    public List<(SeqElement seqNode, float confidence)> RawAnchoredFuzzyMatch(List<Thought> targets)
     {
-        List<(Thought seqNode, IEnumerator<Thought>? curPos, int matchCount)> searchCandidates = new();
-        if (targets is null || targets.Count < 2) return searchCandidates;
+        List<(SeqElement seqNode, float confidence)> matches = new();
+        if (targets is null || targets.Count < 2) return matches;
 
+        //get direct sequences
+        var candidateNodes = targets[0].LinksFrom
+            .Where(r => r.LinkType?.Label == "VLU" && IsSequenceFirstElement(r.From))
+            .Select(r => r.From)
+            .ToList();
+        //add in sequences which refer to this at the beginning
+        for (int i = 0; i < candidateNodes.Count; i++)
+        {
+            Thought candidate = candidateNodes[i];
+            var referrers = candidate.LinksFrom.Where(x => x.LinkType.Label == "VLU" && IsSequenceFirstElement(x.From));
+            foreach (Link referrer in referrers)
+                candidateNodes.Add(referrer.From);
+        }
+        ;
+
+        //see which of the candidates qualifies and get the scores
+        foreach (var candidate in candidateNodes)
+        {
+            if (candidate is not SeqElement seqNode) continue;
+
+            var flat = FlattenSequence(seqNode);
+            if (flat.Count < targets.Count - 1 || flat.Count > targets.Count + 1) continue;
+            if (!ReferenceEquals(flat.LastOrDefault(), targets.Last())) continue; // anchor last
+
+            var seqInner = flat.Skip(1).Take(Math.Max(0, flat.Count - 2)).ToList();
+            var targetInner = targets.Skip(1).Take(Math.Max(0, targets.Count - 2)).ToList();
+
+            int missingTargets = targetInner.Count(t => !seqInner.Any(s => ReferenceEquals(s, t)));
+            int extraSeq = seqInner.Count(s => !targetInner.Any(t => ReferenceEquals(t, s)));
+            if (missingTargets > 2 || extraSeq > 2) continue;
+
+            int matchedInternal = targetInner.Count - missingTargets;
+            int targetCountInner = Math.Max(1, targetInner.Count); // avoid div/0
+
+            // Coverage with extra penalty
+            float matchedRatio = (float)matchedInternal / targetCountInner;
+            float extraPenalty = (float)extraSeq / (extraSeq + targetCountInner); // 0..1
+            float coverageScore = matchedRatio * (1f - extraPenalty); // 0..1
+
+            // Order bonus: fraction of in-order pairs among matched elements
+            float orderScore = ComputeOrderPairFraction(flat, targets);
+
+            // Blend: favor coverage slightly, order strongly influences perfect ranking
+            float confidence = 0.6f * coverageScore + 0.4f * orderScore;
+            if (confidence > 0)
+                matches.Add((seqNode, confidence));
+        }
+
+        return matches
+            .OrderByDescending(m => m.confidence)
+            .ToList();
+    }
+
+    private static float ComputeOrderPairFraction(List<Thought> seq, List<Thought> targets)
+    {
+        float count = 0;
+        for (int j = 0; j < seq.Count - 1; j++)
+        {
+            for (int i = 0; i < targets.Count - 1; i++)
+            {
+                if (ReferenceEquals(targets[i], seq[j]) && ReferenceEquals(targets[i + 1], seq[j + 1]))
+                {
+                    count++;
+                    break;
+                }
+            }
+        }
+        //ignoring the possibility that a pair might occur multiple times.
+        float score = count / (Math.Max(seq.Count, targets.Count) - 1);
+        return score;
+    }
+    public List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> RawSearchExact(List<Thought> targets, bool skipPlusEntries = false)
+    {
+        List<(SeqElement seqNode, IEnumerator<SeqElement>? curPos, int matchCount)> searchCandidates = new();
+        if (targets is null || targets.Count < 2) return searchCandidates;
         //Step 1: initialize enuerators for each candidate sequence
         var candidateNodes = targets[0].LinksFrom
             .Where(r => r.LinkType?.Label == "VLU")
@@ -436,8 +615,8 @@ public partial class UKS
             .ToList();
         foreach (var candidate in candidateNodes)
         {
-            var enumerator = EnumerateSequenceElements(candidate.seqNode).GetEnumerator();
-            searchCandidates.Add(new(candidate.seqNode, enumerator, 1));
+            var enumerator = EnumerateSequenceElements((SeqElement)candidate.seqNode, skipPlusEntries).GetEnumerator();
+            searchCandidates.Add(new((SeqElement)candidate.seqNode, enumerator, 1));
             searchCandidates.Last().curPos.MoveNext();
         }
 
@@ -449,24 +628,23 @@ public partial class UKS
 
             for (int j = 0; j < searchCandidates.Count; j++)
             {
-                Thought? nextThought = null;
+                SeqElement? nextThought = null;
                 Thought theValue = null;
-                do //skip over "+" placeholders
+                //have we reached the end of the current subsequence?
+                if (!searchCandidates[j].curPos.MoveNext())
                 {
-                    //have we reached the end of the current subsequence?
-                    if (!searchCandidates[j].curPos.MoveNext())
+                    var referrers = GetAllFollowingNodes(searchCandidates[j].seqNode);
+                    foreach (var referrer in referrers)
                     {
-                        var referrers = GetAllFollowingNodes(searchCandidates[j].seqNode);
-                        foreach (var referrer in referrers)
-                        {
-                            var x = searchCandidates.FindFirst(x => x.seqNode == referrer);
-                            if (x.seqNode is null)
-                                searchCandidates.Add(new(referrer, EnumerateSequenceElements(referrer).GetEnumerator(), searchCandidates[j].matchCount));
-                        }
-                        break;
+                        var x = searchCandidates.FindFirst(x => x.seqNode == referrer);
+                        if (x.seqNode is null)
+                            searchCandidates.Add(new(referrer, EnumerateSequenceElements(referrer, skipPlusEntries).GetEnumerator(), searchCandidates[j].matchCount));
                     }
-                    nextThought = searchCandidates[j].curPos.Current;
-                } while (GetElementValue(nextThought).Label == "+");
+                    searchCandidates.RemoveAt(j);
+                    j--;
+                    continue;
+                }
+                nextThought = searchCandidates[j].curPos.Current;
                 // Check if the next thought matches the current target
                 if (GetElementValue(nextThought) != currentTarget)
                 {
@@ -481,23 +659,22 @@ public partial class UKS
                 }
             }
         }
-
         return searchCandidates;
     }
 
-    private List<Thought> GetAllFollowingNodes(Thought node)
+    private List<SeqElement> GetAllFollowingNodes(SeqElement node)
     {
-        List<Thought> retVal = new();
+        List<SeqElement> retVal = new();
         //if this is a subsequence, get the caller(s)
-        Thought startOfSequence = GetFirstElement(node);
-        List<Thought> referrers = startOfSequence.LinksFrom.Where(x => x.LinkType.Label == "VLU").ToList();
+        SeqElement startOfSequence = GetFirstElement(node);
+        List<Link> referrers = startOfSequence.LinksFrom.Where(x => x.LinkType.Label == "VLU").ToList();
         foreach (var referrer in referrers)
         {
-            Thought nextLocation = referrer.From.To;
+            SeqElement nextLocation = (referrer.From as SeqElement)?.NXT;
             if (nextLocation is not null)
                 retVal.Add(nextLocation);
             else
-                retVal.AddRange(GetAllFollowingNodes(referrer.From));
+                retVal.AddRange(GetAllFollowingNodes((SeqElement)referrer.From));
         }
         return retVal;
     }
@@ -505,15 +682,14 @@ public partial class UKS
     /// <summary>
     /// Flatten a sequence into a list of leaf Thoughts (letters). Handles nested sequences via VLU.
     /// </summary>
-    public List<Thought> FlattenSequence(Thought sequenceStart)
+    public List<Thought> FlattenSequence(SeqElement sequenceStart, bool skipPlusValues = false)
     {
-        if (sequenceStart.Label.StartsWith("abstr"))
-        { }
         //experimentating with an enumartor for sequences
         List<Thought> result = new();
-        var e = EnumerateSequenceElements(sequenceStart).GetEnumerator();
+        var e = EnumerateSequenceElements(sequenceStart, skipPlusValues).GetEnumerator();
         while (e.MoveNext())
-            result.Add(GetElementValue(e.Current));
+            if (GetElementValue(e.Current) is not null)
+                result.Add(GetElementValue(e.Current));
         //foreach (Thought t in EnumerateSequenceElements(sequenceStart))
         //    result.Add(t);
         return result;
@@ -525,58 +701,55 @@ public partial class UKS
     /// </summary>
     /// <param name="sequenceStart">The first node of the sequence.</param>
     /// <param name="visitedSequences">Optional stack to track visited sequences across recursion.</param>
+    /// <param name="skipPlusValues">When true, elements whose VLU label is "+" are skipped.</param>
     /// <returns>Leaf sequence elements in order.</returns>
-    public IEnumerable<Thought> EnumerateSequenceElements(Thought sequenceStart, Stack<Thought> visitedSequences = null)
+    public IEnumerable<SeqElement> EnumerateSequenceElements(SeqElement sequenceStart, bool skipPlusValues = false, Stack<SeqElement> visitedSequences = null)
     {
         if (sequenceStart is null) yield break;
 
         // Initialize visited sequences tracker if this is the top-level call
         if (visitedSequences is null) visitedSequences = new();
-
-        // Check if we've already processed this sequence (circular reference protection)
         if (visitedSequences.Contains(sequenceStart)) yield break; // Already visited this sequence, stop to prevent infinite recursion
-
         visitedSequences.Push(sequenceStart);
-
         var current = sequenceStart;
-        //        var visitedNodes = new HashSet<Thought>(); // Track nodes within this sequence
 
         while (current is not null)
         {
             // Get the VLU Linkto find what this sequence node points to
-            var valueRel = GetElementValue(current);
+            Thought valueRel = GetElementValue(current);
 
-            if (IsSequenceElement(valueRel))
+            if (valueRel is SeqElement s)
             {
-                //Fire the owner
-                var owner = valueRel?.LinksFrom.FindFirst(x => x.LinkType.Label != "VLU" && x.LinkType.Label != "FRST")?.From;
-                //owner?.Fire();
                 // Recursively enumerate the subsequence, passing the shared visitedSequences set
-                foreach (var subElement in EnumerateSequenceElements(valueRel, visitedSequences))
-                {
+                foreach (var subElement in EnumerateSequenceElements(s, skipPlusValues, visitedSequences))
                     yield return subElement;
-                }
             }
             else
             {
-                // It's a leaf element, return it
-                yield return current;
+                // It's a leaf element, return it unless we're skipping over it
+                if (!skipPlusValues || valueRel?.Label != "+") yield return current;
             }
 
             // Move to next node via NXT Link
             current = GetNextElement(current);
-
             if (current is null) break;
 
             // Stop if we've circled back to the start
-            if (current == sequenceStart) break;  //BROKEN
+            if (current == sequenceStart) break;  //BROKEN?
         }
         visitedSequences.Pop();
+    }
+    public List<Thought> GetReferringThoughts(SeqElement s, Thought linkType)
+    {
+        List<Thought> retVal = new();
+        foreach (Link l in s.LinksFrom.Where(x => x.LinkType == linkType))
+            retVal.Add(l.From);
+        return retVal;
     }
     /// <summary>
     /// Recursively finds all sequences that reference the given sequence.
     /// </summary>
-    private void AddReferencingSequences(List<Thought> currentReferences, Thought linkType, List<Thought> accumulator)
+    private void AddReferencingSequences(List<Link> currentReferences, Thought linkType, List<Link> accumulator)
     {
         if (currentReferences is null || currentReferences.Count == 0) return;
 
@@ -606,5 +779,50 @@ public partial class UKS
                 AddReferencingSequences(parentReferences, linkType, accumulator);
             }
         }
+    }
+
+    /// <summary>
+    /// Replace a plain Thought with a SeqElement while preserving label, value, weight, and links.
+    /// </summary>
+    public SeqElement PromoteToSeqElement(Thought t)
+    {
+        if (t is null) return null;
+        if (t is SeqElement sExisting) return sExisting;
+        ThoughtLabels.RemoveThoughtLabel(t.Label);
+
+        var seq = new SeqElement
+        {
+            Label = t.Label,   // keeps label mapping
+            V = t.V,
+            Weight = t.Weight
+        };
+
+        // Move outgoing links
+        foreach (var link in t.LinksToWriteable.ToList())
+        {
+            link.From = seq;
+            seq.LinksToWriteable.Add(link);
+        }
+        t.LinksToWriteable.Clear();
+
+        // Move incoming links
+        foreach (var link in t.LinksFromWriteable.ToList())
+        {
+            link.To = seq;
+            seq.LinksFromWriteable.Add(link);
+        }
+        t.LinksFromWriteable.Clear();
+
+        // Replace in global list
+        lock (AtomicThoughts)
+        {
+            int idx = AtomicThoughts.IndexOf(t);
+            if (idx >= 0)
+                AtomicThoughts[idx] = seq;
+        }
+        t.Delete();
+
+        ThoughtLabels.AddThoughtLabel(seq.Label, seq);
+        return seq;
     }
 }

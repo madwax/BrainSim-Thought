@@ -359,7 +359,7 @@ is-part-of-speech, ";
             string[] parents = GPTOutput.Split('|');
             // First we make the label a word.
             String englishWord = "." + textIn;
-            theUKS.AddStatement(englishWord, "is-a", "Word");
+            theUKS.AddStatement(englishWord, "is-a", "EnglishWord");
             // Count to capture the amount of values being calculated.
             int count = 0;
             // Then we run through each individual parent.
@@ -387,7 +387,7 @@ is-part-of-speech, ";
                     String newParent = valuePairs[1];
 
                     // Make the english word "means" the abstract item.
-                    Thought r = theUKS.AddStatement(englishWord, "means", textIn + "*");
+                    Link r = theUKS.AddStatement(englishWord, "means", textIn + "*");
 
                     // Make the disambiguated term a child of the parent.
                     theUKS.AddStatement(r.To, "is-a", newParent);
@@ -629,8 +629,8 @@ is-part-of-speech, ";
                             ModuleGPTInfoDlg.linkCount += 1;
                         }
                         ///
-                        foreach (Thought t in theUKS.AllThoughts)
-                            foreach (Thought r in t.LinksTo)
+                        foreach (Thought t in theUKS.AtomicThoughts)
+                            foreach (Link r in t.LinksTo)
                                 if (r.LinkType is null)
                                 {
                                     t.RemoveLink(r);
@@ -647,11 +647,11 @@ is-part-of-speech, ";
             UKS.UKS theUKS = MainWindow.theUKS;
             List<Thought> thoughtsToRemove = new List<Thought>();
             // Get all the children of Word and remove duplicates.
-            foreach (Thought word in theUKS.GetOrAddThought("Word").Children)
+            foreach (Thought word in theUKS.GetOrAddThought("EnglishWord").Children)
             {
                 // Find unique parents to remove duplicates
                 List<Thought> uniqueParents = new List<Thought>();
-                foreach (Thought meaning in word.LinksTo)
+                foreach (Link meaning in word.LinksTo)
                 {
                     // Find the parents of each target in the realtionship.
                     foreach (Thought parent in meaning.To.Parents)
@@ -679,7 +679,7 @@ is-part-of-speech, ";
             // Remove the duplicate thoughts at the end.
             foreach (Thought t in thoughtsToRemove)
             {
-                theUKS.DeleteThought(t);
+                t.Delete();
                 ModuleGPTInfoDlg.linkCount++;
             }
 

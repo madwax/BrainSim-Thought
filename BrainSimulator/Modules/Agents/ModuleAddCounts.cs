@@ -58,9 +58,9 @@ public class ModuleAddCounts : ModuleBase
     public void DoTheWork()
     {
         debugString = "Agent Started\n";
-        for (int i = 0; i < theUKS.AllThoughts.Count; i++)
+        for (int i = 0; i < theUKS.AtomicThoughts.Count; i++)
         {
-            Thought t = theUKS.AllThoughts[i];
+            Thought t = theUKS.AtomicThoughts[i];
             AddCountLinks(t);
         }
         debugString += "Agent  Finished\n";
@@ -71,7 +71,7 @@ public class ModuleAddCounts : ModuleBase
     {
         for (int j = 0; j < t.LinksTo.Count; j++)
         {
-            Thought r = t.LinksTo[j];
+            Link r = t.LinksTo[j];
             if (r.LinkType == Thought.IsA) continue;
             Thought useLinkType = ModuleAttributeBubble.GetInstanceType(r.LinkType);
 

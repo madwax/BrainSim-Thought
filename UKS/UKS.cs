@@ -32,11 +32,7 @@ public partial class UKS
     /// Occasionally a list of all the Thoughts in the UKS is needed. This is READ ONLY.
     /// There is only one (shared) list for the App.
     /// </summary>
-    public List<Thought> AllThoughts { get => uKSList; }
-
-    //TimeToLive processing for links
-    static public List<Thought> transientLinks = new List<Thought>();
-    static Timer stateTimer;
+    public List<Thought> AtomicThoughts { get => uKSList; }
 
     public static UKS theUKS = new UKS();
 
@@ -46,15 +42,12 @@ public partial class UKS
     /// <param name="clear">When true, clears existing thoughts and label cache before initialization.</param>
     public UKS(bool clear = false)
     {
-        if (AllThoughts.Count == 0 || clear)
+        if (AtomicThoughts.Count == 0 || clear)
         {
-            AllThoughts.Clear();
+            AtomicThoughts.Clear();
             ThoughtLabels.ClearLabelList();
         }
         UKSTemp.Clear();
-
-        var autoEvent = new AutoResetEvent(false);
-        stateTimer = new Timer(RemoveExpiredLinks, autoEvent, 0, 1000);
     }
 
     /// <summary>
@@ -71,9 +64,9 @@ public partial class UKS
         {
             newThought.AddParent(parent);
         }
-        lock (AllThoughts)
+        lock (AtomicThoughts)
         {
-            AllThoughts.Add(newThought);
+            AtomicThoughts.Add(newThought);
         }
 
         return newThought;
@@ -90,27 +83,8 @@ public partial class UKS
         return retVal;
     }
 
-    /// <summary>
-    /// This is a primitive method to delete a Thought; the Thought must not have any children.
-    /// </summary>
-    /// <param name="t">The thought to delete.</param>
-    public virtual void DeleteThought(Thought t)
-    {
-        if (t is null) return;
 
-        foreach (Thought r in t.LinksTo.Where(x => IsSequenceFirstElement(x.To)))
-            DeleteSequence(r.To);
-
-        foreach (Thought r in t.LinksTo)
-            t.RemoveLink(r);
-        foreach (Thought r in t.LinksFrom)
-            r.From.RemoveLink(r);
-        ThoughtLabels.RemoveThoughtLabel(t.Label);
-        lock (AllThoughts)
-            AllThoughts.Remove(t);
-    }
-
-    bool HasProperty(Thought t, string propertyName)
+    private bool HasProperty(Thought t, string propertyName)
     {
         if (t is null) return false;
         var v = t.LinksTo;
@@ -118,7 +92,7 @@ public partial class UKS
         return false;
     }
 
-    private bool LinksAreEqual(Thought r1, Thought r2, bool ignoreSource = true)
+    private bool LinksAreEqual(Link r1, Link r2, bool ignoreSource = true)
     {
         if (
             r1.Label == r2.Label &&
@@ -127,10 +101,10 @@ public partial class UKS
             r1.LinkType == r2.LinkType
           ) return true;
         //special case if these contain other links
-        if (r1.From is Thought rt1 && r2.From is Thought rt2)
+        if (r1.From is Link rt1 && r2.From is Link rt2)
         {
             if (!LinksAreEqual(rt1, rt2)) return false;
-            if (r1.To is Thought rt3 && r2.To is Thought rt4)
+            if (r1.To is Link  rt3 && r2.To is Link rt4)
                 if (!LinksAreEqual(rt3, rt4)) return false;
             if (r1.LinkType != r2.LinkType) return false;
             return true;
@@ -145,11 +119,11 @@ public partial class UKS
     /// <param name="linkType">Relationship type thought.</param>
     /// <param name="to">Target thought of the link.</param>
     /// <returns>The existing link Thought, or null if not found.</returns>
-    public Thought GetLink(Thought from, Thought linkType, Thought to)
+    public Link GetLink(Thought from, Thought linkType, Thought to)
     {
         if (from is null) return null;
         //create a temporary link
-        Thought r = new() { From = from, LinkType = linkType, To = to };
+        Link r = new() { From = from, LinkType = linkType, To = to };
         //see if it already exists
         return GetLink(r);
     }
@@ -159,9 +133,9 @@ public partial class UKS
     /// </summary>
     /// <param name="r">Link prototype (From, LinkType, To) to search for.</param>
     /// <returns>The existing link Thought, or null if not found.</returns>
-    public Thought GetLink(Thought r)
+    public Link GetLink(Link r)
     {
-        foreach (Thought r1 in r.From?.LinksTo)
+        foreach (Link  r1 in r.From?.LinksTo)
         {
             if (LinksAreEqual(r, r1)) return r1;
         }
@@ -173,10 +147,10 @@ public partial class UKS
     /// </summary>
     /// <param name="r">Link prototype containing source, link type, and target.</param>
     /// <returns>List of matching link Thoughts.</returns>
-    public List<Thought> GetLinks(Thought r)
+    public List<Link> GetLinks(Link r)
     {
-        List<Thought> retVal = new();
-        foreach (Thought r1 in r.From?.LinksTo)
+        List<Link> retVal = new();
+        foreach (Link r1 in r.From?.LinksTo)
         {
             if (r.LinkType == r1.LinkType && r.To == r1.To)
                 retVal.Add(r1);
@@ -192,22 +166,19 @@ public partial class UKS
     {
         if (t is not null)
         {
-            while (t.Children.Count > 0)
+            List<Thought> subThoughts = t.EnumerateSubThoughts().ToList();
+            foreach (Link t1 in subThoughts)
             {
-                Thought theChild = t.Children[0];
-                if (theChild.Parents.Count == 1)
+                if (t1.To is SeqElement s)
                 {
-                    DeleteAllChildren(theChild);
-                    if (t.Label == "Thought" && t.Children.Count == 0) return;
-                    DeleteThought(theChild);
+                    DeleteSequence(s);
                 }
                 else
-                {//this thought has multiple parents.
-                    t.RemoveChild(theChild);
+                {
+                    t1.Delete();
                 }
             }
         }
-
     }
 
     /// <summary>
@@ -242,7 +213,7 @@ public partial class UKS
                 Thought attrib = Labeled(attribs[i]);
                 if (attrib is null)
                     attrib = AddThought(attribs[i], "Unknown");
-                instanceThought.AddLink(attrib, "is");
+                instanceThought.AddLink("is", attrib);
             }
             return instanceThought;
         }
@@ -274,6 +245,7 @@ public partial class UKS
         }
 
         thoughtToReturn = AddThought(label, correctParent);
+        thoughtToReturn.Fire();
         return thoughtToReturn;
     }
 
@@ -288,6 +260,19 @@ public partial class UKS
     /// <returns>The created or retrieved Thought.</returns>
     public Thought CreateThoughtFromMultipleAttributes(string label, bool attributesFollow, bool singularize = true)
     {
+        if (label.StartsWith("^"))  //if it starts with an ^, it's a sequence
+        {
+            List<Thought> targets = new();
+            string[] targetParts = label[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            foreach (string label1 in targetParts)
+            {
+                Thought t1 = theUKS.GetOrAddThought(label1);
+                targets.Add(t1);
+            }
+            Thought r1 = (Thought)theUKS.CreateRawSequence(targets,"thequery");
+            return r1;
+
+        }
         IPluralize pluralizer = new Pluralizer();
         label = label.Trim();
         string[] tempStringArray = label.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -317,34 +302,4 @@ public partial class UKS
         Thought t = GetOrAddThought(thoughtLabel);
         return t;
     }
-
-    static bool isRunning = false;
-    private void RemoveExpiredLinks(Object stateInfo)
-    {
-        if (isRunning) return;
-        isRunning = true;
-        try
-        {
-            for (int i = transientLinks.Count - 1; i >= 0; i--)
-            {
-                Thought r = transientLinks[i];
-                //check to see if the link has expired
-                if (r.TimeToLive != TimeSpan.MaxValue && r.LastFiredTime + r.TimeToLive < DateTime.Now)
-                {
-                    r.To.RemoveLink(r);
-                    //if this leaves an orphan thought, make it unknown
-                    if (r.LinkType.Label == "is-a" && r.From?.Parents.Count == 0)
-                    {
-                        r.From.AddParent("Unknown");
-                    }
-                    transientLinks.Remove(r);
-                }
-            }
-        }
-        finally
-        {
-            isRunning = false;
-        }
-    }
-
 }

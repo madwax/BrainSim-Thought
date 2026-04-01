@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Empty Dialog Template" Height="170" Width="560" Background="Gray" ShowInTaskbar="False" >
 
-    <Grid Margin="14">
+    <Grid Margin="0,0,0,20" >
 
     </Grid>
 </local:ModuleBaseDlg>

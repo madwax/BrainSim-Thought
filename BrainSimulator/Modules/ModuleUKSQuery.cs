@@ -12,10 +12,12 @@
  */
 
 
-using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UKS;
+using static UKS.UKS;
 
 namespace BrainSimulator.Modules;
 
@@ -70,8 +72,9 @@ Follow has ONLY if called out in type
 
      */
 
-    public List<(Thought r, float confidence)> QueryUKS(string sourceIn, string linkTypeIn, string targetIn,
-            string filter, out List<Thought> thoughtResult, out List<Thought> links)
+    //this is called from the GetAttribs tab
+    public List<(Thought r, float confidence)> GetAttributes(string sourceIn, string linkTypeIn, string targetIn,
+            string filter, out List<Thought> thoughtResult, out List<Link> links)
     {
         thoughtResult = new();
         links = new();
@@ -116,23 +119,6 @@ Follow has ONLY if called out in type
             return null;
         }
 
-        //check for target sequence
-        if (sourceList.Count > 1)
-        {
-            float confidence = 0.0f;
-            List<Thought> targets = new();
-            foreach (Thought t in sourceList)
-                targets.Add(t);
-            var results1 = theUKS.HasSequence(targets, null);
-            Thought tDict = theUKS.Labeled("location");
-            if (tDict is not null)
-            {
-                var seq = tDict.LinksTo.Where(x => x.LinkType.Label == "spelled").ToList()[0].To;
-                var testing = theUKS.FlattenSequence(seq);
-            }
-            return results1;
-        }
-
         links = theUKS.GetAllLinks(sourceList);
 
         //unreverse the source and target
@@ -149,7 +135,7 @@ Follow has ONLY if called out in type
         //filter the links
         for (int i = 0; i < links.Count; i++)
         {
-            Thought r = links[i];
+            Link r = links[i];
             if (targetList.Count > 0 && target != "" && !r.To.HasAncestor(targetList[0]))
             { links.RemoveAt(i); i--; continue; }
             if (r.LinkType is not null && linkType != "" && !r.LinkType.HasAncestor(linkType))

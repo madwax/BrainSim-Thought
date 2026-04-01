@@ -173,21 +173,8 @@ abstract public class ModuleBase
             dlg.Width = dlgSize.X;
             dlg.Height = dlgSize.Y;
         }
-
-
-
-#if !DEBUG
-        if (GetType().ToString() != "BrainSimulator.Modules.ModuleUserInterface" && !GetType().ToString().StartsWith("BrainSimulator.Modules.ModuleUI_"))
-            dlg.WindowState = WindowState.Minimized;
-#endif
-
         dlg.Show();
         dlgIsOpen = true;
-
-#if !DEBUG
-        if (GetType().ToString() != "BrainSimulator.Modules.ModuleUserInterface" && !GetType().ToString().StartsWith("BrainSimulator.Modules.ModuleUI_"))
-        dlg.Hide();
-#endif
     }
 
     public  string GetSavedDlgAttribute(string attribName)
@@ -215,7 +202,7 @@ abstract public class ModuleBase
             {
                 if (attribValue is null)
                 {
-                    theUKS.DeleteThought(r.To);
+                    r.To.Delete();
                     return;
                 }
                 r.To.V = attribValue;
@@ -226,7 +213,7 @@ abstract public class ModuleBase
         Thought dlgAttribParent = theUKS.GetOrAddThought("DlgAttrib", "BrainSim");
         Thought dlgInfo = theUKS.AddThought(attribName, dlgAttribParent);
         Thought hasAttribute = theUKS.GetOrAddThought("hasAttribute", "LinkType");
-        thisDlg.AddLink(dlgInfo,hasAttribute);
+        thisDlg.AddLink(hasAttribute, dlgInfo);
         dlgInfo.V = attribValue;
         dlgInfo.Fire();
     }

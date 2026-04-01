@@ -15,10 +15,7 @@
 using Pluralize.NET;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Intrinsics.Arm;
-using System.Windows.Documents;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 namespace BrainSimulator.Modules;
 
@@ -67,7 +64,7 @@ public class ModuleUKSStatement : ModuleBase
     }
 
 
-    public Thought AddLink(Thought tSource, string linkType, string to)
+    public Link AddLink(Thought tSource, string linkType, string to)
     {
         GetUKS();
         if (theUKS is null) return null;
@@ -86,11 +83,21 @@ public class ModuleUKSStatement : ModuleBase
             targetParts = to[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             foreach (string label in targetParts)
             {
-                Thought t = theUKS.GetOrAddThought(label);
-                targets.Add(t);
+                if (label.Length == 1)
+                {
+                    Thought letterParent = theUKS.GetOrAddThought("letter", "Object");
+                    Thought t = theUKS.GetOrAddThought(label.ToUpper(), letterParent);
+                    targets.Add(t);
+                }
+                else
+                {
+                    Thought t = theUKS.GetOrAddThought(label);
+                    targets.Add(t);
+                }
             }
-            Thought r1 = theUKS.AddSequence(tSource, tLinkType, targets);
-            return r1;
+            SeqElement r1 = theUKS.AddSequence(tSource, tLinkType, targets);
+            
+            return tSource.LinksTo.FindFirst(x=>x.LinkType == tLinkType);
         }
  
         if (targetParts.Length == 3)
@@ -107,12 +114,12 @@ public class ModuleUKSStatement : ModuleBase
         }
 
         //Create the link
-        Thought r = theUKS.AddStatement(tSource, tLinkType, tTarget);
+        Link r = theUKS.AddStatement(tSource, tLinkType, tTarget);
 
         if (tLinkType.Label == "IF")  //this is a HACK which must be fixed later
         {
-            tSource.AddLink("isResult", "hasProperty");
-            tTarget.AddLink("isCondition", "hasProperty");
+            tSource.AddLink("hasProperty","isResult");
+            tTarget.AddLink("hasProperty", "isCondition");
         }
         return r;
     }
@@ -135,9 +142,11 @@ public class ModuleUKSStatement : ModuleBase
         source = source.Trim();
         string[] tempStringArray = source.Split(' ');
         //first, build a list of all the Thoughts in the list
-        for (int i = 0; i < tempStringArray.Length; i++)
+        for ( int i = 0; i < tempStringArray.Length; i++)
         {
             if (tempStringArray[i] == "") continue;
+            //old hack for spelling
+            //if (tempStringArray[i].Length == 1) tempStringArray[i] = "c:"+tempStringArray[i];
             if (!char.IsUpper(tempStringArray[i][0]) && tempStringArray[i].Length > 2)
                 tempStringArray[i] = pluralizer.Singularize(tempStringArray[i]);
             Thought t = ThoughtLabels.GetThought(tempStringArray[i]);
