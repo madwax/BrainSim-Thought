@@ -18,36 +18,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;NU1701</NoWarn>
     <LangVersion>preview</LangVersion>
+    <WarningLevel>0</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>1701;1702;NU1701</NoWarn>
     <Optimize>False</Optimize>
     <LangVersion>preview</LangVersion>
+    <WarningLevel>0</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="GlobalSuppressions.cs" />
-    <Compile Remove="ImgUtils.cs" />
-    <Compile Remove="MainWindowPythonModules.cs" />
-    <Compile Remove="Modules\Module2DSim.cs" />
-    <Compile Remove="Modules\Module2DSimDlg.xaml.cs" />
-    <Compile Remove="Modules\Module2DVision.cs" />
-    <Compile Remove="Modules\ModuleAttentionManager.cs" />
-    <Compile Remove="Modules\ModuleFrequencyConfidence2.cs" />
-    <Compile Remove="Modules\ModuleMove.cs" />
-    <Compile Remove="Modules\ModuleObject.cs" />
-    <Compile Remove="Modules\ModulePodArmExtension.cs" />
-    <Compile Remove="Modules\ModulePremise.cs" />
-    <Compile Remove="Modules\ModulePremiseDlg.xaml.cs" />
-    <Compile Remove="Modules\ModuleQueryResolution.cs" />
-    <Compile Remove="Modules\ModuleTurn.cs" />
-    <Compile Remove="Modules\ModuleUKSSearch.cs" />
-    <Compile Remove="Modules\PhysicalObject.cs" />
-    <Compile Remove="Modules\UnknownArea.cs" />
-    <Compile Remove="Modules\WaveMemoryStream.cs" />
-    <Compile Remove="Sallie.cs" />
-    <Compile Remove="Tools\Module.cs" />
-    <Compile Remove="Tools\ModuleDlg.xaml.cs" />
-    <Compile Remove="XmlFile.cs" />
+    <Compile Remove="Tools\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="refresh-3104.png" />
@@ -67,10 +47,8 @@
     <None Remove="SplashScreen3.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <Page Remove="Modules\Module2DSimDlg.xaml" />
-    <Page Remove="Modules\ModuleObjectDlg.xaml" />
-    <Page Remove="Modules\ModulePremiseDlg.xaml" />
-    <Page Remove="Tools\ModuleDlg.xaml" />
+    <Page Remove="Tools\*.xaml" />
+    <Page Remove="Tools\*.axaml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Iconsmall.ico">

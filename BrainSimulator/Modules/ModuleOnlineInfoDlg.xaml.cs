@@ -82,28 +82,6 @@ namespace BrainSimulator.Modules
 
                 switch (currentSearch)
                 {
-                    case "ChatGPT":
-                        if (txt.EndsWith("?"))
-                            mcn.GetChatGPTResult(txt, ModuleOnlineInfo.QueryType.general);
-                        else if (txt.StartsWith("list some"))
-                            mcn.GetChatGPTResult(txt.Substring(10), ModuleOnlineInfo.QueryType.list);
-                        else if (txt.StartsWith("count some"))
-                            mcn.GetChatGPTResult(txt.Substring(11), ModuleOnlineInfo.QueryType.listCount);
-                        else if (txt.EndsWith("can"))
-                            mcn.GetChatGPTResult(txt.Substring(0,txt.Length-3), ModuleOnlineInfo.QueryType.can);
-                        else
-                        {
-                            mcn.GetChatGPTResult(txt, qType);
-                            //Thread.Sleep(1000);
-                            //mcn.GetChatGPTData(txt, ModuleOnlineInfo.QueryType.hasa);
-                            //Thread.Sleep(1000);
-                            //mcn.GetChatGPTData(txt, ModuleOnlineInfo.QueryType.can);
-                            //Thread.Sleep(1000);
-                            //mcn.GetChatGPTData(txt, ModuleOnlineInfo.QueryType.count);
-                            //Thread.Sleep(1000);
-                            //mcn.GetChatGPTData(txt, ModuleOnlineInfo.QueryType.list);
-                        }
-                        break;
                     case "ConceptNet":
                         mcn.GetConceptNetData(txt);
                         break;
