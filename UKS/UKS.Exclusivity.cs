@@ -30,10 +30,8 @@ public partial class UKS
         return false;
     }
 
-#if DEBUG
     // Test hook: exposes the private exclusivity check to the test assembly (IVT is set in UKS.csproj).
     internal bool LinksAreExclusive_ForTests(Link r1, Link r2) => LinksAreExclusive(r1, r2);
-#endif
 
 
     //TODO: This method has gotten out of hand and needs a rewrite
