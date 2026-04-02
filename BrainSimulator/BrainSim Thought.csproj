@@ -27,6 +27,7 @@
     <WarningLevel>0</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Modules\Agents\**" />
     <Compile Remove="Tools\*.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +48,7 @@
     <None Remove="SplashScreen3.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <Page Remove="Modules\Agents\**" />
     <Page Remove="Tools\*.xaml" />
     <Page Remove="Tools\*.axaml" />
   </ItemGroup>
@@ -108,9 +110,67 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Modules\Vision\**" />
+    <EmbeddedResource Remove="Modules\Agents\**" />
     <EmbeddedResource Remove="Modules\Vision\**" />
+    <None Remove="Modules\Agents\**" />
     <None Remove="Modules\Vision\**" />
     <Page Remove="Modules\Vision\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Modules\ModuleAction.cs" />
+    <Compile Remove="Modules\ModuleActionDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleAddToMentalModel.cs" />
+    <Compile Remove="Modules\ModuleAddToMentalModelDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleAttention.cs" />
+    <Compile Remove="Modules\ModuleAttentionDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleAttentionS.cs" />
+    <Compile Remove="Modules\ModuleEmpty.cs" />
+    <Compile Remove="Modules\ModuleEmptyDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleMentalModel.cs" />
+    <Compile Remove="Modules\ModuleMentalModelDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleOnlineInfo.cs" />
+    <Compile Remove="Modules\ModuleOnlineInfoDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleShowGraph.cs" />
+    <Compile Remove="Modules\ModuleShowGraphDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleSoundIn.cs" />
+    <Compile Remove="Modules\ModuleSoundInDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleSoundOut.cs" />
+    <Compile Remove="Modules\ModuleSoundOutDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleStressTest.cs" />
+    <Compile Remove="Modules\ModuleStressTestDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleText.cs" />
+    <Compile Remove="Modules\ModuleTextDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleTextIn.cs" />
+    <Compile Remove="Modules\ModuleTextInDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKS.cs" />
+    <Compile Remove="Modules\ModuleUKSDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKSQuery.cs" />
+    <Compile Remove="Modules\ModuleUKSQueryDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKSStatement.cs" />
+    <Compile Remove="Modules\ModuleUKSStatementDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleWellBeing.cs" />
+    <Compile Remove="Modules\ModuleWellBeingDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleWord.cs" />
+    <Compile Remove="Modules\ModuleWordDlg.xaml.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Remove="Modules\ModuleActionDlg.xaml" />
+    <Page Remove="Modules\ModuleAddToMentalModelDlg.xaml" />
+    <Page Remove="Modules\ModuleAttentionDlg.xaml" />
+    <Page Remove="Modules\ModuleEmptyDlg.xaml" />
+    <Page Remove="Modules\ModuleMentalModelDlg.xaml" />
+    <Page Remove="Modules\ModuleOnlineInfoDlg.xaml" />
+    <Page Remove="Modules\ModuleShowGraphDlg.xaml" />
+    <Page Remove="Modules\ModuleSoundInDlg.xaml" />
+    <Page Remove="Modules\ModuleSoundOutDlg.xaml" />
+    <Page Remove="Modules\ModuleStressTestDlg.xaml" />
+    <Page Remove="Modules\ModuleTextDlg.xaml" />
+    <Page Remove="Modules\ModuleTextInDlg.xaml" />
+    <Page Remove="Modules\ModuleUKSDlg.xaml" />
+    <Page Remove="Modules\ModuleUKSQueryDlg.xaml" />
+    <Page Remove="Modules\ModuleUKSStatementDlg.xaml" />
+    <Page Remove="Modules\ModuleWellBeingDlg.xaml" />
+    <Page Remove="Modules\ModuleWordDlg.xaml" />
   </ItemGroup>
 
 </Project>

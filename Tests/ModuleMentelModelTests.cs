@@ -18,6 +18,8 @@ public class ModuleMentelModelTests
     [Fact]
     public void RotateMentalModel_MovesContainsLinkToNewCell()
     {
+
+#if MODULES_USED
         // arrange
         var uks = CreateUKS();
         var module = new ModuleMentalModel();
@@ -40,5 +42,6 @@ public class ModuleMentelModelTests
 
         Assert.NotNull(containsAfter);
         Assert.Same(expectedCell, containsAfter!.From);
+#endif
     }
 }

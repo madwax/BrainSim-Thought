@@ -6,6 +6,7 @@ using UKS;
 using Xunit;
 
 namespace BrainSimulator.Tests;
+#if MODULES_USED
 
 public class ModuleWordTests
 {
@@ -58,3 +59,5 @@ public class ModuleWordTests
         Assert.Equal(new[] { "c:D", "c:O", "c:G" }, flat.Select(t => t.Label));
     }
 }
+
+#endif
