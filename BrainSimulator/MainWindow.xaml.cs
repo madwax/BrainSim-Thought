@@ -28,11 +28,14 @@ namespace BrainSimulator
     {
         //TODO move these to ModuleHandler
         public List<ModuleBase> activeModules = new();
+
+#if PYTHON_SUPPORT
         public List<string> pythonModules = new();
+        public static string pythonPath = "";
+#endif
 
         //the name of the currently-loaded network file
         public static string currentFileName = "";
-        public static string pythonPath = "";
         public static ModuleHandler moduleHandler = new();
         public static UKS.UKS theUKS = moduleHandler.theUKS;
         public static MainWindow theWindow = null;
@@ -45,18 +48,18 @@ namespace BrainSimulator
             Loaded += MainWindow_Loaded;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            theWindow = this;
 
+        private void SetupPythonEnv()
+        {
+#if PYTHON_SUPPORT
             //setup the python support
-            pythonPath = (string)Environment.GetEnvironmentVariable("PythonPath", EnvironmentVariableTarget.User);
-            if (string.IsNullOrEmpty(pythonPath))
+            pythonPath = ( string )Environment.GetEnvironmentVariable( "PythonPath", EnvironmentVariableTarget.User );
+            if( string.IsNullOrEmpty( pythonPath ) )
             {
-                var result1 = MessageBox.Show("Do you want to use Python Modules?", "Python?", MessageBoxButton.YesNo);
-                if (result1 == MessageBoxResult.Yes)
+                var result1 = MessageBox.Show( "Do you want to use Python Modules?", "Python?", MessageBoxButton.YesNo );
+                if( result1 == MessageBoxResult.Yes )
                 {
-                    string likeliPath = (string)Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    string likeliPath = ( string )Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData );
                     likeliPath += @"\Programs\Python";
                     System.Windows.Forms.OpenFileDialog openFileDialog = new()
                     {
@@ -67,28 +70,37 @@ namespace BrainSimulator
                     // Show the file Dialog.  
                     System.Windows.Forms.DialogResult result = openFileDialog.ShowDialog();
                     // If the user clicked OK in the dialog and  
-                    if (result == System.Windows.Forms.DialogResult.OK)
+                    if( result == System.Windows.Forms.DialogResult.OK )
                     {
                         pythonPath = openFileDialog.FileName;
-                        Environment.SetEnvironmentVariable("PythonPath", pythonPath, EnvironmentVariableTarget.User);
+                        Environment.SetEnvironmentVariable( "PythonPath", pythonPath, EnvironmentVariableTarget.User );
                     }
                     else
                     {
-                        Environment.SetEnvironmentVariable("PythonPath", "", EnvironmentVariableTarget.User);
+                        Environment.SetEnvironmentVariable( "PythonPath", "", EnvironmentVariableTarget.User );
                     }
                     openFileDialog.Dispose();
                 }
                 else
                 {
                     pythonPath = "no";
-                    Environment.SetEnvironmentVariable("PythonPath", pythonPath, EnvironmentVariableTarget.User);
+                    Environment.SetEnvironmentVariable( "PythonPath", pythonPath, EnvironmentVariableTarget.User );
                 }
             }
             moduleHandler.PythonPath = pythonPath;
-            if (pythonPath != "no")
+            if( pythonPath != "no" )
             {
                 moduleHandler.InitPythonEngine();
             }
+#endif
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            theWindow = this;
+
+            // Get the paths and stuff needed to run python code.
+            SetupPythonEnv();
 
             //setup the input file
             string fileName = "";
@@ -256,10 +268,12 @@ namespace BrainSimulator
                 activeModules.Add(newModule);
                 newModule.OpenDlg();
             }
+#if SUPPORT_PYTHON
             else
             {
                 pythonModules.Add(t.Label);
             }
+#endif
 
             ReloadActiveModulesSP();
             return t.Label;
@@ -296,11 +310,13 @@ namespace BrainSimulator
                     }
                 }
             }
+#if PYTHON_SUPPORT
             foreach (string pythonModule in pythonModules)
             {
                 moduleHandler.Close(pythonModule);
             }
             pythonModules.Clear();
+#endif
         }
 
         private void SetTitleBar()
@@ -332,10 +348,12 @@ namespace BrainSimulator
                     });
                 }
             }
+#if PYTHON_SUPPORT
             foreach (string pythonModule in pythonModules)
             {
                 moduleHandler.RunScript(pythonModule);
             }
+#endif
         }
 
         private void LoadModuleTypeMenu()

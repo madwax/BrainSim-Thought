@@ -10,7 +10,6 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-using Python.Runtime;
 using System.Diagnostics;
 using UKS;
 using System;
@@ -19,29 +18,50 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 
+// #define PYTHON_SUPPORT
+// #define PYTHON_SUPPORT_UI
+
+#if PYTHON_SUPPORT
 
 #if !CONSOLE_APP
+#define PYTHON_SUPPORT_UI
+#endif
+
+using Python.Runtime;
+
+#if WINDOWS
+
 using System.Windows.Interop;
 using System.Windows;
 using System.Runtime.InteropServices;
+
+#elif MACOS
+
+#else // Its Linux...
+
 #endif
+
+#endif
+
+
 
 namespace BrainSimulator;
 
 public class ModuleHandler
 {
+    public UKS.UKS theUKS = UKS.UKS.theUKS;
+
+#if PYTHON_SUPPORT
     public List<string> pythonModules = new();
 
-
     public List<(string, dynamic)> activePythonModules = new();
-    public UKS.UKS theUKS = UKS.UKS.theUKS;
 
     string pythonPath = "";
     public string PythonPath { get => pythonPath; set => pythonPath = value; }
 
     //Runtime.PythonDLL = @"/opt/anaconda3/envs/brainsim/bin/python";  // Yida's MAC
-    // Runtime.PythonDLL = PythonDll;//  @"python310";  // Charles's Windows
-
+    //Runtime.PythonDLL = PythonDll;//  @"python310";  // Charles's Windows
+#endif
 
     public string ActivateModule(string moduleType)
     {
@@ -49,8 +69,10 @@ public class ModuleHandler
         t = theUKS.CreateInstanceOf(theUKS.Labeled(moduleType));
         t.AddParent(theUKS.Labeled("ActiveModule"));
 
-#if !CONSOLE_APP
-        if (!moduleType.Contains(".py"))
+#if PYTHON_SUPPORT
+
+#if PYTHON_SUPPORT_UI
+        if( !moduleType.Contains(".py"))
         {
             BrainSimulator.Modules.ModuleBase newModule = MainWindow.theWindow.CreateNewModule(moduleType);
             newModule.Label = t.Label;
@@ -62,9 +84,10 @@ public class ModuleHandler
         {
             pythonModules.Add(t.Label);
         }
-
+#endif
         return t.Label;
     }
+
     public void DeactivateModule(string moduleLabel)
     {
         Thought t = theUKS.Labeled(moduleLabel);
@@ -82,6 +105,7 @@ public class ModuleHandler
 
     public List<string> GetListOfExistingPythonModuleTypes()
     {
+#if PYTHON_SUPPORT
         //this is a buffer of python modules so they can be imported once and run many times.
         List<String> pythonFiles = new();
         if (pythonPath == "no") return pythonFiles;
@@ -100,15 +124,21 @@ public class ModuleHandler
 
         }
         return pythonFiles;
+#else
+        return [];
+#endif
     }
 
     public bool ClosePythonEngine()
     {
+#if PYTHON_SUPPORT
         PythonEngine.Shutdown();
+#endif
         return true;
     }
     public bool InitPythonEngine()
     {
+#if PYTHON_SUPPORT
         try
         {
             //Runtime.PythonDLL = @"/opt/anaconda3/envs/brainsim/bin/python";  // Yida's MAC
@@ -127,11 +157,13 @@ public class ModuleHandler
             Console.WriteLine("Python engine initialization failed because: " + ex.Message);
             return false;
         }
+#endif
         return true;
     }
 
     public void Close(string moduleLabel)
     {
+#if PYTHON_SUPPORT
         var theModuleEntry = activePythonModules.FirstOrDefault(x => x.Item1.ToLower() == moduleLabel.ToLower());
         if (theModuleEntry.Item2 is not null)
         {
@@ -144,10 +176,12 @@ public class ModuleHandler
                 catch { }
             }
         }
+#endif
     }
 
     public void RunScript(string moduleLabel)
     {
+#if PYTHON_SUPPORT
         if (PythonPath == "no") return;
         bool firstTime = false;
         //get the ModuleType
@@ -200,13 +234,15 @@ public class ModuleHandler
                     activePythonModules.Add(theModuleEntry);
                 }
             }
+
             if (theModuleEntry.Item2 is not null)
             {
                 try
                 {
                     theModuleEntry.Item2.Fire();
-#if !CONSOLE_APP
-//This sets the owner of any target window so that the system will work propertly
+#if PYTHON_SUPPORT_UI
+#if WINDOWS
+                    //This sets the owner of any target window so that the system will work propertly
                     if (firstTime)
                     {
                         var HWND = theModuleEntry.Item2.GetHWND();
@@ -216,20 +252,36 @@ public class ModuleHandler
                         firstTime = false;
                         SetOwner(intValue);
                     }
+#elif MACOS
+    // TODO - Do we need to support parenting the phyton window?
+#else
+    // TODO - Do we need to support parenting the phyton window?
+    // Also what about if we are running under X or Wayland?
+#endif
 #endif
                 }
                 catch (Exception ex)
                 {
                     activePythonModules.Remove(theModuleEntry);
                     DeactivateModule(moduleLabel);
-#if !CONSOLE_APP
+#if PYTHON_SUPPORT_UI
                     MainWindow.theWindow.ReloadActiveModulesSP();
 #endif
                     Console.WriteLine("Fire method call failed for module: " + moduleLabel + "   Reason: " + ex.Message);
                 }
             }
         }
+#endif
     }
+
+    public void ClearAllPythonModules()
+    {
+#if PYTHON_SUPPORT
+        pythonModules.Clear();
+        activePythonModules.Clear();
+#endif        
+    }
+
 
     public void CreateEmptyUKS()
     {
@@ -246,15 +298,22 @@ public class ModuleHandler
     {
 
         Debug.WriteLine("InsertMandatoryModules entered");
-#if !CONSOLE_APP
+#if PYTHON_SUPPORT
+#if PYTHON_SUPPORT_UI
         ActivateModule("UKS");
         ActivateModule("UKSStatement");
+
+#endif
+#else
+        ActivateModule( "UKS" );
+        ActivateModule( "UKSStatement" );
 #endif
     }
 
+#if PYTHON_SUPPORT
+#if PYTHON_SUPPORT_UI
 
-
-#if !CONSOLE_APP
+#if WINDOWS
     private const int GWL_HWNDPARENT = -8;
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
@@ -293,5 +352,10 @@ public class ModuleHandler
             Console.WriteLine("Window owner changed successfully.");
         }
     }
+#elif MACOS
+#else // LINUX
+#endif
+
+#endif
 #endif
 }

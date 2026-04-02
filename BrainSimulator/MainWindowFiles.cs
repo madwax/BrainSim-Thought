@@ -114,10 +114,10 @@ namespace BrainSimulator
         void LoadActiveModules()
         {
             activeModules.Clear();
+#if PYTHON_SUPPORT
             pythonModules.Clear();
-            moduleHandler.pythonModules.Clear();
-            moduleHandler.activePythonModules.Clear();
-
+#endif
+            moduleHandler.ClearAllPythonModules();
 
             var activeModules1 = theUKS.Labeled("ActiveModule").Children;
             activeModules1 = activeModules1.OrderBy(x => x.Label).ToList();
@@ -131,7 +131,9 @@ namespace BrainSimulator
 
                 if (moduleType.Contains(".py"))
                 {
+#if PYTON_SUPPORT
                     pythonModules.Add(t.Label);
+#endif
                 }
                 else
                 {
