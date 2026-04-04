@@ -10,16 +10,26 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
+
+/** NOTES
+ * Don't know if we should be using Avalonia's Point, it's designed to be readonly.
+ */
+#pragma warning disable CA2225
+#pragma warning disable CA1725
+#pragma warning disable CA1305
+#pragma warning disable CA1051
+#pragma warning disable CA1062
+#pragma warning disable CA1307
 
 using System;
 using System.CodeDom;
 using System.Diagnostics;
 using System.IO.IsolatedStorage;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Xml.Serialization;
+
+using Avalonia;
+using Avalonia.Media;
+
 using static BrainSimulator.Utils;
 using static System.Math;
 
@@ -75,8 +85,8 @@ namespace BrainSimulator.Modules
             get { if (xyDirty) UpdateXY(); return p; }
             set { polarDirty = true; p = value; }
         }
-        public float X { get { if (xyDirty) UpdateXY(); return (float)p.X; } set { if (xyDirty) UpdateXY(); p.X = value; polarDirty = true; } }
-        public float Y { get { if (xyDirty) UpdateXY(); return (float)p.Y; } set { if (xyDirty) UpdateXY(); p.Y = value; polarDirty = true; } }
+        public float X { get { if (xyDirty) UpdateXY(); return (float)p.X; } set { if (xyDirty) UpdateXY(); p = new(value, p.Y); polarDirty = true; } }
+        public float Y { get { if (xyDirty) UpdateXY(); return (float)p.Y; } set { if (xyDirty) UpdateXY(); p = new(p.X, value); polarDirty = true; } }
         [XmlIgnore]
         public Vector V { get => (Vector)P; }
         [XmlIgnore]
@@ -99,8 +109,7 @@ namespace BrainSimulator.Modules
         }
         private void UpdateXY()
         {
-            p.X = r * Cos(theta);
-            p.Y = r * Sin(theta);
+            p = new Point( r * Cos( theta ), r * Sin( theta ) );
             xyDirty = false;
         }
         public PointPlus Clone()
@@ -123,7 +132,7 @@ namespace BrainSimulator.Modules
         public override string ToString()
         {
             //            string s = "R: " + R.ToString("F3") + ", Theta: " + Degrees.ToString("F3") + "° (" + X.ToString("F2") + "," + Y.ToString("F2") + ") Conf:" + Conf.ToString("F3");
-            string s = $"({X.ToString("0.0")}.{Y.ToString("0.0")})";
+            string s = $"({X:0.0}.{Y:0.0)})";
             return s;
         }
 
@@ -176,14 +185,61 @@ namespace BrainSimulator.Modules
         }
     }
 
+    /// <summary>
+    /// Replacement for Point3D class.  As Avalonia does not have one.
+    /// </summary>
+    ///
+
+    public class Point3D
+    {
+        private float x;
+        private float y;
+        private float z;
+
+        public Point3D()
+        {
+            this.x = 0.0f;
+            this.y = 0.0f;
+            this.z = 0.0f;
+        }
+        public Point3D( float xInput, float yInput, float zInput )
+        {
+            this.x = xInput;
+            this.y = yInput;
+            this.z = zInput;
+        }
+
+        public float X
+        {
+            get { return x; }
+            set { x = value; }
+        }
+
+        public float Y
+        {
+            get { return y; }
+            set { y = value; }
+        }
+        public float Z
+        {
+            get { return z; }
+            set { z = value; }
+        }
+
+        public static explicit operator Avalonia.Vector3D( Point3D point )
+        {
+            return new Avalonia.Vector3D( point.x, point.y, point.z );
+        }
+    }
+
     // this is an extension of a 3D position point which allows access via both polar and cartesian coordinates
     // it also accepts a "conf"idence value which can be used to indicate the accuracy of the position
     public class Point3DPlus
     {
-        private Point3D p;
-        private float r;
-        private Angle theta;
-        private Angle phi;
+        private Point3D p = default!;
+        private float r = default!;
+        private Angle theta = 0.0!;
+        private Angle phi = 0.0!;
         private bool polarDirty = false;  // polar values invalid?
         private bool xyzDirty = false;    // xyz values invalid?
 
@@ -195,12 +251,13 @@ namespace BrainSimulator.Modules
             r = 0;
             theta = 0;
             phi = 0;
-            P = new Point3D(0, 0, 0);
             Conf = 0;
         }
         public Point3DPlus(float x, float y, float z)
         {
-            P = new Point3D(x, y, z);
+            p.X = x;
+            p.Y = y;
+            p.Z = z;
             Conf = 0;
         }
         public Point3DPlus(float R1, Angle theta1, Angle phi1)
@@ -263,18 +320,17 @@ namespace BrainSimulator.Modules
 
         public Point Get2DPoint(float xsize, float ysize)
         {
-            Point result = new Point();
             // this assumes x and y are 2D coordinates on a field of view bitmap,
             // with 0, 0 at center. xsize and ysize are the size of the bitmap. 
             double maxTheta = 22.5 / 180.0 * Math.PI;
             double max_X = xsize / 2.0;
-            result.X = max_X * Theta / maxTheta;
+            var tX = max_X * Theta / maxTheta;
 
             double maxPhi = 15.2 / 180.0 * Math.PI;
             double max_Y = ysize / 2.0;
-            result.Y = max_Y * Phi / maxPhi;
+            var tY = max_Y * Phi / maxPhi;
 
-            return result;
+            return new(tX, tY);
         }
 
         public Point3D P
@@ -321,9 +377,9 @@ namespace BrainSimulator.Modules
         }
         private void UpdateXYZ()
         {
-            p.X = r * Cos(theta) * Cos(phi);
-            p.Y = r * Sin(theta) * Cos(phi);
-            p.Z = r * Sin(phi);
+            p.X = r * ( float )Cos(theta) * ( float )Cos(phi);
+            p.Y = r * ( float )Sin(theta) * ( float )Cos(phi);
+            p.Z = r * ( float )Sin(phi);
             xyzDirty = false;
         }
         public Point3DPlus Clone()

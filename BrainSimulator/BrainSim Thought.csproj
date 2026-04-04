@@ -1,30 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>disable</Nullable>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>True</UseWindowsForms>
-    <PlatformTarget>x64</PlatformTarget>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>False</UseWPF>
+    <UseWindowsForms>False</UseWindowsForms>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <BaseOutputPath>bin\</BaseOutputPath>
-    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <Version>$(VersionPrefix)</Version>
     <AssemblyVersion>1.6.4</AssemblyVersion>
     <ApplicationIcon>Iconsmall.ico</ApplicationIcon>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</SourceRevisionId>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <RootNamespace>BrainSimulator</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;NU1701</NoWarn>
     <LangVersion>preview</LangVersion>
+    <Optimize>False</Optimize>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <WarningLevel>0</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>1701;1702;NU1701</NoWarn>
     <Optimize>False</Optimize>
-    <LangVersion>preview</LangVersion>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <WarningLevel>0</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Label="Avalonia">
+    <AvaloniaUseCompiledBindingsByDefault>False</AvaloniaUseCompiledBindingsByDefault>
+    <AvaloniaXamlIlDebuggerLaunch>False</AvaloniaXamlIlDebuggerLaunch>
+    <AvaloniaXamlCreateSourceInfo>True</AvaloniaXamlCreateSourceInfo>
+    <AvaloniaXamlReportImportance>Low</AvaloniaXamlReportImportance>
+    <AvaloniaXamlVerboseExceptions>True</AvaloniaXamlVerboseExceptions>
+    <EnableAvaloniaXamlCompilation>True</EnableAvaloniaXamlCompilation>    
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Modules\Agents\**" />
@@ -48,7 +59,6 @@
     <None Remove="SplashScreen3.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <Page Remove="Modules\Agents\**" />
     <Page Remove="Tools\*.xaml" />
     <Page Remove="Tools\*.axaml" />
   </ItemGroup>
@@ -58,6 +68,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <AvaloniaResource Include="Resources\**"></AvaloniaResource>  
     <Resource Include="Resources\BrainSimBackground.jpg" />
     <Resource Include="Resources\Icons\NewFile_16x.png" />
     <Resource Include="Resources\Icons\OpenFile_16x.png" />
@@ -68,10 +79,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutomaticGraphLayout.GraphViewerGDI" Version="1.1.12" />
+    <PackageReference Include="Avalonia" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.13" />
+    <PackageReference Include="MessageBox.Avalonia" Version="3.3.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
     <PackageReference Include="pythonnet" Version="3.0.5" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
   <ItemGroup>
@@ -109,68 +127,68 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <AvaloniaXaml Remove="Modules\Agents\**" />
+    <AvaloniaXaml Remove="Modules\Vision\**" />
     <Compile Remove="Modules\Vision\**" />
     <EmbeddedResource Remove="Modules\Agents\**" />
     <EmbeddedResource Remove="Modules\Vision\**" />
     <None Remove="Modules\Agents\**" />
     <None Remove="Modules\Vision\**" />
-    <Page Remove="Modules\Vision\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaXaml Remove="Modules\ModuleActionDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleAddToMentalModelDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleAttentionDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleEmptyDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleMentalModelDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleOnlineInfoDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleShowGraphDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleSoundInDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleSoundOutDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleStressTestDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleTextDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleTextInDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleUKSDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleUKSQueryDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleUKSStatementDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleWellBeingDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleWordDlg.axaml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Modules\ModuleAction.cs" />
-    <Compile Remove="Modules\ModuleActionDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleActionDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAddToMentalModel.cs" />
-    <Compile Remove="Modules\ModuleAddToMentalModelDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleAddToMentalModelDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAttention.cs" />
-    <Compile Remove="Modules\ModuleAttentionDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleAttentionDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAttentionS.cs" />
     <Compile Remove="Modules\ModuleEmpty.cs" />
-    <Compile Remove="Modules\ModuleEmptyDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleEmptyDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleMentalModel.cs" />
-    <Compile Remove="Modules\ModuleMentalModelDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleMentalModelDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleOnlineInfo.cs" />
-    <Compile Remove="Modules\ModuleOnlineInfoDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleOnlineInfoDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleShowGraph.cs" />
-    <Compile Remove="Modules\ModuleShowGraphDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleShowGraphDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleSoundIn.cs" />
-    <Compile Remove="Modules\ModuleSoundInDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleSoundInDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleSoundOut.cs" />
-    <Compile Remove="Modules\ModuleSoundOutDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleSoundOutDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleStressTest.cs" />
-    <Compile Remove="Modules\ModuleStressTestDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleStressTestDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleText.cs" />
-    <Compile Remove="Modules\ModuleTextDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleTextDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleTextIn.cs" />
-    <Compile Remove="Modules\ModuleTextInDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleTextInDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleUKS.cs" />
-    <Compile Remove="Modules\ModuleUKSDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKSDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleUKSQuery.cs" />
-    <Compile Remove="Modules\ModuleUKSQueryDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKSQueryDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleUKSStatement.cs" />
-    <Compile Remove="Modules\ModuleUKSStatementDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleUKSStatementDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWellBeing.cs" />
-    <Compile Remove="Modules\ModuleWellBeingDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleWellBeingDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWord.cs" />
-    <Compile Remove="Modules\ModuleWordDlg.xaml.cs" />
+    <Compile Remove="Modules\ModuleWordDlg.axaml.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Page Remove="Modules\ModuleActionDlg.xaml" />
-    <Page Remove="Modules\ModuleAddToMentalModelDlg.xaml" />
-    <Page Remove="Modules\ModuleAttentionDlg.xaml" />
-    <Page Remove="Modules\ModuleEmptyDlg.xaml" />
-    <Page Remove="Modules\ModuleMentalModelDlg.xaml" />
-    <Page Remove="Modules\ModuleOnlineInfoDlg.xaml" />
-    <Page Remove="Modules\ModuleShowGraphDlg.xaml" />
-    <Page Remove="Modules\ModuleSoundInDlg.xaml" />
-    <Page Remove="Modules\ModuleSoundOutDlg.xaml" />
-    <Page Remove="Modules\ModuleStressTestDlg.xaml" />
-    <Page Remove="Modules\ModuleTextDlg.xaml" />
-    <Page Remove="Modules\ModuleTextInDlg.xaml" />
-    <Page Remove="Modules\ModuleUKSDlg.xaml" />
-    <Page Remove="Modules\ModuleUKSQueryDlg.xaml" />
-    <Page Remove="Modules\ModuleUKSStatementDlg.xaml" />
-    <Page Remove="Modules\ModuleWellBeingDlg.xaml" />
-    <Page Remove="Modules\ModuleWordDlg.xaml" />
-  </ItemGroup>
-
 </Project>

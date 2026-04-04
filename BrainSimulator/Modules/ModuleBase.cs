@@ -14,9 +14,13 @@
 
 using System;
 using System.Threading;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Threading;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -104,7 +108,7 @@ abstract public class ModuleBase
     {
         if (dlg is not null)
         {
-            Application.Current.Dispatcher.Invoke((Action)delegate
+            Dispatcher.UIThread.Invoke((Action)delegate
             {
                 dlg.Close();
             });
@@ -122,10 +126,8 @@ abstract public class ModuleBase
             string[] info = infoString.Split('+', 'x');
             if (info.Length == 4)
             {
-                dlgSize.X = float.Parse(info[0]);
-                dlgSize.Y = float.Parse(info[1]);
-                dlgPos.X = float.Parse(info[2]);
-                dlgPos.Y = float.Parse(info[3]);
+                dlgSize = new Point(float.Parse(info[0]),float.Parse(info[1]));
+                dlgPos = new Point(float.Parse(info[2]),float.Parse(info[3]));
             }
         }
 
@@ -147,33 +149,44 @@ abstract public class ModuleBase
         dlg.ParentModule = (ModuleBase)this;
         dlg.Closed += Dlg_Closed;
         dlg.Closing += Dlg_Closing;
-        dlg.LocationChanged += Dlg_LocationChanged;
+        dlg.PositionChanged += Dlg_LocationChanged;
         dlg.SizeChanged += Dlg_SizeChanged;
+
+
+        Window? owner = null;
 
         // we need to set the dialog owner so it will display properly
         // this hack is here because a file might load and create dialogs prior to the mainwindow opening
         // so the same functionality is called from within FileLoad
-        Window mainWindow = Application.Current.MainWindow;
-        if (mainWindow.GetType() == typeof(MainWindow))
-            dlg.Owner = Application.Current.MainWindow;
-
-        //restore the size and position
-        if (dlgPos != new Point(0, 0))
+        if( Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
         {
-            dlg.Top = dlgPos.Y;
-            dlg.Left = dlgPos.X;
+            Window mainWindow = desktop.MainWindow;
+            if( mainWindow.GetType() == typeof( MainWindow ) )
+            {
+                owner = desktop.MainWindow;
+            }
         }
         else
         {
-            dlg.Top = 250;
-            dlg.Left = 250;
+            MessageBox.Alert( "ShowDialog only supports Desktop Style Apps!", "Unsupported!" );
         }
+
+        //restore the size and position
+        if( dlgPos != new Point( 0, 0 ) )
+        {
+            dlg.Position = new PixelPoint( ( int )dlgPos.X, ( int )dlgPos.Y );
+        }
+        else
+        {
+            dlg.Position = new PixelPoint( 250, 250 );
+        }
+
         if (dlgSize != new Point(0, 0))
         {
             dlg.Width = dlgSize.X;
             dlg.Height = dlgSize.Y;
         }
-        dlg.Show();
+        dlg.Show( owner );
         dlgIsOpen = true;
     }
 
@@ -225,20 +238,19 @@ abstract public class ModuleBase
     {
         string infoString = "";
         if (dlg is not null)
-            infoString = dlg.Width.ToString("F0") + "x" + dlg.Height.ToString("F0") + "+" + dlg.Left.ToString("F0") + "+" + dlg.Top.ToString("F0");
+            infoString = dlg.Width.ToString("F0") + "x" + dlg.Height.ToString("F0") + "+" + dlg.Position.X.ToString("F0") + "+" + dlg.Position.Y.ToString("F0");
         SetSavedDlgAttribute("DlgWindow", infoString);
 
     }
     private void Dlg_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        dlgSize = new Point()
-        { Y = dlg.Height, X = dlg.Width };
+        dlgSize = new Point( dlg.Width, dlg.Height );
         SetDlgWindow();
     }
 
-    private void Dlg_LocationChanged(object sender, EventArgs e)
+    private void Dlg_LocationChanged(object sender, PixelPointEventArgs e )
     {
-        dlgPos = new Point() { Y = dlg.Top, X = dlg.Left };
+        dlgPos = new Point( dlg.Position.X, dlg.Position.Y );
         SetDlgWindow();
     }
 
@@ -278,7 +290,7 @@ abstract public class ModuleBase
         if (timer is not null) timer.Stop();
 
         if (dlg is not null)
-            Application.Current.Dispatcher.InvokeAsync(new Action(() =>
+            Dispatcher.UIThread.InvokeAsync(new Action(() =>
             {
                 dlg?.Draw(true);
             }));

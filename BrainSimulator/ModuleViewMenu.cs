@@ -14,19 +14,22 @@ using BrainSimulator.Modules;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 
 namespace BrainSimulator
 {
     public partial class MainWindow : Window
     {
-        public static readonly DependencyProperty moduleNameProperty =
-            DependencyProperty.Register("moduleName", typeof(string), typeof(MenuItem));
+        // OLD - public static readonly DependencyProperty moduleNameProperty = DependencyProperty.Register( "moduleName", typeof( string ), typeof( MenuItem ) );
 
-        public void CreateContextMenu(ModuleBase nr, FrameworkElement r, ContextMenu cm = null) //for a selection
+        public static readonly DirectProperty<MenuItem, string> moduleNameProperty = Avalonia.AvaloniaProperty.RegisterDirect<MenuItem, string>( "moduleName", o => o.Name );
+
+
+        public void CreateContextMenu(ModuleBase nr, Control r, ContextMenu cm = null) //for a selection
         {
             //cmCancelled = false;
             if (cm is null)
@@ -84,7 +87,6 @@ namespace BrainSimulator
             }
         }
 
-
         private void Mi_Click(object sender, RoutedEventArgs e)
         {
             //Handle delete  & initialize commands
@@ -134,7 +136,7 @@ namespace BrainSimulator
                             }
                             catch (Exception e1)
                             {
-                                MessageBox.Show("Initialize failed on module " + activeModules[i].Label + ".   Message: " + e1.Message);
+                                MessageBox.Alert("Initialize failed on module " + activeModules[i].Label + ".   Message: " + e1.Message, "Error" );
                             }
                         }
 
@@ -152,7 +154,7 @@ namespace BrainSimulator
                 {
                     string theModuleType = m.GetType().Name.ToString();
                     ModuleDescriptionDlg md = new ModuleDescriptionDlg(theModuleType);
-                    md.ShowDialog();
+                    md.Show();
                 }
             }
         }

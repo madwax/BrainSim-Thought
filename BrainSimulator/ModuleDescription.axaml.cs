@@ -10,11 +10,14 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows;
-using System.Windows.Controls;
 using System.Xml.Serialization;
 
 namespace BrainSimulator
@@ -28,6 +31,7 @@ namespace BrainSimulator
         public ModuleDescriptionDlg(string theModuleType)
         {
             InitializeComponent();
+
             moduleType = theModuleType;
             string fileName = Path.GetFullPath(".").ToLower();
             var modules = Utils.GetListOfExistingCSharpModuleTypes();
@@ -38,7 +42,10 @@ namespace BrainSimulator
             }
             moduleSelector.SelectedItem = theModuleType.Replace("Module", "");
 
-            Owner = Application.Current.MainWindow;
+            if( Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
+            {
+                Owner = desktop.MainWindow;
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -47,7 +54,7 @@ namespace BrainSimulator
             ModuleDescriptionFile.Save();
         }
 
-        private void moduleSelector_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void moduleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e )
         {
             if (sender is ComboBox cb)
             {
@@ -103,7 +110,7 @@ namespace BrainSimulator
             }
             catch (Exception e)
             {
-                MessageBox.Show("Module CvStageDescription Xml file read failed because: " + e.Message);
+                MessageBox.Alert( "Module CvStageDescription Xml file read failed because: " + e.Message, "Loading ModuleDescriptions,xml" );
                 return false;
             }
             file.Close();
@@ -129,10 +136,10 @@ namespace BrainSimulator
             }
             catch (Exception e)
             {
-                MessageBox.Show("Module CvStageDescription Xml file write failed because: " + e.Message);
+                MessageBox.Alert("Module CvStageDescription Xml file write failed because: " + e.Message, "Saving ModuleDescriptions.xml" );
                 return false;
             }
-            file.Position = 0; ;
+            file.Position = 0;
 
             file.Close();
 

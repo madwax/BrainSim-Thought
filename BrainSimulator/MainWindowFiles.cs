@@ -11,15 +11,17 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+
 using BrainSimulator.Modules;
-using Microsoft.Win32;
 using System;
+using System.Collections;
 using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+using System.IO;
+using System.Threading.Tasks;
 using UKS;
 
 namespace BrainSimulator
@@ -176,6 +178,7 @@ namespace BrainSimulator
         }
         private void LoadMRUMenu()
         {
+            /*
             MRUListMenu.Items.Clear();
             StringCollection MRUList = (StringCollection)Properties.Settings.Default["MRUList"];
             if (MRUList is null)
@@ -186,9 +189,9 @@ namespace BrainSimulator
                 string shortName = Path.GetFileNameWithoutExtension(fileItem);
                 MenuItem mi = new MenuItem() { Header = shortName };
                 mi.Click += buttonLoad_Click;
-                mi.ToolTip = fileItem;
+                ToolTip.SetTip( mi, fileItem );
                 MRUListMenu.Items.Add(mi);
-            }
+            }*/
         }
 
         private void LoadCurrentFile()
@@ -202,13 +205,13 @@ namespace BrainSimulator
             Properties.Settings.Default.Save();
         }
 
-        private bool PromptToSaveChanges()
+        private async Task<bool> PromptToSaveChanges()
         {
-            var result = MessageBox.Show("Save current UKS content first?", "Save?", MessageBoxButton.YesNoCancel);
-            if (result == MessageBoxResult.Cancel)
+            var result = await MessageBox.YesNoCancel("Save current UKS content first?", "Save?" );
+            if (result == MessageBox.Buttons.Cancel)
                 return false;
-            if (result == MessageBoxResult.Yes)
-                Save();
+            if (result == MessageBox.Buttons.Yes)
+                return Save();
             return true;
         }
 
@@ -217,36 +220,39 @@ namespace BrainSimulator
             SetupBeforeSave();
             return theUKS.SaveUKStoXMLFile(currentFileName);
         }
-        private bool SaveAs()
+        private async Task<bool> SaveAs()
         {
-            System.Windows.Forms.SaveFileDialog saveFileDialog = new()
+            var topLevel = TopLevel.GetTopLevel( this );
+            ArgumentNullException.ThrowIfNull( topLevel );
+
+            var saveFilepath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+
+            var saveFilepathLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync( new System.Uri( saveFilepath ) );
+            var filepathToSaveTo = await topLevel.StorageProvider.SaveFilePickerAsync( new Avalonia.Platform.Storage.FilePickerSaveOptions
             {
-                Filter = Utils.FilterXMLs,
                 Title = Utils.TitleUKSFileSave,
-                InitialDirectory = Utils.GetOrAddLocalSubFolder(Directory.GetCurrentDirectory() + "\\" + Utils.UKSContentFolder),
-            };
+                FileTypeChoices = new[] { Utils.FilterXMLs },
+                SuggestedStartLocation = saveFilepathLocation
+            } );
 
-            // Show the file Dialog.  
-            // If the user clicked OK in the dialog and  
-            System.Windows.Forms.DialogResult result = saveFileDialog.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if( filepathToSaveTo == null )
             {
-                MainWindow.SuspendEngine();
-                currentFileName = saveFileDialog.FileName;
-                theUKS.SaveUKStoXMLFile(currentFileName);
-                AddFileToMRUList(currentFileName);
-                SetCurrentFileNameToProperties();
-
-                SetTitleBar();
-                ResumeEngine();
-            }
-            else
-            {
-                saveFileDialog.Dispose();
                 return false;
             }
-            saveFileDialog.Dispose();
-            ResumeEngine();
+
+            MainWindow.SuspendEngine();
+
+            /// CHECK - Does absolute path return with file://?
+            currentFileName = filepathToSaveTo.Path.AbsolutePath;
+
+            theUKS.SaveUKStoXMLFile(currentFileName);
+
+            AddFileToMRUList( currentFileName );
+            SetCurrentFileNameToProperties();
+
+            SetTitleBar();
+
+            MainWindow.ResumeEngine();
             return true;
         }
     }

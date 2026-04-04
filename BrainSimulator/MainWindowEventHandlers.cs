@@ -11,12 +11,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using Microsoft.Win32;
 using System;
-using System.Windows;
-using System.Windows.Controls;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using BrainSimulator.Modules;
-using System.Windows.Input;
 
 namespace BrainSimulator
 {
@@ -26,7 +26,7 @@ namespace BrainSimulator
     public partial class MainWindow : Window
     {
 
-        private void buttonSave_Click(object sender, RoutedEventArgs e)
+        private async void buttonSave_Click(object sender, RoutedEventArgs e)
         {
             if (currentFileName.Length == 0)
             {
@@ -38,17 +38,17 @@ namespace BrainSimulator
             }
         }
 
-        private void buttonSaveAs_Click(object sender, RoutedEventArgs e)
+        private async void buttonSaveAs_Click(object sender, RoutedEventArgs e)
         {
-            if (SaveAs())
+            if ( await SaveAs())
             {
                 SaveButton.IsEnabled = true;
             }
         }
 
-        private void buttonReloadNetwork_click(object sender, RoutedEventArgs e)
+        private async void buttonReloadNetwork_click(object sender, RoutedEventArgs e)
         {
-            if (!PromptToSaveChanges())
+            if ( ! await PromptToSaveChanges())
                 return;
 
             if (currentFileName != "")
@@ -104,9 +104,9 @@ namespace BrainSimulator
             ReloadActiveModulesSP();
 
         }
-        private void button_FileNew_Click(object sender, RoutedEventArgs e)
+        private async void button_FileNew_Click(object sender, RoutedEventArgs e)
         {
-            if (!PromptToSaveChanges())
+            if ( ! await PromptToSaveChanges())
                 return;
 
             SuspendEngine();
@@ -125,15 +125,14 @@ namespace BrainSimulator
 
             LoadMRUMenu();
 
-
             SetTitleBar();
 
             ResumeEngine();
         }
 
-        private void buttonLoad_Click(object sender, RoutedEventArgs e)
+        private async void buttonLoad_Click(object sender, RoutedEventArgs e)
         {
-            if (!PromptToSaveChanges())
+            if (! await PromptToSaveChanges())
                 return;
             string fileName = "_Open";
             if (sender is MenuItem mainMenu)
@@ -141,17 +140,16 @@ namespace BrainSimulator
 
             if (fileName == "_Open")
             {
-                OpenFileDialog openFileDialog1 = new OpenFileDialog
+                var topLevel = TopLevel.GetTopLevel( this );
+                var fileLocation = await topLevel.StorageProvider.OpenFilePickerAsync( new Avalonia.Platform.Storage.FilePickerOpenOptions
                 {
-                    Filter = Utils.FilterXMLs,
                     Title = Utils.TitleUKSFileLoad,
-                };
-                // Show the Dialog.  
-                // If the user clicked OK in the dialog and  
-                Nullable<bool> result = openFileDialog1.ShowDialog();
-                if (result ?? false)
+                    FileTypeFilter = new[] { Utils.FilterXMLs }
+                } );
+
+                if( fileLocation != null && fileLocation.Count > 0 )
                 {
-                    currentFileName = openFileDialog1.FileName;
+                    currentFileName = fileLocation[ 0 ].Path.AbsolutePath;
                     LoadCurrentFile();
                 }
             }
@@ -160,16 +158,16 @@ namespace BrainSimulator
                 if (sender is MenuItem mi)
                 {
                     //this is a file name from the File menu
-                    currentFileName = mi.ToolTip.ToString(); //Path.GetFullPath("./UKSContent/" + fileName + ".xml");
+                    currentFileName = ToolTip.GetTip( mi ).ToString(); //Path.GetFullPath("./UKSContent/" + fileName + ".xml");
                     LoadCurrentFile();
 
                 }
             }
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (!PromptToSaveChanges())
+            if (! await PromptToSaveChanges())
                 return;
             CloseAllModuleDialogs();
             CloseAllModules();

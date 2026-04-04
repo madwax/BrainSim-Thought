@@ -12,24 +12,23 @@
  */
  
 
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using BrainSimulator.Modules;
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using static System.Math;
-using System.Windows.Input;
 using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Media.Media3D;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using static System.Math;
+
 
 namespace BrainSimulator
 {
-
     public static class IReadOnlyListExtensions
     {
         public static T FindFirst<T>(this IReadOnlyList<T> source, Func<T, bool> condition)
@@ -49,7 +48,6 @@ namespace BrainSimulator
             return theList;
         }
     }
-
 
     //This is not used
     class Range
@@ -192,7 +190,7 @@ namespace BrainSimulator
             double X = C * (1 - Abs((hue / 60) % 2 - 1));
             double m = luminance - C / 2;
 
-            Color c;
+            Color c = default!;
 
             if (000 <= hue && hue < 060) c = Color.FromArgb(255, (byte)((C + m) * 255), (byte)((X + m) * 255), (byte)((0 + m) * 255));
             if (060 <= hue && hue < 120) c = Color.FromArgb(255, (byte)((X + m) * 255), (byte)((C + m) * 255), (byte)((0 + m) * 255));
@@ -213,7 +211,6 @@ namespace BrainSimulator
             else if (h * 2 < 1) return m2;
             else if (h * 3 < 2) return m1 + (m2 - m1) * 6 * (2d / 3d - h);
             else return m1;
-
         }
 
         public bool Equals(HSLColor c1)
@@ -237,13 +234,18 @@ namespace BrainSimulator
 
     public static class Utils
     {
+
+
+#if NOTUSED_WINDOWS
         [DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
         public static extern void GetSystemTimePreciseAsFileTime(out long filetime);
+
         public static long GetPreciseTime()
-        {
+        { 
             GetSystemTimePreciseAsFileTime(out long fileTime);
             return fileTime;
         }
+#endif
 
         public static float RoundToSignificantDigits(this float d, int digits)
         {
@@ -257,7 +259,7 @@ namespace BrainSimulator
         //this searches a control tree to find a control by name so you can retrieve its value
         public static Control FindByName(Visual v, string name)
         {
-            foreach (Object o in LogicalTreeHelper.GetChildren(v))
+            foreach( Object o in Avalonia.LogicalTree.LogicalExtensions.GetLogicalChildren( v ) )
             {
                 if (o is Visual v3)
                 {
@@ -277,6 +279,8 @@ namespace BrainSimulator
             }
             return null;
         }
+
+#if NOT_USED
 
         public static float Rad(float degrees)
         {
@@ -299,6 +303,8 @@ namespace BrainSimulator
             c.R = (byte)(theColor >> 16 & 0xff);
             return c;
         }
+#endif
+
         public static int ColorToInt(Color theColor)
         {
             int retVal = 0;
@@ -308,6 +314,8 @@ namespace BrainSimulator
             retVal += theColor.B;
             return retVal;
         }
+
+#if NOT_USED
         public static int ColorToInt(System.Drawing.Color theColor)
         {
             int retVal = 0;
@@ -502,6 +510,7 @@ namespace BrainSimulator
             if (dif > toler) return false;
             return true;
         }
+#endif
 
         public static bool Close(int a, int b)
         {
@@ -545,7 +554,7 @@ namespace BrainSimulator
             Vector AB = B - A;    //Vector from A to B  
 
             float magnitudeAB = (float)(AB.Length * AB.Length);     //Magnitude of AB vector (it's length squared)     
-            float ABAPproduct = (float)Vector.Multiply(AP, AB);    //The DOT product of a_to_p and a_to_b--projection of P onto AB     
+            float ABAPproduct = (float)Vector.Multiply(AP, AB).Length;    //The DOT product of a_to_p and a_to_b--projection of P onto AB     
             float distance = ABAPproduct / magnitudeAB; //The normalized "distance" from a to your closest point  
 
             if (distance < 0)     //Check if P projection is over vectorAB     
@@ -554,7 +563,8 @@ namespace BrainSimulator
             }
             else if (distance > 1)
             {
-                return (float)(P-B).Length;
+                var t = ( P - B );
+                return (float)(t.X * t.Y);
             }
             else
             {
@@ -768,7 +778,7 @@ namespace BrainSimulator
             {
                 Vector v = P2 - P1;
                 double changeLength = (v.Length + dist) / v.Length;
-                v = Vector.Multiply(changeLength, v);
+                v = Vector.Multiply(v, changeLength);
                 PointPlus newPoint = new PointPlus { P = P2 - v };
                 return newPoint;
             }
@@ -776,7 +786,8 @@ namespace BrainSimulator
             {
                 Vector v = P1 - P2;
                 double changeLength = (v.Length + dist) / v.Length;
-                v = Vector.Multiply(changeLength, v);
+                v = Vector.Multiply(v, changeLength);
+
                 PointPlus newPoint = new PointPlus { P = P1 - v };
                 return newPoint;
             }
@@ -848,8 +859,7 @@ namespace BrainSimulator
             return new Point(centerX / accumulatedArea, centerY / accumulatedArea);
         }
 
-
-
+#if NOT_USED
         //This textbox has a special action to cope with peculiar focus issues when a textbox is placed on a context menu
         public static TextBox ContextMenuTextBox(string content, string name, float width)
         {
@@ -890,7 +900,7 @@ namespace BrainSimulator
             sp.Children.Add(theCombo);
             return new MenuItem { StaysOpenOnClick = true, Header = sp };
         }
-
+       
         public static ComboBox CreateComboBox(string cbName, float value, List<float> values, string format, int textWidth, RoutedEventHandler theEventHandler)
         {
             ComboBox theCombo = new ComboBox { IsEditable = true, Width = textWidth, Name = cbName };
@@ -941,6 +951,7 @@ namespace BrainSimulator
                 }
             }
         }
+#endif
 
         public static List<Type> GetListOfExistingCSharpModuleTypes()
         {
@@ -959,6 +970,7 @@ namespace BrainSimulator
             return retVal;
         }
 
+#if NOT_USED
         /// <summary>
         /// TrimPunctuation from start and end of string.
         /// </summary>
@@ -1047,7 +1059,7 @@ namespace BrainSimulator
 
             return rot;
         }
-
+#endif
         static Random randomGenerator = new Random();
 
         public static string Random(int min, int max)
@@ -1068,7 +1080,13 @@ namespace BrainSimulator
         public const string UKSContentFolder = "UKSContent";
         //public const string FolderUISavedImages = "SavedPictures";
 
-        public const string FilterXMLs = "XML Files|*.xml";
+        public static FilePickerFileType FilterXMLs { get; } = new( "XML Files" )
+        {
+            Patterns = new[] { "*.xml" },
+            AppleUniformTypeIdentifiers = new[] { "XML Files" },
+            MimeTypes = new[] { "application/xml" }
+        };
+
         //public const string FilterImages = "Image Files|*.png;*.jpg;*.bmp";
         //public const string FilterWavs = "wav Files|*.wav";
 

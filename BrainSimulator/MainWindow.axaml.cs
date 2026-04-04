@@ -10,13 +10,16 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-using BrainSimulator.Modules;
+
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Threading;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using BrainSimulator.Modules;
 using UKS;
+
+using static System.Configuration.ConfigurationManager;
 
 namespace BrainSimulator
 {
@@ -114,7 +117,7 @@ namespace BrainSimulator
                 {
                     if (!LoadFile(fileName))
                     {
-                        MessageBox.Show("Previous UKS File could not be opened, empty UKS initialized", "File not read", MessageBoxButton.OK);
+                        MessageBox.Alert("Previous UKS File could not be opened, empty UKS initialized", "UKS Content not loaded" );
                         CreateEmptyUKS();
                     }
                 }
@@ -125,7 +128,7 @@ namespace BrainSimulator
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show("UKS Content not loaded");
+                MessageBox.Alert("Exception: " + ex.ToString(), "UKS Content not loaded" );
             }
 
             //safety check
@@ -141,10 +144,10 @@ namespace BrainSimulator
             LoadMRUMenu();
 
             //start the module engine
-            DispatcherTimer dt = new();
-            dt.Interval = TimeSpan.FromSeconds(0.001);
-            dt.Tick += Dt_Tick;
-            dt.Start();
+            //DispatcherTimer dt = new();
+            //dt.Interval = TimeSpan.FromSeconds(0.001);
+            //dt.Tick += Dt_Tick;
+            //dt.Start();
         }
 
 
@@ -178,7 +181,7 @@ namespace BrainSimulator
             {
                 if (mb is not null)
                 {
-                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    Dispatcher.UIThread.Invoke((Action)delegate
                     {
                         mb.ShowDialog();
                     });
@@ -249,7 +252,7 @@ namespace BrainSimulator
 
         public void InsertMandatoryModules()
         {
-            Debug.WriteLine("InsertMandatoryModules entered");
+            // Debug.WriteLine("InsertMandatoryModules entered");
             ActivateModule("ModuleUKS");
             ActivateModule("ModuleUKSStatement");
         }
@@ -342,7 +345,7 @@ namespace BrainSimulator
                 ModuleBase mb = activeModules.FindFirst(x => x.Label == module.Label);
                 if (mb is not null)
                 {
-                    System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate
+                    Dispatcher.UIThread.Invoke((Action)delegate
                     {
                         mb.Fire();
                     });
@@ -376,15 +379,21 @@ namespace BrainSimulator
 
             ModuleListComboBox.Items.Clear();
             ModuleListComboBox.FontSize = 18;
+
+            // We can't sort the items in the control so we have to do it first in a list then asign 
+            List<string> labels = [];
             foreach (Thought t in theUKS.Labeled("AvailableModule").Children)
             {
                 //ModuleListComboBox.Items.Add(new System.Windows.Controls.Label { Content = t.Label, Margin = new Thickness(0), Padding = new Thickness(0) });
-                ModuleListComboBox.Items.Add(t.Label);
+                 labels.Add(t.Label);                
             }
-            ModuleListComboBox.Items.SortDescriptions.Add(
-                new System.ComponentModel.SortDescription(
-                    "", // empty = sort by the item itself (e.g., string)
-                    System.ComponentModel.ListSortDirection.Ascending));
+
+            labels.Sort();
+
+            labels.ForEach( label =>
+            {
+                ModuleListComboBox.Items.Add( label );
+            } );
         }
     }
 }

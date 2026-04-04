@@ -16,12 +16,13 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace BrainSimulator.Modules;
 
@@ -45,7 +46,7 @@ public class ModuleBaseDlg : Window
         initializedLayout = true;
 
         // capture original content
-        UIElement? originalContent = this.Content as UIElement;
+        Control? originalContent = this.Content as Control;
 
         // create outer grid (single row) and overlay bottom bar at the bottom
         Grid shell = new()
@@ -80,7 +81,7 @@ public class ModuleBaseDlg : Window
             Height = 25,
             Padding = new Thickness(0, -6, 0, 0),
             Name = "helpButton",
-            ToolTip = "Show dialog help",
+            //ToolTip = "Show dialog help",
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -93,7 +94,7 @@ public class ModuleBaseDlg : Window
             Width = 33,
             Height = 25,
             Name = "sourceButton",
-            ToolTip = "Show dialog source",
+            //ToolTip = "Show dialog source",
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -140,11 +141,12 @@ public class ModuleBaseDlg : Window
 
     private void SourceButton_Click(object sender, RoutedEventArgs e)
     {
+#if WINDOWS
         string theModuleType = this.GetType().Name.ToString();
         string cwd = System.IO.Directory.GetCurrentDirectory();
         cwd = cwd.ToLower().Replace("bin\\debug\\net8.0-windows", "") + @"modules\";
-        string dlgFilePath = FindFile(cwd, theModuleType + ".xaml.cs");
-        string csFilePath = FindFile(cwd, theModuleType.Substring(0, theModuleType.Length - 3) + ".cs");
+        string dlgFilePath = FindFile(cwd, theModuleType + ".axaml.cs");
+        string csFilePath = FindFile(cwd, theModuleType.Substring(0, theModuleType.Length - 4) + ".cs");
         csFilePath = "\"" + csFilePath + "\"";
         dlgFilePath = "\"" + dlgFilePath + "\"";
 
@@ -170,6 +172,7 @@ public class ModuleBaseDlg : Window
         ProcessStartInfo startInfo2 = new ProcessStartInfo(taskFile, "/edit " + csFilePath);
         process.StartInfo = startInfo2;
         process.Start();
+#endif
     }
 
     private void HelpButton_Click(object sender, RoutedEventArgs e)
