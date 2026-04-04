@@ -1,6 +1,8 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using System;
 using System.Threading.Tasks;
 
 #pragma warning disable CA2007
@@ -22,28 +24,25 @@ namespace BrainSimulator
         /// </summary>
         /// <param name="message"></param>
         /// <param name="title"></param>
-        public static void Alert( string message, string title)
+        public static async void Alert( string message, string title)
         {
             var theMsgBox = MessageBoxManager.GetMessageBoxStandard( message, title, ButtonEnum.Ok );
             // don't care about the return
-            Task.Run( async () => await theMsgBox.ShowAsync() );
+            await theMsgBox.ShowAsync();
         }
 
-        public static MessageBox.Buttons YesNoCancel( string message, string title )
+        public static async Task<MessageBox.Buttons> YesNoCancel( string message, string title )
         {
             var theMsgBox = MessageBoxManager.GetMessageBoxStandard( message, title, ButtonEnum.YesNoCancel );
+            ButtonResult buttonIs = await theMsgBox.ShowWindowAsync();
 
-            var results = Task.Run( async () => await theMsgBox.ShowAsync() );
-            if( results is not null )
+            if( buttonIs == ButtonResult.Yes )
             {
-                if( results.Result == ButtonResult.Yes )
-                {
-                    return MessageBox.Buttons.Yes;
-                }
-                else if( results.Result == ButtonResult.No )
-                {
-                    return MessageBox.Buttons.No;
-                }
+                return MessageBox.Buttons.Yes;
+            }
+            else if( buttonIs == ButtonResult.No )
+            {
+                return MessageBox.Buttons.No;
             }
             return MessageBox.Buttons.Cancel;
         }
