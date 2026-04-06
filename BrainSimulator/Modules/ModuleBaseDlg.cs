@@ -29,9 +29,13 @@ namespace BrainSimulator.Modules;
 public class ModuleBaseDlg : Window
 {
     public ModuleBase ParentModule;
+
+#if TO_REMOVE
     private DateTime dt;
-    private DispatcherTimer timer;
+    private DispatcherTimer timer;  // It's not used.
     public int UpdateMS = 100;
+#endif
+
     public Label statusLabel;
     private bool initializedLayout = false;
 
@@ -123,6 +127,7 @@ public class ModuleBaseDlg : Window
         this.Content = shell;
     }
 
+#if TO_REMOVE
     /// <summary>
     /// Searches for a file with the given name (no path) in the specified root directory
     /// and all its subdirectories.
@@ -138,6 +143,7 @@ public class ModuleBaseDlg : Window
                             fileName,
                             StringComparison.OrdinalIgnoreCase));
     }
+#endif 
 
     private void SourceButton_Click(object sender, RoutedEventArgs e)
     {
@@ -185,10 +191,10 @@ public class ModuleBaseDlg : Window
 
     virtual public bool Draw(bool checkDrawTimer)
     {
-        if (!checkDrawTimer) return true;
         return true;
     }
 
+#if TO_REMOVE
     public void Timer_Tick(object sender, EventArgs e)
     {
         timer.Stop();
@@ -206,6 +212,7 @@ public class ModuleBaseDlg : Window
         if (this is not null)
             Draw(false);
     }
+#endif
 
     /// <summary>
     /// Sets a status message at the bottom of the dialog. Seets the background yellow if the color is red or null

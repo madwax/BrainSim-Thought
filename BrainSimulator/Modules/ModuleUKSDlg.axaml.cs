@@ -16,36 +16,47 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
+using System.Diagnostics;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Threading;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+using Avalonia.Controls.Templates;
+
 using UKS;
-using Microsoft.Win32;
+
 
 namespace BrainSimulator.Modules;
 
 public partial class ModuleUKSDlg : ModuleBaseDlg
 {
+    private enum TreeViewExpandedModes
+    {
+        Currently = 0, // Workout what is currently expanded in the treeview.
+        All, // Your doing to expand everything
+        None // Only the root is expended.
+    };
 
-    public static readonly DependencyProperty ThoughtObjectProperty = //used in TreeView items
-    DependencyProperty.Register("Thought", typeof(Thought), typeof(TreeViewItem));
-    public static readonly DependencyProperty TreeViewItemProperty = //used in Thought context menus
-    DependencyProperty.Register("TreeViewItem", typeof(TreeViewItem), typeof(TreeViewItem));
-    public static readonly DependencyProperty LinkObjectProperty = //used in Link context menus
-    DependencyProperty.Register("LinkType", typeof(Thought), typeof(TreeViewItem));
-
+    public static readonly StyledProperty<Thought> ThoughtObjectProperty = AvaloniaProperty.Register<TreeViewItem, Thought>( "Thought" );
+    public static readonly StyledProperty<TreeViewItem> TreeViewItemProperty = AvaloniaProperty.Register<TreeViewItem, TreeViewItem>( "Thought" );
+    public static readonly StyledProperty<Thought> LinkObjectProperty = AvaloniaProperty.Register<TreeViewItem, Thought>( "Thought" );
 
     private const int maxDepth = 20;
     private const int rootHistoryLimit = 8;
     private readonly List<string> _rootHistory = new();
     private int totalItemCount;
     private bool mouseInWindow; //prevent auto-update while the mouse is in the tree
-    private bool busy;
-    private List<string> expandedItems = new();
+    private bool pauseRefreshing = false;  // prevent the tree control being updated while we do things like context menus.
+    private bool contextMenuForceDraw = false; // True if the content menu needs to draw after its action.
+    private List<string> treeviewCurrentExpandedItems = new();
+    private string treeviewCurrentSelectedLabel = "";
+    private TreeViewExpandedModes treeviewExpandedMode = TreeViewExpandedModes.Currently;
+
     private bool updateFailed;
-    private DispatcherTimer dt;
+    private DispatcherTimer? dt = null;
     private string expandAll = "";  //all the children below this named node will be expanded
     private UKS.UKS theUKS = null;
 
@@ -54,15 +65,50 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     {
         InitializeComponent();
         theUKS = MainWindow.theUKS;
+        this.Opened += OnOpened;
+        this.Closed += OnClosed;
     }
+
+    private void OnOpened(object? sender, EventArgs e)
+    {
+        this.StartTimer();
+    }
+    private void OnClosed( object? sender, EventArgs e )
+    {
+        this.StopTimer();
+    }
+
+    private void StartTimer()
+    {
+        if( dt is null )
+        {
+            dt = new DispatcherTimer();
+            dt.Tick += Dt_Tick;
+        }
+
+        if( checkBoxAuto.IsChecked == true )
+        {
+            dt.Start();
+        }
+    }
+    private void StopTimer()
+    {
+        if( dt is null ) return;
+        dt.Stop();
+    }
+
     public override bool Draw(bool checkDrawTimer)
     {
+        // RHC - Base has no timers anymore!
+
         //this has a timer so that no matter how often you might call draw, the dialog
         //only updates 10x per second
-        if (!base.Draw(checkDrawTimer)) return false;
-        if (busy) return false;
-        if (!checkBoxAuto.IsChecked == true) { return false; }
-        Refresh();
+        if( !base.Draw(checkDrawTimer)) return false;
+
+        if( pauseRefreshing == false )
+        {
+            Refresh();
+        }
         return true;
     }
 
@@ -70,14 +116,18 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     {
         //get the parameters
         ModuleUKS parent = (ModuleUKS)ParentModule;
+
         expandAll = parent.GetSavedDlgAttribute("ExpandAll");
         string root = parent.GetSavedDlgAttribute("Root");
+
         //root = "BrainSim";
         Thought Root = theUKS.Labeled(root);
 
         if (Root is null) Root = (Thought)"Thought";
+
         string sizeString = parent.GetSavedDlgAttribute("fontSize");
         int.TryParse(sizeString, out int fontSize);
+
         if (fontSize != 0)
             theTreeView.FontSize = fontSize;
 
@@ -85,18 +135,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if (!string.IsNullOrEmpty(root))
         {
             totalItemCount = 0;
+
             TreeViewItem tvi = new() { Header = Root.ToString() };
             tvi.ContextMenu = GetContextMenu(Root, tvi);
             tvi.IsExpanded = true; //always expand the top-level item
             theTreeView.Items.Add(tvi);
+            
             tvi.SetValue(ThoughtObjectProperty, Root);
+
             AddLinks(Root, tvi, 1, "");
             AddChildren(Root, tvi, 0, Root.Label);
         }
-        else if (string.IsNullOrEmpty(root)) //search for unattached Thoughts
+        else //search for unattached Thoughts
         {
-            for (
-                int i = 0; i < theUKS.AtomicThoughts.Count; i++)
+            for ( int i = 0; i < theUKS.AtomicThoughts.Count; i++)
             {
                 Thought t1 = theUKS.AtomicThoughts[i];
                 if (t1.Parents.Count == 0)
@@ -110,12 +162,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddChildren(Thought t, TreeViewItem tvi, int depth, string parentLabel)
     {
-        if (totalItemCount > 500) return;
+        if( totalItemCount > 500) return;
         depth++;
         if (depth > maxDepth) return;
 
         List<Link> theChildren = t.LinksFrom.Where(x => x.LinkType.Label.StartsWith("is-a") && x.To is not null).ToList();
         theChildren = theChildren.OrderBy(x => x.From.Label).ToList();
+
         if (detailsCB.IsChecked == true)
             theChildren = theChildren.OrderByDescending(x => x.From.Weight).ToList();
 
@@ -125,6 +178,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             var child = l.From;
             TreeViewItem tviChild = GetTreeChildFormatted(parentLabel, child);
             tvi.Items.Add(tviChild);
+
             tviChild.ContextMenu = GetContextMenu(child, tviChild);
 
             if (l.LinksTo.Count > 0)  //there is provenance on this is-a link
@@ -133,6 +187,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             int childCount = child.Children.Count;
             int linkCount = child.LinksTo.Count(x => x.LinkType.Label != "is-a");
             int linkFromCount = child.LinksFrom.Count;
+
             if (tviChild.IsExpanded)
             {
                 // load children and links
@@ -143,7 +198,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void AddLinks(Thought t, TreeViewItem tvi, int depth, string parentLabel)
     {
-        if (t.LinksTo.Count == 0 && t is not Link lnk) return;
+        if( t.LinksTo.Count == 0 && t is not Link lnk) return;
 
         //build the entry for the tabel of expanded items
         string currentLabel = "|" + parentLabel + "|" + t.Label;
@@ -160,7 +215,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             if (showConditionals.IsChecked != true)
                 if (l.HasProperty("isCondition") || l.HasProperty("isResult")) continue; //hide conditionals
-            var x = expandedItems;
+            var x = treeviewCurrentExpandedItems;
 
             TreeViewItem tviLink = GetTreeChildFormatted(currentLabel, l);
             tviLink.ContextMenu = GetLinkContextMenu(l);
@@ -168,6 +223,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
             if (tviLink.IsExpanded && l.LinksTo.Count > 0) //get provenance, etc. on this link
                 AddLinks(l, tviLink, depth, currentLabel);
+
             if (tviLink.IsExpanded && theUKS.IsSequenceElement(l?.To)) //expand sequence elements
                 AddLinks(l.To, tviLink, depth, currentLabel + "|" + l.ToString());
         }
@@ -195,7 +251,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             tvi.Items.Add(tviLink);
         }
     }
-
 
     //build and format the TreeView item for this Thought
     private TreeViewItem GetTreeChildFormatted(string parentLabel, Thought t)
@@ -257,18 +312,41 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         tviChild.SetValue(ThoughtObjectProperty, child);
         if (child.LastFiredTime > DateTime.Now - TimeSpan.FromMilliseconds(500))
             tviChild.Background = new SolidColorBrush(Colors.LightGreen);
+
         if (child.TimeToLive != TimeSpan.MaxValue && child.LastFiredTime + child.TimeToLive < DateTime.Now + TimeSpan.FromSeconds(3))
             tviChild.Background = new SolidColorBrush(Colors.LightYellow);
 
         //is this expanded?
         string currentLabel = "|" + parentLabel + "|" + (string.IsNullOrEmpty(child?.Label) ? child?.ToString() : child?.Label);
         currentLabel = currentLabel.Replace("||", "|"); //parentLabel may or may not have a leading '|'
-        if (expandedItems.Contains(currentLabel))
+
+        switch( treeviewExpandedMode )
+        {
+            case TreeViewExpandedModes.Currently:
+            {
+                if( treeviewCurrentExpandedItems.Contains( currentLabel ) )
+                    tviChild.IsExpanded = true;
+            }break;
+
+            case TreeViewExpandedModes.All:
+            {
+                tviChild.IsExpanded = true;
+            } break;
+
+            case TreeViewExpandedModes.None:
+            {
+                tviChild.IsExpanded = false;
+            } break;
+        }
+
+        if( treeviewCurrentSelectedLabel == currentLabel )
+            tviChild.IsSelected = true;
+
+        if (child.Ancestors.Contains(expandAll) && (child.Label == "" || !parentLabel.Contains("|" + child.Label)))
             tviChild.IsExpanded = true;
-        if (child.Ancestors.Contains(expandAll) &&
-            (child.Label == "" || !parentLabel.Contains("|" + child.Label)))
-            tviChild.IsExpanded = true;
-        tviChild.Expanded += EmptyChild_Expanded;
+        
+        tviChild.Expanded += TreeViewItem_Expanded;
+        tviChild.DoubleTapped += TreeViewItem_DoubleTapped;
 
         totalItemCount++;
         return tviChild;
@@ -277,7 +355,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     //if the "details" box is checked, add the details
     private string AddDetails(Thought t, string header)
     {
-
         if (detailsCB.IsChecked == false) return header;
         string timeToLive = (t.TimeToLive == TimeSpan.MaxValue ? "∞" : (t.LastFiredTime + t.TimeToLive - DateTime.Now).ToString(@"mm\:ss"));
         if (t.Weight != 1f || t.TimeToLive != TimeSpan.MaxValue)
@@ -292,41 +369,85 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         return header;
     }
 
+    private void PopulateEmptyTreeViewItemWithChildren( TreeViewItem tvi )
+    {
+        string name = tvi.Header.ToString(); // to help debug
+        Thought t = ( Thought )tvi.GetValue( ThoughtObjectProperty );
+        string parentLabel = "|" + t.ToString();
+        TreeViewItem tvi1 = tvi;
+        int depth = 0;
+        //work your way up the tree to find all ancestors of this leaf
+        while( tvi1.Parent is not null && tvi1.Parent is TreeViewItem tvi2 )
+        {
+            tvi1 = tvi2;
+            Thought t1 = ( Thought )tvi1.GetValue( ThoughtObjectProperty );
+            parentLabel = "|" + ( string.IsNullOrEmpty( t1?.Label ) ? t1?.ToString() : t1?.Label ) + parentLabel;
+            depth++;
+        }
+
+        if( !treeviewCurrentExpandedItems.Contains( parentLabel ) )
+            treeviewCurrentExpandedItems.Add( parentLabel );
+
+        tvi.Items.Clear(); // delete empty child
+
+        if( t.Children.Count > 0 )
+            AddChildren( t, tvi, depth, parentLabel );
+
+        if( t.LinksTo.Count > 0 )
+            AddLinks( t, tvi, 1, parentLabel );
+
+        if( reverseCB.IsChecked == true && t.LinksFrom.Count > 0 )
+            AddLinksFrom( t, tvi, parentLabel );
+
+        if( theUKS.IsSequenceElement( ( t as Link )?.To ) )
+            AddLinks( ( t as Link )?.To, tvi, 1, parentLabel );
+
+        tvi.IsExpanded = true;
+        treeviewCurrentSelectedLabel = parentLabel;
+    }
+
+    private void TreeViewItem_DoubleTapped( object? sender, TappedEventArgs e )
+    {
+        Debug.WriteLine( "TreeViewItem_DoubleTapped() >>" );
+
+        if( sender is null ) { return; }
+        if( sender is not TreeViewItem ) { return; }
+        TreeViewItem tvi = sender as TreeViewItem;
+
+        e.Handled = true;
+
+        var children = tvi.GetVisualChildren();
+        if( children == null || children.Count() <= 1 )
+        {
+            PopulateEmptyTreeViewItemWithChildren( tvi );
+        }
+        Debug.WriteLine( "TreeViewItem_DoubleTapped() <<" );
+    }
 
     //the treeview is populated only with expanded items or it would contain the entire UKS content
     //when an item is expanded, its content needs to be created into the treeview
-    private void EmptyChild_Expanded(object sender, RoutedEventArgs e)
+    private void TreeViewItem_Expanded( object sender, RoutedEventArgs e)
     {
-        // what tree view item is this
-        if (sender is TreeViewItem tvi)
-        {
-            string name = tvi.Header.ToString(); // to help debug
-            Thought t = (Thought)tvi.GetValue(ThoughtObjectProperty);
-            string parentLabel = "|" + t.ToString();
-            TreeViewItem tvi1 = tvi;
-            int depth = 0;
-            //work your way up the tree to find all ancestors of this leaf
-            while (tvi1.Parent is not null && tvi1.Parent is TreeViewItem tvi2)
-            {
-                tvi1 = tvi2;
-                Thought t1 = (Thought)tvi1.GetValue(ThoughtObjectProperty);
-                parentLabel = "|" + (string.IsNullOrEmpty(t1?.Label) ? t1?.ToString() : t1?.Label) + parentLabel;
-                depth++;
-            }
-            if (!expandedItems.Contains(parentLabel))
-                expandedItems.Add(parentLabel);
+        Debug.WriteLine( "TreeViewItem_Expanded() >>" );
 
-            tvi.Items.Clear(); // delete empty child
-            if (t.Children.Count > 0)
-                AddChildren(t, tvi, depth, parentLabel);
-            if (t.LinksTo.Count > 0)
-                AddLinks(t, tvi, 1, parentLabel);
-            if (reverseCB.IsChecked == true && t.LinksFrom.Count > 0)
-                AddLinksFrom(t, tvi, parentLabel);
-            if (theUKS.IsSequenceElement((t as Link)?.To))
-                AddLinks((t as Link)?.To, tvi, 1, parentLabel);
-            e.Handled = true;
+        if( sender is null ) { return; }
+        if( sender is not TreeViewItem ) { return; }
+
+        e.Handled = true;
+        TreeViewItem tvi = sender as TreeViewItem;
+
+        if( tvi.IsExpanded ) 
+        {
+            return; 
         }
+
+        PopulateEmptyTreeViewItemWithChildren( tvi );
+        var children = tvi.GetVisualChildren();
+        if( children == null || children.Count() == 0 )
+        {
+            PopulateEmptyTreeViewItemWithChildren( tvi );
+        }
+        Debug.WriteLine( "TreeViewItem_Expanded() <<" );
     }
 
     //find out which tree items are already expanded by recursively following the tree items 
@@ -336,8 +457,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             var t = tvi1.GetValue(ThoughtObjectProperty);
             if (t is null) continue;
-            if (tvi1.IsExpanded) expandedItems.Add(parentLabel + "|" + t.ToString());
-            FindExpandedItems(tvi1.Items, parentLabel + "|" + t.ToString());
+
+            var lableIs = parentLabel + "|" + t.ToString();
+            if (tvi1.IsExpanded) treeviewCurrentExpandedItems.Add(lableIs);
+            if( tvi1.IsSelected ) treeviewCurrentSelectedLabel = lableIs;
+
+            FindExpandedItems(tvi1.Items, lableIs);
         }
     }
 
@@ -357,7 +482,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         menu.Items.Add(mi);
 
         TextBox renameBox = new() { Text = thoughtLabel, Width = 200, Name = "RenameBox" };
-        renameBox.PreviewKeyDown += RenameBox_PreviewKeyDown;
+        renameBox.KeyDown += RenameBox_KeyDown;
         mi = new();
         mi.Header = renameBox;
         menu.Items.Add(mi);
@@ -387,10 +512,14 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         mi.Click += Mi_Click;
         mi.Header = "Fire";
         menu.Items.Add(mi);
+
+#if NOT_USED
         //mi = new();
         //mi.Click += Mi_Click;
         //mi.Header = "Fetch GPT Info";
         //menu.Items.Add(mi);
+#endif
+
         mi = new();
         mi.Header = "Parents:";
         if (t.Parents.Count == 0)
@@ -414,11 +543,18 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void Menu_Closed(object sender, RoutedEventArgs e)
     {
-        Draw(true);
+        pauseRefreshing = false;
+        if(contextMenuForceDraw == true)
+        {
+            Draw( true );
+            contextMenuForceDraw = false;
+        }
     }
 
     private void Menu_Opened(object sender, RoutedEventArgs e)
     {
+        pauseRefreshing = true;
+
         //when the context menu opens, focus on the label and position text cursor to end
         if (sender is ContextMenu cm)
         {
@@ -426,14 +562,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             if (cc is TextBox tb)
             {
                 tb.Focus();
-                tb.Select(0, tb.Text.Length);
+
+                tb.CaretIndex = tb.Text.Length;
+
+                // TODO - RHC Don't know if we should use this or what we have below
+                tb.SelectionStart = 0;
+                tb.SelectionEnd = tb.Text.Length;
+
             }
         }
     }
 
-    private void RenameBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void RenameBox_KeyDown(object sender, KeyEventArgs e)
     {
-        if (sender is System.Windows.Controls.TextBox tb)
+        if (sender is TextBox tb)
         {
             MenuItem mi = tb.Parent as MenuItem;
             ContextMenu cm = mi.Parent as ContextMenu;
@@ -451,11 +593,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 t.Label = tb.Text;
                 //clear any time-to-live on this new image
                 t.LinksFrom.FindFirst(x => x.LinkType.Label == "is-a")?.TimeToLive = TimeSpan.MaxValue;
-                cm.IsOpen = false;
+                // In WPF this hides the control, not close it! cm.IsOpen = false;
+                cm.IsVisible = false;
             }
-            if (e.Key == Key.Escape)
+            else if( e.Key == Key.Escape )
             {
-                cm.IsOpen = false;
+                cm.IsVisible = false;
             }
         }
     }
@@ -514,32 +657,32 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             if (tParent is not null)
             {
                 comboRoot.Text = tParent.Label;
-                Refresh();
+                contextMenuForceDraw = true;
             }
             Thought t = (Thought)m.GetValue(ThoughtObjectProperty);
             if (t is null)
             {
                 Link r = m.GetValue(LinkObjectProperty) as Link;
                 (r.From as Thought).RemoveLink(r);
-                //force a repaint
-                Refresh();
+                contextMenuForceDraw = true;
                 return;
             }
             ModuleUKS parent = (ModuleUKS)ParentModule;
+
             switch (mi.Header)
             {
                 case "Expand All":
                     expandAll = t.Label;
-                    expandedItems.Clear();
-                    expandedItems.Add("|Thought|Object");
+                    treeviewCurrentExpandedItems.Clear();
+                    treeviewCurrentExpandedItems.Add("|Thought|Object");
                     parent.SetSavedDlgAttribute("ExpandAll", expandAll);
-                    updateFailed = true; //this forces the expanded items list not to rebuild
+                    treeviewExpandedMode = TreeViewExpandedModes.All;
                     break;
                 case "Collapse All":
                     expandAll = "";
-                    expandedItems.Clear();
-                    expandedItems.Add("|Thought|Object");
-                    updateFailed = true;
+                    treeviewCurrentExpandedItems.Clear();
+                    treeviewCurrentExpandedItems.Add("|Thought|Object");
+                    treeviewExpandedMode = TreeViewExpandedModes.None;
                     parent.SetSavedDlgAttribute("ExpandAll", expandAll);
                     break;
                 case "Fetch GPT Info":
@@ -548,40 +691,50 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                     break;
                 case "Fire":
                     t.Fire();
+
+#if MODULE_ACTION
                     var ActionModule = MainWindow.theWindow?.activeModules.OfType<ModuleAction>().FirstOrDefault();
                     if (ActionModule is not null)
                         ActionModule.TakeActrion(t);
+#endif
                     break;
                 case "Delete":
                     theUKS.DeleteAllChildren(t);
                     t.Delete();
                     break;
+
                 case "Delete Child":
                     //figure out which item (and its parent) clicked us
-                    TreeViewItem tvi = (TreeViewItem)m.GetValue(TreeViewItemProperty);
-                    DependencyObject parent1 = VisualTreeHelper.GetParent((DependencyObject)tvi);
+                    TreeViewItem tvi = m.GetValue(TreeViewItemProperty);
+
+                    Visual? parent1 = Avalonia.VisualTree.VisualExtensions.GetVisualParent((Visual)tvi);
+                    
                     while (parent1 is not null && !(parent1 is TreeViewItem))
-                        parent1 = VisualTreeHelper.GetParent(parent1);
+                        parent1 = Avalonia.VisualTree.VisualExtensions.GetVisualParent(parent1);
+                    
                     Thought parentThought = (Thought)parent1.GetValue(ThoughtObjectProperty);
+                    
                     //now delete the link
                     if (parentThought is not null && t is not null)
                         parentThought.RemoveChild(t);
+                    
                     break;
+
                 case "Make Root":
                     comboRoot.Text = t.Label;
                     AddRootToHistory(t.Label);
-                    Refresh();
                     break;
             }
+
             //force a repaint
-            Refresh();
+            contextMenuForceDraw = true;
         }
     }
 
     //EVENTS
     private void TheTreeView_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        Draw(true);
+        Draw(false);
     }
 
     private void UpdateStatusLabel()
@@ -591,9 +744,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
 
     private bool _isTextChangingInternally = true;  //lockout so we can change the text without retriggering the event
+
     private void TextBoxRoot_KeyDown(object sender, KeyEventArgs e)
     {
-        var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+        TextBox? tb = comboRoot.FindNameScope().Find<TextBox>( "PART_EditableTextBox" );
+
         if (tb is null) return;
         // Allow text changes when keys like backspace, delete are pressed
         if (e.Key == Key.Back || e.Key == Key.Delete)
@@ -612,7 +767,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if (e.Key == Key.Enter)
         {
             AddRootToHistory(comboRoot.Text);
-            tb.SelectionLength = 0;
+            tb.ClearSelection();
         }
     }
     private void textBoxRoot_TextChanged(object sender, TextChangedEventArgs e)
@@ -631,66 +786,70 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
             if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
             {
-                var tb = comboRoot.Template.FindName("PART_EditableTextBox", comboRoot) as TextBox;
+                TextBox? tb = comboRoot.FindNameScope().Find<TextBox>( "PART_EditableTextBox" );
+
                 if (tb is null) return;
                 int caretIndex = tb.CaretIndex;
                 _isTextChangingInternally = true;
                 comboRoot.Text = suggestion;
                 tb.CaretIndex = caretIndex;
                 tb.SelectionStart = caretIndex;
-                tb.SelectionLength = suggestion.Length - caretIndex;
-                tb.SelectionOpacity = .4;
+                tb.SelectionEnd = suggestion.Length - caretIndex;
+                // RHC - Do we have this?
+                //tb.SelectionOpacity = .4;
                 _isTextChangingInternally = false;
             }
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
         if (parent is null) return;
         parent.SetSavedDlgAttribute("Root", comboRoot.Text); //why?
-        Refresh();
 
+        //Refresh();
+        Draw( false );
     }
     //using the mouse-wheel while pressing ctrl key changes the font size
-    private void theTreeView_MouseWheel(object sender, MouseWheelEventArgs e)
+    private void theTreeView_MouseWheel(object sender, PointerWheelEventArgs e )
     {
-        if ((Keyboard.GetKeyStates(Key.LeftCtrl) & KeyStates.Down | Keyboard.GetKeyStates(Key.RightCtrl) & KeyStates.Down) != 0)
+        // RHC - My understanding is if we have a modifier its down.
+        if( e.KeyModifiers.HasFlag( KeyModifiers.Control ) )
         {
-            if (e.Delta < 0)
+            if( e.Delta.Y < 0.0 )
             {
-                if (theTreeView.FontSize > 2)
+                if( theTreeView.FontSize > 2 )
                     theTreeView.FontSize -= 1;
+
             }
-            else if (e.Delta > 0)
+            else if( e.Delta.Y > 0.0 )
             {
                 theTreeView.FontSize += 1;
             }
-            ModuleUKS parent = (ModuleUKS)ParentModule;
-            parent.SetSavedDlgAttribute("fontSize", theTreeView.FontSize.ToString());
 
+            ModuleUKS parent = ( ModuleUKS )ParentModule;
+            parent.SetSavedDlgAttribute( "fontSize", theTreeView.FontSize.ToString() );
         }
-    }
-
-    private void CheckBoxAuto_Checked(object sender, RoutedEventArgs e)
-    {
-        if (dt is null)
-            dt = new DispatcherTimer
-            {
-                Interval = new TimeSpan(0, 0, 0, 0, 200)
-            };
-        dt.Tick += Dt_Tick;
-        dt.Start();
     }
 
     private void Dt_Tick(object sender, EventArgs e)
     {
-        if (!mouseInWindow)
-            Draw(true);
-        RefreshButton?.Visibility = Visibility.Hidden;
+        if( IsVisible == true )
+        {
+            if( !mouseInWindow )
+                Draw( true );
+
+            RefreshButton?.IsVisible = false;
+        }
+    }
+
+    private void CheckBoxAuto_Checked( object sender, RoutedEventArgs e )
+    {
+        StartTimer();
+        RefreshButton.IsVisible = false;
     }
 
     private void CheckBoxAuto_Unchecked(object sender, RoutedEventArgs e)
     {
-        dt.Stop();
-        RefreshButton.Visibility = Visibility.Visible;
+        StopTimer();
+        RefreshButton.IsVisible = true;
     }
 
     private void CheckBox_Checked(object sender, RoutedEventArgs e)
@@ -703,12 +862,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         Draw(false);
     }
 
-    private void TheTreeView_MouseEnter(object sender, MouseEventArgs e)
+    private void TheTreeView_MouseEnter(object sender, PointerEventArgs e )
     {
         mouseInWindow = true;
         theTreeView.Background = new SolidColorBrush(Colors.LightSteelBlue);
     }
-    private void TheTreeView_MouseLeave(object sender, MouseEventArgs e)
+    private void TheTreeView_MouseLeave(object sender, PointerEventArgs e )
     {
         mouseInWindow = false;
         theTreeView.Background = new SolidColorBrush(Colors.LightGray);
@@ -716,30 +875,30 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
-        Refresh();
+        //Refresh();
+        Draw( false );
     }
 
+    // Draw calls this which does the work.
+    // if you call this then everything is getting updated and there are not checks stopping it.
     private void Refresh()
     {
         try
         {
-            if (!updateFailed)
+            if (treeviewExpandedMode == TreeViewExpandedModes.Currently )
             {
-                expandedItems.Clear();
+                treeviewCurrentExpandedItems.Clear();
+                treeviewCurrentSelectedLabel = "";
                 FindExpandedItems(theTreeView.Items, "");
             }
-            updateFailed = false;
-
-            UpdateStatusLabel();
-
             theTreeView.Items.Clear();
             LoadContentToTreeView();
+
+            UpdateStatusLabel();
         }
         catch
         {
-            updateFailed = true;
         }
-        busy = false;
     }
 
     private void InitializeButton_Click(object sender, RoutedEventArgs e)
@@ -756,7 +915,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if (string.IsNullOrEmpty(root))
             root = "Thought";
         comboRoot.Text = root;
-        Refresh();
+        //Refresh();
+        Draw( false );
     }
 
     private void CollapseAll()
@@ -774,7 +934,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             item.IsExpanded = false;
 
-            if (item.HasItems)
+            if (item.ItemCount > 0 )
                 CollapseTreeviewItems(item);
         }
     }
@@ -785,34 +945,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         comboRoot.Text = parent.GetSavedDlgAttribute("Root");
     }
 
-    private string Browse(bool open)
-    {
-        string path = "";
-        System.Windows.Forms.FileDialog dlg;
-        if (open)
-            dlg = new System.Windows.Forms.OpenFileDialog
-            {
-                Title = "Select UKS .txt file",
-                Filter = "UKS text (*.txt)|*.txt|All files (*.*)|*.*",
-                CheckFileExists = false,
-                Multiselect = false
-            };
-        else
-            dlg = new System.Windows.Forms.SaveFileDialog
-            {
-                Title = "Select UKS .txt file",
-                Filter = "UKS text (*.txt)|*.txt|All files (*.*)|*.*",
-                CheckFileExists = false,
-            };
-        if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            path = dlg.FileName;
-        return path;
-    }
 
     private async void ImportButton_Click(object sender, RoutedEventArgs e)
     {
         SetStatus("");
-        var path = Browse(true); ;
+
+        var path = await Utils.OpenFileDialog( this, Utils.TitleBrainSimImport, Utils.FilterTextFile );
+
         if (string.IsNullOrEmpty(path)) return;
 
         if (string.IsNullOrWhiteSpace(path))
@@ -836,23 +975,20 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
         catch (Exception ex)
         {
-            Mouse.OverrideCursor = null;
-
-            // Show a friendly error, but include details for debugging.
-            System.Windows.MessageBox.Show(this,
-                "Import failed.\n\n" + ex.Message,
-                "UKS Import",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            //Mouse.OverrideCursor = null;
+            MessageBox.Alert( "Import failed.\n\n" + ex.Message, "UKS Import" );
         }
         finally
         {
-            Mouse.OverrideCursor = null;
+            //Mouse.OverrideCursor = null;
         }
     }
 
     private async void ExportButton_Click(object sender, RoutedEventArgs e)
     {
-        var path = Browse(true); ;
+        var path = await Utils.SaveFileDialog( this, Utils.TitleBrainSimExport, Utils.FilterTextFile );
+
+
         if (string.IsNullOrEmpty(path)) return;
 
         if (string.IsNullOrWhiteSpace(path))
@@ -870,17 +1006,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         }
         catch (Exception ex)
         {
-            Mouse.OverrideCursor = null;
-
-            // Show a friendly error, but include details for debugging.
-            System.Windows.MessageBox.Show(this,
-                "Import failed.\n\n" + ex.Message,
-                "UKS Import",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            // RHC - Need better alert 
+            MessageBox.Alert( "Import failed.\n\n" + ex.Message, "UKS Export" );
         }
         finally
         {
-            Mouse.OverrideCursor = null;
         }
     }
 
@@ -915,9 +1045,13 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private static bool IsDarkMode()
     {
+#if WINDOWS
         const string personalize = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
         object? value = Registry.GetValue(personalize, "AppsUseLightTheme", 1);
         return value is int i && i == 0;
+#else
+        return false;
+#endif
     }
 
     private void ApplyContextMenuTheme(ContextMenu menu)
@@ -931,7 +1065,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         menu.Background = bg;
         menu.Foreground = fg;
 
-        foreach (var item in menu.Items.OfType<FrameworkElement>())
+        foreach (var item in menu.Items.OfType<Control>())
         {
             if (item is MenuItem mi)
             {

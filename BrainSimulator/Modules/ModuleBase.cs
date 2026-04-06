@@ -161,7 +161,7 @@ abstract public class ModuleBase
         if( Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
         {
             Window mainWindow = desktop.MainWindow;
-            if( mainWindow.GetType() == typeof( MainWindow ) )
+            if( mainWindow is not null && mainWindow.GetType() == typeof( MainWindow ) )
             {
                 owner = desktop.MainWindow;
             }

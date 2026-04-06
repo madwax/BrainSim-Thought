@@ -10,24 +10,25 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-using BrainSimulator.Modules;
-using System;
-using System.Diagnostics;
-using System.IO;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using BrainSimulator.Modules;
+using System;
+using System.Diagnostics;
+using System.IO;
+using UKS;
 
 namespace BrainSimulator
 {
     public partial class MainWindow : Window
     {
         // OLD - public static readonly DependencyProperty moduleNameProperty = DependencyProperty.Register( "moduleName", typeof( string ), typeof( MenuItem ) );
-
-        public static readonly DirectProperty<MenuItem, string> moduleNameProperty = Avalonia.AvaloniaProperty.RegisterDirect<MenuItem, string>( "moduleName", o => o.Name );
-
+        //public static readonly DirectProperty<MenuItem, string> moduleNameProperty = Avalonia.AvaloniaProperty.RegisterDirect<MenuItem, string>( "moduleName", o => o.Name );
+        //public static readonly DirectProperty<MenuItem, string> moduleNameProperty = Avalonia.AvaloniaProperty.RegisterDirect<MenuItem, string>( "moduleName", o => o.Name );
+        public static readonly StyledProperty<string> moduleNameProperty = AvaloniaProperty.Register<MenuItem, string>( "moduleName" );
 
         public void CreateContextMenu(ModuleBase nr, Control r, ContextMenu cm = null) //for a selection
         {

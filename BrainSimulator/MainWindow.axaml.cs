@@ -144,10 +144,10 @@ namespace BrainSimulator
             LoadMRUMenu();
 
             //start the module engine
-            //DispatcherTimer dt = new();
-            //dt.Interval = TimeSpan.FromSeconds(0.001);
-            //dt.Tick += Dt_Tick;
-            //dt.Start();
+            DispatcherTimer dt = new();
+            dt.Interval = TimeSpan.FromSeconds(0.001);
+            dt.Tick += Dt_Tick;
+            dt.Start();
         }
 
 

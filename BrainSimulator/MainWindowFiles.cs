@@ -222,28 +222,13 @@ namespace BrainSimulator
         }
         private async Task<bool> SaveAs()
         {
-            var topLevel = TopLevel.GetTopLevel( this );
-            ArgumentNullException.ThrowIfNull( topLevel );
-
-            var saveFilepath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
-
-            var saveFilepathLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync( new System.Uri( saveFilepath ) );
-            var filepathToSaveTo = await topLevel.StorageProvider.SaveFilePickerAsync( new Avalonia.Platform.Storage.FilePickerSaveOptions
-            {
-                Title = Utils.TitleUKSFileSave,
-                FileTypeChoices = new[] { Utils.FilterXMLs },
-                SuggestedStartLocation = saveFilepathLocation
-            } );
-
-            if( filepathToSaveTo == null )
-            {
-                return false;
-            }
+            var saveToStartPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+            var filepathToSaveTo = await Utils.SaveFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, saveToStartPath );
+            if( filepathToSaveTo == null) return false;
 
             MainWindow.SuspendEngine();
 
-            /// CHECK - Does absolute path return with file://?
-            currentFileName = filepathToSaveTo.Path.AbsolutePath;
+            currentFileName = filepathToSaveTo;
 
             theUKS.SaveUKStoXMLFile(currentFileName);
 

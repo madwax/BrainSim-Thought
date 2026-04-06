@@ -140,16 +140,11 @@ namespace BrainSimulator
 
             if (fileName == "_Open")
             {
-                var topLevel = TopLevel.GetTopLevel( this );
-                var fileLocation = await topLevel.StorageProvider.OpenFilePickerAsync( new Avalonia.Platform.Storage.FilePickerOpenOptions
+                var openStartPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+                var filepathToOpen = await Utils.OpenFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, openStartPath );
+                if( filepathToOpen is not null )
                 {
-                    Title = Utils.TitleUKSFileLoad,
-                    FileTypeFilter = new[] { Utils.FilterXMLs }
-                } );
-
-                if( fileLocation != null && fileLocation.Count > 0 )
-                {
-                    currentFileName = fileLocation[ 0 ].Path.AbsolutePath;
+                    currentFileName = filepathToOpen;
                     LoadCurrentFile();
                 }
             }
@@ -160,7 +155,6 @@ namespace BrainSimulator
                     //this is a file name from the File menu
                     currentFileName = ToolTip.GetTip( mi ).ToString(); //Path.GetFullPath("./UKSContent/" + fileName + ".xml");
                     LoadCurrentFile();
-
                 }
             }
         }

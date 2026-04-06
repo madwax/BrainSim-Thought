@@ -32,7 +32,8 @@ namespace BrainSimulator
             if( ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
             {
                 desktop.Startup += this.OnStarted;
-                desktop.Exit += this.OnExit;
+
+                desktop.MainWindow = new MainWindow();
             }
             base.OnFrameworkInitializationCompleted();
         }
@@ -40,12 +41,10 @@ namespace BrainSimulator
         private void OnStarted( object sender, ControlledApplicationLifetimeStartupEventArgs e )
         {
             MainWindow mainWindow = new();
-            mainWindow.Show();
-        }
-
-        private void OnExit( object sender, ControlledApplicationLifetimeExitEventArgs e )
-        {
-            // this.mainWindow.Close();
+            if( ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
+            {
+                desktop.MainWindow.Show();
+            }
         }
 
         private static string startupString = "";

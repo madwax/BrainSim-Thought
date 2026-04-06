@@ -14,9 +14,11 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using BrainSimulator.Modules;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +26,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+
 using static System.Math;
 
 
@@ -1087,13 +1091,23 @@ namespace BrainSimulator
             MimeTypes = new[] { "application/xml" }
         };
 
+        public static FilePickerFileType FilterTextFile { get; } = new( "Text Files" )
+        {
+            Patterns = new[] { "*.txt" },
+            AppleUniformTypeIdentifiers = new[] { "Text Files" },
+            MimeTypes = new[] { "text/plain" }
+        };
+
+
+
         //public const string FilterImages = "Image Files|*.png;*.jpg;*.bmp";
         //public const string FilterWavs = "wav Files|*.wav";
 
-        //public const string TitleBrainSimLoad = "Select a Brain Simulator file to load";
-        //public const string TitleBrainSimSave = "Select a Brain Simulator file to save";
+        public const string TitleBrainSimImport = "Select a Brain Simulator file to import";
+        public const string TitleBrainSimExport = "Select a Brain Simulator file to export";
         public const string TitleUKSFileLoad = "Select a Brain UKS Content File to load";
         public const string TitleUKSFileSave = "Select a Brain UKS Content File to save";
+
         //public const string TitleImagesLoad = "Select an image file for input";
         //public const string TitleImagesSave = "Select a name to save the image";
         //public const string TitleModelLoad = "Select an XML file to load a model";
@@ -1101,6 +1115,67 @@ namespace BrainSimulator
         //public const string TitleParamLoad = "Select an XML file to load parameters";
         //public const string TitleParamSave = "Select an XML file to save parameters";
         //public const string TitleSoundLoad = "Select a wav file to load";
+
+        public async static Task<string?> OpenFileDialog( Visual? owner, string title, FilePickerFileType filter, string pathToStartIn = "" )
+        {
+            if( owner is null )
+            {
+                return null;
+            }
+
+            var topLevel = TopLevel.GetTopLevel( owner );
+
+            var options = new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = Utils.TitleUKSFileLoad,
+                FileTypeFilter = new[] { Utils.FilterXMLs }
+            };
+
+            if( pathToStartIn.Length > 0 )
+            {
+                options.SuggestedStartLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync( new System.Uri( pathToStartIn ) );
+            }
+
+            var filepathToOpen = await topLevel.StorageProvider.OpenFilePickerAsync( options );
+
+            if( filepathToOpen is null || filepathToOpen.Count == 0 )
+            {
+                return null;
+            }
+
+            return filepathToOpen[ 0 ].Path.AbsolutePath;
+        }
+
+        public async static Task<string?> SaveFileDialog( Visual? owner, string title, FilePickerFileType filter, string pathToStartIn = "" )
+        {
+            if( owner is null )
+            {
+                return null;
+            }
+
+            var topLevel = TopLevel.GetTopLevel( owner );
+
+            var options = new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = Utils.TitleUKSFileLoad,
+                FileTypeChoices = new[] { filter }
+            };
+            if( pathToStartIn.Length > 0 )
+            {
+                options.SuggestedStartLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync( new System.Uri( pathToStartIn ) );
+            }
+
+            var filepathToSaveTo = await topLevel.StorageProvider.SaveFilePickerAsync( options );
+
+            if( filepathToSaveTo is null )
+            {
+                return null;
+            }
+
+            var r = filepathToSaveTo.Path.AbsolutePath;
+            return r;
+        }
+
 
         public static string GetOrAddDocumentsSubFolder(string subfolder)
         {
