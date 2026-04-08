@@ -131,8 +131,10 @@ abstract public class ModuleBase
             }
         }
 
-        ApartmentState aps = Thread.CurrentThread.GetApartmentState();
-        if (aps != ApartmentState.STA) return;
+        //ApartmentState aps = Thread.CurrentThread.GetApartmentState();
+        //if (aps != ApartmentState.STA) return;
+
+
         Type t = this.GetType();
         Type t1 = Type.GetType(t.ToString() + "Dlg");
         while (t1 is null && t.BaseType.Name != "ModuleBase")
