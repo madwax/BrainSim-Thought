@@ -11,14 +11,15 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
 using Pluralize.NET;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Threading;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -44,7 +45,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
     Thought tSource = null;
 
     // BtnAddLink_Click is called when the AddLink button is clicked or ENTER is pressed in one of the textboxes
-    private void BtnAddLink_Click(object sender, RoutedEventArgs e)
+    private void BtnAddLink_Click(object sender, RoutedEventArgs e )
     {
         ModuleUKSStatement UKSStatement = (ModuleUKSStatement)ParentModule;
         string fromString = sourceText.Text;
@@ -88,7 +89,6 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         if (pluralizer.IsPlural(fromString) && pluralizer.IsPlural(toString) && linkTypeString == "are")
             linkTypeString = "is-a";
 
-
         //hand source though which is itself a link
         var sourceParts = UKSStatement.Singular(fromString.Split(" ", StringSplitOptions.RemoveEmptyEntries));
         if (sourceParts.Length == 3)
@@ -105,14 +105,21 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             else
             {
                 // multiple matches, create a dropdown in the UI to select which one?
-                sourceCombo.Visibility = Visibility.Visible;
+                sourceCombo.IsVisible = true;
+
                 sourceCombo.Items.Clear();
-                ComboBoxItem cbi = new ComboBoxItem { Content = "<New>", ToolTip = "Create a new Link" };
-                cbi.PreviewMouseLeftButtonUp += ComboItem_Clicked;
+                ComboBoxItem cbi = new ComboBoxItem { Content = "<New>" };
+                ToolTip.SetTip( cbi, "Create a new Link" );
+
+                cbi.PointerReleased += ComboItem_Clicked;
+
                 sourceCombo.Items.Add(cbi);
                 sourceCombo.SelectedIndex = 0;
-                //sourceCombo.IsDropDownOpen = true;
-                Dispatcher.BeginInvoke(DispatcherPriority.Input, () => sourceCombo.IsDropDownOpen = true);
+
+                sourceCombo.IsDropDownOpen = true;
+
+                //Dispatcher.BeginInvoke(DispatcherPriority.Input, () => sourceCombo.IsDropDownOpen = true);
+
                 foreach (var t in existing)
                 {
                     string toolTipText = "";
@@ -124,9 +131,11 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
                     cbi = new()
                     {
                         Content = t,
-                        ToolTip = toolTipText,
                     };
-                    cbi.PreviewMouseLeftButtonUp += ComboItem_Clicked;
+                    ToolTip.SetTip( cbi, toolTipText );
+
+                    cbi.PointerReleased += ComboItem_Clicked;
+
                     sourceCombo.Items.Add(cbi);
                 }
                 return;
@@ -138,9 +147,7 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
             tSource = UKSStatement.theUKS.CreateThoughtFromMultipleAttributes(fromString, false);
         }
 
-
         Link r1 = UKSStatement.AddLink(tSource, linkTypeString, toString);
-
 
         //set the duration
         if (r1 is not null && setConfCB.IsChecked == true)
@@ -179,11 +186,13 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         tSource = null;
     }
 
-    private void ComboItem_Clicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void ComboItem_Clicked(object? sender, PointerReleasedEventArgs e)
     {
         if (sender is not ComboBoxItem cbi) return;
         ModuleUKSStatement UKSStatement = (ModuleUKSStatement)ParentModule;
-        sourceCombo.Visibility = Visibility.Hidden;
+
+        sourceCombo.IsVisible = false;
+
         if (cbi.Content.ToString() == "<New>")
         {
             var sourceParts = UKSStatement.Singular(sourceText.Text.Split(" ", StringSplitOptions.RemoveEmptyEntries));

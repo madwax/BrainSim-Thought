@@ -148,8 +148,7 @@
     <AvaloniaXaml Remove="Modules\ModuleStressTestDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleTextDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleTextInDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\ModuleUKSQueryDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\ModuleUKSStatementDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleUKSQueryDlg.axaml" />    
     <AvaloniaXaml Remove="Modules\ModuleWellBeingDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleWordDlg.axaml" />
   </ItemGroup>
@@ -181,8 +180,6 @@
     <Compile Remove="Modules\ModuleTextInDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleUKSQuery.cs" />
     <Compile Remove="Modules\ModuleUKSQueryDlg.axaml.cs" />
-    <Compile Remove="Modules\ModuleUKSStatement.cs" />
-    <Compile Remove="Modules\ModuleUKSStatementDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWellBeing.cs" />
     <Compile Remove="Modules\ModuleWellBeingDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWord.cs" />
