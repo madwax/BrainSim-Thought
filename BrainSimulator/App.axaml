@@ -6,8 +6,8 @@
 	<Application.Resources>
 	</Application.Resources>
 	<Application.Styles>
-		<!--<SimpleTheme />-->
-		<FluentTheme />
+		<SimpleTheme />
+		<!--<FluentTheme />-->
 	</Application.Styles>
 </Application>
 
