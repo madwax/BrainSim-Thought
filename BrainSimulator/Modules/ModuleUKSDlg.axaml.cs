@@ -592,7 +592,9 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 t.Label = tb.Text;
                 //clear any time-to-live on this new image
-                t.LinksFrom.FindFirst(x => x.LinkType.Label == "is-a")?.TimeToLive = TimeSpan.MaxValue;
+                var foundLink = t.LinksFrom.FindFirst(x => x.LinkType.Label == "is-a");
+                if( foundLink is not null ) foundLink.TimeToLive = TimeSpan.MaxValue;
+
                 // In WPF this hides the control, not close it! cm.IsOpen = false;
                 cm.IsVisible = false;
             }
@@ -835,8 +837,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             if( !mouseInWindow )
                 Draw( true );
-
-            RefreshButton?.IsVisible = false;
+            if( RefreshButton is not null ) RefreshButton.IsVisible = false;
         }
     }
 
