@@ -316,15 +316,14 @@ namespace BrainSimulator
             }
         }
 
-
-        private void ModuleListComboBox_PreviewKeyDown( object sender, KeyEventArgs e )
+        private void ModuleList_KeyDown( object sender, KeyEventArgs e )
         {
             if( sender is ComboBox cb )
                 if( e.Key != Key.Enter && e.Key != Key.Escape )
                     cb.IsDropDownOpen = true;
         }
 
-        private void ModuleListComboBox_DropDownClosed( object sender, EventArgs e )
+        private void ModuleList_DropDownClosed( object sender, EventArgs e )
         {
             if( sender is ComboBox cb )
             {
@@ -339,7 +338,6 @@ namespace BrainSimulator
             }
             ReloadActiveModulesSP();
         }
-
 
         // General methods
         private bool CanSaveCurrentUKS()
@@ -634,7 +632,6 @@ namespace BrainSimulator
             }
 
             ModuleListComboBox.Items.Clear();
-            ModuleListComboBox.FontSize = 18;
 
             // We can't sort the items in the control so we have to do it first in a list then asign 
             List<string> labels = [];

@@ -5,29 +5,52 @@
         Height="600"
         Width="800">
 	<Window.Styles>
-		<Style Selector="DockPanel.Toolbar">
-			<Setter Property="Background" Value="rgba(100,100,100,0.25)" />
-			<Setter Property="VerticalAlignment" Value="Top"/>
-			<Setter Property="Margin" Value="5,5,5,5"/>
-			<Style Selector="^ > Button">
-				<Setter Property="Height" Value="25" />
-				<Setter Property="Width" Value="25" />
-				<Style Selector="^ > Image">
-					<Setter Property="Height" Value="20" />
-					<Setter Property="Width" Value="20" />
-
+		<Style Selector="Menu.FileMenu">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="Background" Value="rgb(210,210,210)"/>
+			<Style Selector="^ MenuItem" >
+				<Setter Property="FontSize" Value="14" />
+				<Setter Property="Background" Value="rgb(210,210,210)"/>
+				<Style Selector="^ /template/ Border#PART_LayoutRoot">
+					<Setter Property="Background" Value="rgb(210,210,210)"/>
+				</Style>
+				<Style Selector="^ /template/ ContentPresenter#PART_Popup">
+					<Setter Property="Background" Value="rgb(210,210,210)"/>
+				</Style>
+				<Style Selector="^ /template/ Popup#PART_Popup Border">
+					<Setter Property="Background" Value="rgb(210,210,210)"/>
 				</Style>
 			</Style>
 		</Style>
-		<Style Selector="StackPanel.AddModules">
-			<Style Selector="^ > ComboBox">
-				<Setter Property="Background" Value="White"/>
-				<Setter Property="VerticalAlignment" Value="Top"/>
+		<Style Selector="DockPanel.Toolbar">
+			<Setter Property="Background" Value="rgba(100,100,100,0.25)" />
+			<Setter Property="VerticalAlignment" Value="Top"/>
+			<Style Selector="^ > StackPanel">
+				<Setter Property="Margin" Value="5,5,5,5"/>
+				<Style Selector="^ > Button">
+					<Setter Property="Height" Value="25" />
+					<Setter Property="Width" Value="25" />
+					<Style Selector="^ > Image">
+						<Setter Property="Height" Value="20" />
+						<Setter Property="Width" Value="20" />
+					</Style>
+				</Style>
+				<Style Selector="^ > StackPanel">
+					<Style Selector="^ > Label">
+						<Setter Property="Foreground" Value="White" />
+						<Setter Property="VerticalAlignment" Value="Center" />
+					</Style>
+					<Style Selector="^ > ComboBox">
+						<Setter Property="Width" Value="270" />
+						<Setter Property="FontSize" Value="14" />
+						<Setter Property="Background" Value="White"/>
+					</Style>
+				</Style>
 			</Style>
 		</Style>
 	</Window.Styles>
 	<DockPanel Margin="0,0,0,0" >
-		<Menu DockPanel.Dock="Top" x:Name="MainMenu" Height="26" Margin="0,0" VerticalAlignment="Top" Background="LightGray" >
+		<Menu Classes="FileMenu" DockPanel.Dock="Top" x:Name="MainMenu" >
 			<MenuItem Header="_File">
 				<MenuItem Header="_New" Click="MainMenu_FileNew" HotKey="Ctrl+N">
 					<MenuItem.Icon>
@@ -75,23 +98,24 @@
 
 			<!-- The Toolbar -->
 			<DockPanel Classes="Toolbar" Grid.Row="0" Grid.Column="0" x:Name="MainToolBar" Grid.ColumnSpan="3">
-				<Button x:Name="NewButton" Click="MainMenu_FileNew" VerticalAlignment="Top" ToolTip.Tip="New UKS File">
-					<Image Source="/Resources/Icons/NewFile_16x.png" ></Image>
-				</Button>
-				<Button x:Name="OpenButton" Click="MainMenu_FileOpen" VerticalAlignment="Top" ToolTip.Tip="Open UKS File">
-					<Image Source="/Resources/Icons/OpenFile_16x.png"></Image>
-				</Button>
-				<Button x:Name="SaveButton" Click="MainMenu_FileSave" VerticalAlignment="Top" ToolTip.Tip="Save UKS File" >
-					<Image Source="/Resources/Icons/Save_16x.png"></Image>
-				</Button>
-				<Button x:Name="SaveAsButton" Click="MainMenu_FileSaveAs" VerticalAlignment="Top" ToolTip.Tip="Save UKS File As"  >
-					<Image Source="/Resources/Icons/SaveAs_16x.png"></Image>
-				</Button>
-				<Label IsVisible="True" Width="65"></Label>
-				<StackPanel Classes="AddModules" Orientation="Horizontal" HorizontalAlignment="Left">
-					<Label Content="Add Module:" Foreground="White"/>
-					<ComboBox x:Name="ModuleListComboBox" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Width="271" Height="26" IsEditable="True" DropDownClosed="ModuleListComboBox_DropDownClosed" >
-					</ComboBox>
+				<StackPanel Orientation="Horizontal">
+					<Button x:Name="NewButton" Click="MainMenu_FileNew" ToolTip.Tip="New UKS File">
+						<Image Source="/Resources/Icons/NewFile_16x.png" ></Image>
+					</Button>
+					<Button x:Name="OpenButton" Click="MainMenu_FileOpen" ToolTip.Tip="Open UKS File">
+						<Image Source="/Resources/Icons/OpenFile_16x.png"></Image>
+					</Button>
+					<Button x:Name="SaveButton" Click="MainMenu_FileSave" ToolTip.Tip="Save UKS File" >
+						<Image Source="/Resources/Icons/Save_16x.png"></Image>
+					</Button>
+					<Button x:Name="SaveAsButton" Click="MainMenu_FileSaveAs" ToolTip.Tip="Save UKS File As"  >
+						<Image Source="/Resources/Icons/SaveAs_16x.png"></Image>
+					</Button>
+					<Label IsVisible="True" Width="65"></Label>
+					<StackPanel Classes="AddModules" Orientation="Horizontal" HorizontalAlignment="Left">
+						<Label Content="Add Module:" Foreground="White"/>
+						<ComboBox x:Name="ModuleListComboBox" IsEditable="True" DropDownClosed="ModuleList_DropDownClosed" KeyDown="ModuleList_KeyDown" />
+					</StackPanel>
 				</StackPanel>
 			</DockPanel>
 			<Border BorderThickness="4" Width="180" Grid.Column="0" Grid.Row="1" BorderBrush="Gray" HorizontalAlignment="Left">
