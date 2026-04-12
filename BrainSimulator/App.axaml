@@ -7,7 +7,10 @@
 	</Application.Resources>
 	<Application.Styles>
 		<SimpleTheme />
-		<!--<FluentTheme />-->
+		<Style Selector=":is(TopLevel)">
+			<Setter Property="FontFamily" Value="Verdana"/>
+			<Setter Property="FontSize" Value="12"/>
+		</Style>
 	</Application.Styles>
 </Application>
 
