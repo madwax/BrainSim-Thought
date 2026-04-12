@@ -11,14 +11,19 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System;
-using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using BrainSimulator.Modules;
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Threading.Tasks;
 using UKS;
-
 using static System.Configuration.ConfigurationManager;
 
 namespace BrainSimulator
@@ -36,21 +41,328 @@ namespace BrainSimulator
         public List<string> pythonModules = new();
         public static string pythonPath = "";
 #endif
-
-        //the name of the currently-loaded network file
-        public static string currentFileName = "";
+        private static DispatcherTimer timer = null;
+        public static MainWindow theWindow = null;
         public static ModuleHandler moduleHandler = new();
         public static UKS.UKS theUKS = moduleHandler.theUKS;
-        public static MainWindow theWindow = null;
+        private static StackPanel loadedModulesSP;
+
+        private string CurrentFileName
+        {
+            get 
+            {
+                return Properties.Settings.Default[ "CurrentFile" ] as string;
+            }
+            set
+            {
+                // Update the title 
+                Title = "Brain Simulator Thought " + System.IO.Path.GetFileNameWithoutExtension( value );
+
+                // Add it to the MRUList
+                if(value.Length > 0)
+                {
+                    AddFileToMRUList( value );
+                }
+
+                // And save it back to disk
+                Properties.Settings.Default[ "CurrentFile" ] = value;
+                Properties.Settings.Default.Save();
+            }
+        }
 
         public MainWindow()
         {
+            theWindow = this;
+
             InitializeComponent();
 
-            SetTitleBar();
             Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
         }
 
+        // Support Dialogs
+        private async Task<string> SaveAsDialog()
+        {
+            var saveToStartPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+            var filepathToSaveTo = await Utils.SaveFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, saveToStartPath );
+            if( filepathToSaveTo == null )
+            {
+                return "";
+            }
+            return filepathToSaveTo;
+        }
+
+        // Event Handlers below
+
+        private void MainWindow_Loaded( object sender, RoutedEventArgs e )
+        {
+            // Setup the timer.
+            if( timer == null )
+            {
+                timer = new DispatcherTimer();
+            }
+            timer.Interval = TimeSpan.FromSeconds( 0.001 );
+            timer.Tick += Dt_Tick;
+
+            // Get the paths and stuff needed to run python code.
+            SetupPythonEnv();
+
+            // Populate the MRU list which what we have on properties.
+            LoadMRUMenu();
+
+            // Load last file
+            string fileName = CurrentFileName;
+            if( fileName.Length > 0 )
+            {
+                try
+                {
+                    if( this.LoadFile( fileName ) )
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        MessageBox.Alert( "Failed to load UKS file: " + CurrentFileName + ". Using defaults", "Application StartUp" );
+                    }
+                }
+                catch( Exception ex )
+                {
+                    MessageBox.Alert( "Failed to load UKS file: " + CurrentFileName + " Exception: " + ex.ToString(), "Application StartUp" );
+                }
+            }
+
+            // Need to use the default
+            this.NewFile();
+        }
+
+        private async void MainWindow_Closing( object sender, WindowClosingEventArgs e )
+        {
+
+        }
+
+
+        private async void MainMenu_FileNew( object sender, RoutedEventArgs e )
+        {
+            if( this.CanSaveCurrentUKS() == true )
+            {
+                var button = await MessageBox.YesNoCancel( "Would you like to save the exiting UKS to disk?", "New UKS" );
+                if( button == MessageBox.Buttons.Cancel )
+                {
+                    // abort
+                    return;
+                }
+                if( button == MessageBox.Buttons.Yes )
+                {
+                    var filepath = await this.SaveAsDialog();
+                    if( filepath.Length > 0 )
+                    {
+                        this.SaveFile( filepath );
+                    }
+                }
+            }
+            this.NewFile();
+        }
+
+        private async void MainMenu_FileOpen( object sender, RoutedEventArgs e )
+        {
+            if( this.CanSaveCurrentUKS() == true )
+            {
+                var button = await MessageBox.YesNoCancel( "Would you like to save the exiting UKS to disk?", "New UKS" );
+                if( button == MessageBox.Buttons.Cancel )
+                {
+                    // abort
+                    return;
+                }
+                if( button == MessageBox.Buttons.Yes )
+                {
+                    var filepath = await this.SaveAsDialog();
+                    if( filepath.Length > 0 )
+                    {
+                        this.SaveFile( filepath );
+                    }
+                }
+            }
+
+            string fileName = "_Open";
+            if( sender is MenuItem mainMenu )
+                fileName = ( string )mainMenu.Header;
+
+            if( fileName == "_Open" )
+            {
+                var openStartPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+                var filepathToOpen = await Utils.OpenFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, openStartPath );
+                if( filepathToOpen is not null )
+                {
+                    this.LoadFile( filepathToOpen );
+                }
+            }
+            else
+            {
+                if( sender is MenuItem mi )
+                {
+                    //this is a file name from the File menu
+                    var filepathToOpen = ToolTip.GetTip( mi ).ToString(); //Path.GetFullPath("./UKSContent/" + fileName + ".xml");
+                    this.LoadFile( filepathToOpen );
+                }
+            }
+        }
+
+        private async void MainMenu_FileExit( object sender, RoutedEventArgs e )
+        {
+            if( CanSaveCurrentUKS() )
+            {
+                var button = await MessageBox.YesNoCancel( "Would you like Save current UKS on exit?", "Application Closing" );
+                if( button == MessageBox.Buttons.Yes )
+                {
+                    var path = await this.SaveAsDialog();
+                    if( path.Length > 0 )
+                    {
+                        this.SaveFile( path );
+                    }
+                }
+                else if( button == MessageBox.Buttons.Cancel )
+                {
+                    // it's an abort
+                    return;
+                }
+            }
+
+            if( timer != null )
+            {
+                timer.Stop();
+                timer = null;
+            }
+
+            Properties.Settings.Default.Save();
+            CloseAllModuleDialogs();
+            CloseAllModules();
+
+            moduleHandler.ClosePythonEngine();
+
+            this.Close();
+        }
+
+        private async void MainMenu_FileSave( object sender, RoutedEventArgs e )
+        {
+            var filepath = CurrentFileName;
+            if( filepath.Length == 0 )
+            {
+                filepath = await this.SaveAsDialog();
+            }
+
+            if( filepath.Length == 0 )
+            {
+                MessageBox.Alert( "No file selected", "Save File" );
+                return;
+            }
+
+            if( SaveFile( filepath ) == true )
+            {
+                MessageBox.Alert( "Failed to save to file: " + filepath, "Save File" );
+            }
+        }
+
+        private async void MainMenu_FileSaveAs( object sender, RoutedEventArgs e )
+        {
+            var filepath = await this.SaveAsDialog();
+            if( filepath.Length == 0 )
+            {
+                // User didn't want to save
+                return;
+            }
+
+            if( SaveFile( filepath ) == true )
+            {
+                SaveButton.IsEnabled = true;
+            }
+            else
+            {
+                MessageBox.Alert( "Failed to save to file: " + filepath, "Save As File" );
+            }
+        }
+
+        private async void buttonReloadNetwork_click( object sender, RoutedEventArgs e )
+        {
+            var toSave = await MessageBox.YesNoCancel( "Would you like to SaveAs before reloading current file", "Reload File" );
+            if( toSave == MessageBox.Buttons.Yes )
+            {
+                var filepath = await this.SaveAsDialog();
+                if( filepath.Length == 0 )
+                {
+                    MessageBox.Alert( "No filename to SaveTo so just reloading", "Reload File" );
+                }
+                else
+                {
+                    var was = CurrentFileName;
+                    if( this.SaveFile( CurrentFileName ) == false )
+                    {
+                        MessageBox.Alert( "Failed to Save current state to file: " + filepath + "carrying on with Reload", "Reload File" );
+                    }
+                    CurrentFileName = was;
+                }
+            }
+            else if( toSave == MessageBox.Buttons.Cancel )
+            {
+                return;
+            }
+
+            if( CurrentFileName != "" )
+            {
+                if( this.LoadFile( CurrentFileName ) == false )
+                {
+                    MessageBox.Alert( "Failed to Load file:" + CurrentFileName, "Reload File" );
+                    return;
+                }
+            }
+        }
+
+
+        private void ModuleListComboBox_PreviewKeyDown( object sender, KeyEventArgs e )
+        {
+            if( sender is ComboBox cb )
+                if( e.Key != Key.Enter && e.Key != Key.Escape )
+                    cb.IsDropDownOpen = true;
+        }
+
+        private void ModuleListComboBox_DropDownClosed( object sender, EventArgs e )
+        {
+            if( sender is ComboBox cb )
+            {
+                if( cb.SelectedItem is not null )
+                {
+
+                    //                    string moduleName = ((Label)cb.SelectedItem).Content.ToString();
+                    string moduleName = cb.SelectedItem.ToString();
+                    cb.SelectedIndex = -1;
+                    ActivateModule( moduleName );
+                }
+            }
+            ReloadActiveModulesSP();
+        }
+
+
+        // General methods
+        private bool CanSaveCurrentUKS()
+        {
+            // TODO see if the current USK is dirty?
+            return true;
+        }
+
+
+        public ModuleBase CreateNewModule( string moduleTypeLabel, string moduleLabel = "" )
+        {
+            Type t = Type.GetType( "BrainSimulator.Modules." + moduleTypeLabel );
+            if( t is null )
+                return null;
+            ModuleBase theModule = ( Modules.ModuleBase )Activator.CreateInstance( t );
+
+            theModule.Label = moduleLabel;
+            if( moduleLabel == "" )
+                theModule.Label = moduleTypeLabel;
+
+            theModule.GetUKS();
+            return theModule;
+        }
 
         private void SetupPythonEnv()
         {
@@ -98,59 +410,6 @@ namespace BrainSimulator
 #endif
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            theWindow = this;
-
-            // Get the paths and stuff needed to run python code.
-            SetupPythonEnv();
-
-            //setup the input file
-            string fileName = "";
-            string savedFile = (string)Properties.Settings.Default["CurrentFile"];
-            if (savedFile != "")
-                fileName = savedFile;
-
-            try
-            {
-                if (fileName != "")
-                {
-                    if (!LoadFile(fileName))
-                    {
-                        MessageBox.Alert("Previous UKS File could not be opened, empty UKS initialized", "UKS Content not loaded" );
-                        CreateEmptyUKS();
-                    }
-                }
-                else //force a new file creation on startup if no file name set
-                {
-                    CreateEmptyUKS();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Alert("Exception: " + ex.ToString(), "UKS Content not loaded" );
-            }
-
-            //safety check
-            if (theUKS.Labeled("BrainSim") is null)
-                CreateEmptyUKS();
-
-            UpdateModuleListsInUKS();
-
-            LoadModuleTypeMenu();
-
-            InitializeActiveModules();
-
-            LoadMRUMenu();
-
-            //start the module engine
-            DispatcherTimer dt = new();
-            dt.Interval = TimeSpan.FromSeconds(0.001);
-            dt.Tick += Dt_Tick;
-            dt.Start();
-        }
-
-
         public void InitializeActiveModules()
         {
             for (int i = 0; i < activeModules.Count; i++)
@@ -162,6 +421,7 @@ namespace BrainSimulator
                 }
             }
         }
+
         public void SetupBeforeSave()
         {
             for (int i = 0; i < activeModules.Count; i++)
@@ -173,7 +433,6 @@ namespace BrainSimulator
                 }
             }
         }
-
 
         public void ShowAllModuleDialogs()
         {
@@ -281,11 +540,11 @@ namespace BrainSimulator
             ReloadActiveModulesSP();
             return t.Label;
         }
+
         public ModuleBase GetModuleByLabel(string label)
         {
             return activeModules.FindFirst(x => x.Label == label);
         }   
-
 
         public void CloseAllModuleDialogs()
         {
@@ -322,17 +581,14 @@ namespace BrainSimulator
 #endif
         }
 
-        private void SetTitleBar()
-        {
-            Title = "Brain Simulator Thought " + System.IO.Path.GetFileNameWithoutExtension(currentFileName);
-        }
-
         public static void SuspendEngine()
         {
+            timer.Stop();
         }
 
         public static void ResumeEngine()
         {
+            timer.Start();
         }
 
         //THIS IS THE MAIN ENGINE LOOP
@@ -384,8 +640,7 @@ namespace BrainSimulator
             List<string> labels = [];
             foreach (Thought t in theUKS.Labeled("AvailableModule").Children)
             {
-                //ModuleListComboBox.Items.Add(new System.Windows.Controls.Label { Content = t.Label, Margin = new Thickness(0), Padding = new Thickness(0) });
-                 labels.Add(t.Label);                
+                labels.Add(t.Label);                
             }
 
             labels.Sort();
@@ -395,5 +650,217 @@ namespace BrainSimulator
                 ModuleListComboBox.Items.Add( label );
             } );
         }
+
+        private void NewFile()
+        {
+            SuspendEngine();
+
+            CloseAllModuleDialogs();
+            CloseAllModules();
+            UnloadActiveModules();
+
+            CreateEmptyUKS();
+            CurrentFileName = "";
+
+            LoadModuleTypeMenu();
+
+            UpdateModuleListsInUKS();
+            LoadActiveModules();
+            ReloadActiveModulesSP();
+            ShowAllModuleDialogs();
+
+            ResumeEngine();
+        }
+
+        private bool SaveFile( string fileName )
+        {
+            bool ret = false;
+
+            SuspendEngine();
+            SetupBeforeSave();
+
+            if( theUKS.SaveUKStoXMLFile( fileName ) == true )
+            {
+                CurrentFileName = fileName;
+                ret = true;
+            }
+
+            ResumeEngine();
+            return ret;
+        }
+
+        private bool LoadFile( string fileName )
+        {
+            SuspendEngine();
+
+            CloseAllModuleDialogs();
+            CloseAllModules();
+
+            UnloadActiveModules();
+
+            if( !theUKS.LoadUKSfromXMLFile( fileName ) )
+            {
+                theUKS = new UKS.UKS();
+                return false;
+            }
+
+            if( theUKS.Labeled( "BrainSim" ) is null )
+            {
+                MessageBox.Alert( "Labeled BrainSim Missing", "Failed to load" );
+                return false;
+            }
+                
+            this.CurrentFileName = fileName;
+
+            LoadModuleTypeMenu();
+
+            UpdateModuleListsInUKS();
+
+            LoadActiveModules();
+            ReloadActiveModulesSP();
+            ShowAllModuleDialogs();
+
+            ResumeEngine();
+            return true;
+        }
+
+
+        public void ReloadActiveModulesSP()
+        {
+            ActiveModuleSP.Children.Clear();
+
+            Thought activeModuleParent = theUKS.Labeled( "ActiveModule" );
+        
+            if( activeModuleParent is null ) { return; }
+            var activeModules1 = activeModuleParent.Children;
+            activeModules1 = activeModules1.OrderBy( x => x.Label ).ToList();
+
+            foreach( Thought t in activeModules1 )
+            {
+                //what kind of module is this?
+                Thought t1 = t.Parents.FindFirst( x => x.HasAncestor( "AvailableModule" ) );
+                if( t1 is null ) continue;
+                string moduleType = t1.Label;
+
+                TextBlock tb = new TextBlock();
+                tb.Text = t.Label;
+                tb.Margin = new Thickness( 5, 2, 5, 2 );
+                tb.Padding = new Thickness( 10, 3, 10, 3 );
+                tb.ContextMenu = new ContextMenu();
+                if( moduleType.Contains( ".py" ) )
+                { }
+                else
+                {
+                    ModuleBase mod = activeModules.FindFirst( x => x.Label == t.Label );
+                    CreateContextMenu( mod, tb, tb.ContextMenu );
+                }
+                tb.Background = new SolidColorBrush( Colors.LightGreen );
+                ActiveModuleSP.Children.Add( tb );
+            }
+        }
+        void UnloadActiveModules()
+        {
+            Thought activeModulesParent = theUKS.Labeled( "ActiveModule" );
+            if( activeModulesParent is null ) return;
+            var activeModules1 = activeModulesParent.Children;
+
+            foreach( Thought t in activeModules1 )
+            {
+                for( int i = 0; i < t.LinksTo.Count; i++ )
+                {
+                    Link r = t.LinksTo[ i ];
+                    t.RemoveLink( r );
+                    r.To.Delete();
+                }
+                t.Delete();
+            }
+        }
+
+        void LoadActiveModules()
+        {
+            activeModules.Clear();
+#if PYTHON_SUPPORT
+            pythonModules.Clear();
+#endif
+            moduleHandler.ClearAllPythonModules();
+
+            var activeModules1 = theUKS.Labeled( "ActiveModule" ).Children;
+            activeModules1 = activeModules1.OrderBy( x => x.Label ).ToList();
+
+            foreach( Thought t in activeModules1 )
+            {
+                //what kind of module is this?
+                Thought tModuleType = t.Parents.FindFirst( x => x.HasAncestor( "AvailableModule" ) );
+                if( tModuleType is null ) continue;
+                string moduleType = tModuleType.Label;
+
+                if( moduleType.Contains( ".py" ) )
+                {
+#if PYTON_SUPPORT
+                    pythonModules.Add(t.Label);
+#endif
+                }
+                else
+                {
+                    ModuleBase mod = CreateNewModule( moduleType, t.Label );
+                    if( mod is not null )
+                        activeModules.Add( mod );
+                    else
+                    {
+                        theUKS.Labeled( "ActiveModule" ).RemoveChild( t );
+                    }
+                }
+            }
+        }
+
+        private void AddFileToMRUList( string filePath )
+        {
+            StringCollection MRUList = ( StringCollection )Properties.Settings.Default[ "MRUList" ];
+            if( MRUList is null )
+                MRUList = new StringCollection();
+            MRUList.Remove( filePath ); //remove it if it's already there
+            MRUList.Insert( 0, filePath ); //add it to the top of the list
+
+            Properties.Settings.Default[ "MRUList" ] = MRUList;
+            Properties.Settings.Default.Save();
+
+            LoadMRUMenu();
+        }
+
+        public void RemoveFileFromMRUList( string filePath )
+        {
+            StringCollection MRUList = ( StringCollection )Properties.Settings.Default[ "MRUList" ];
+            if( MRUList is null )
+                MRUList = new StringCollection();
+            MRUList.Remove( filePath ); //remove it if it's already there
+
+            Properties.Settings.Default[ "MRUList" ] = MRUList;
+            Properties.Settings.Default.Save();
+
+            LoadMRUMenu();
+        }
+
+        private void LoadMRUMenu()
+        {
+            /*
+            MRUListMenu.Items.Clear();
+            StringCollection MRUList = (StringCollection)Properties.Settings.Default["MRUList"];
+            if (MRUList is null)
+                MRUList = new StringCollection();
+            foreach (string fileItem in MRUList)
+            {
+                if (fileItem is null) continue;
+                string shortName = Path.GetFileNameWithoutExtension(fileItem);
+                MenuItem mi = new MenuItem() { Header = shortName };
+                mi.Click += buttonLoad_Click;
+                ToolTip.SetTip( mi, fileItem );
+                MRUListMenu.Items.Add(mi);
+            }*/
+        }
+
+
+
+
+
     }
 }
