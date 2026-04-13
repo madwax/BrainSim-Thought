@@ -21,10 +21,17 @@ using BrainSimulator.Modules;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 using UKS;
 using static System.Configuration.ConfigurationManager;
+
+
+// To Be fixed later on.
+// SUPPORT_CODEEDIT - Opening up the source code in your editor.
 
 namespace BrainSimulator
 {
@@ -34,6 +41,8 @@ namespace BrainSimulator
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static readonly StyledProperty<string> moduleNameProperty = AvaloniaProperty.Register<MenuItem, string>( "moduleName" );
+
         //TODO move these to ModuleHandler
         public List<ModuleBase> activeModules = new();
 
@@ -46,6 +55,8 @@ namespace BrainSimulator
         public static ModuleHandler moduleHandler = new();
         public static UKS.UKS theUKS = moduleHandler.theUKS;
         private static StackPanel loadedModulesSP;
+
+        private bool supportCodeEditing = false;
 
         private string CurrentFileName
         {
@@ -78,18 +89,21 @@ namespace BrainSimulator
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
+
+            // set a local flag so we don't render code editing stuff if we can't do it.
+            supportCodeEditing = Utils.PlatformSupportCodeEditing();
         }
 
         // Support Dialogs
         private async Task<string> SaveAsDialog()
         {
             var saveToStartPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
-            var filepathToSaveTo = await Utils.SaveFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, saveToStartPath );
-            if( filepathToSaveTo == null )
+            var filePathToSaveTo = await Utils.SaveFileDialog( this, Utils.TitleUKSFileSave, Utils.FilterXMLs, saveToStartPath );
+            if( filePathToSaveTo == null )
             {
                 return "";
             }
-            return filepathToSaveTo;
+            return filePathToSaveTo;
         }
 
         // Event Handlers below
@@ -137,9 +151,7 @@ namespace BrainSimulator
 
         private async void MainWindow_Closing( object sender, WindowClosingEventArgs e )
         {
-
         }
-
 
         private async void MainMenu_FileNew( object sender, RoutedEventArgs e )
         {
@@ -281,6 +293,104 @@ namespace BrainSimulator
             }
         }
 
+        private async void ActiveModulesSP_ContextMenu_Click( object sender, RoutedEventArgs e )
+        {
+            //Handle delete  & initialize commands
+            if( sender is MenuItem mi && mi is not null && mi.Parent is not null )
+            {
+                string moduleName = ( string )mi.Parent.GetValue( moduleNameProperty );
+                if( moduleName.Length > 0 )
+                {
+                    ModuleBase? m = activeModules.FindFirst( x => x.Label == moduleName );
+                    if( m is not null )
+                    {
+                        int indexToModule = activeModules.IndexOf( m );
+
+                        switch( ( string )mi.Header )
+                        {
+                            case "View Source":
+                            case "View Dialog Source":
+                            {
+                                // should never get here but...
+                                if( supportCodeEditing == false ) return;
+#if SUPPORT_CODEEDIT
+                                string theModuleType = m.GetType().Name.ToString();
+
+                                if( ( string )mi.Header == "View Dialog Source" )
+                                    theModuleType += "Dlg.xaml";
+
+                                string cwd = System.IO.Directory.GetCurrentDirectory();
+                                if( cwd.Contains( "bin\\" ) )
+                                    cwd = cwd.ToLower().Substring( 0, cwd.IndexOf( "bin\\" ) );
+                                string fileName = cwd + @"modules\" + theModuleType + ".cs";
+                                if( File.Exists( fileName ) )
+                                    OpenSource( fileName );
+                                else
+                                {
+                                    fileName = cwd + @"BrainSim2modules\" + theModuleType + ".cs";
+                                    OpenSource( fileName );
+                                }
+#endif
+                                break;
+                            }
+
+                            case "Delete":
+                            {
+                                if( indexToModule >= 0 )
+                                {
+                                    DeleteModule( moduleName );
+                                }
+                                break;
+                            }
+
+                            case "Initialize":
+                            {
+                                if( indexToModule >= 0 )
+                                {
+                                    try
+                                    {
+                                        activeModules[ indexToModule ].Initialize();
+                                    }
+                                    catch( Exception e1 )
+                                    {
+                                        MessageBox.Alert( "Initialize failed on module " + activeModules[ indexToModule ].Label + ".   Message: " + e1.Message, "Error" );
+                                    }
+                                }
+                                break;
+                            }
+                            case "Show Dialog":
+                            {
+                                if( indexToModule >= 0 )
+                                {
+                                    activeModules[ indexToModule ].OpenDlg();
+                                }
+                                break;
+                            }
+                            case "Hide Dialog":
+                            {
+                                if( indexToModule >= 0 )
+                                {
+                                    activeModules[ indexToModule ].CloseDlg();
+                                }
+                                break;
+                            }
+                            case "Info...":
+                            {
+                                string theModuleType = m.GetType().Name.ToString();
+                                ModuleDescriptionDlg md = new ModuleDescriptionDlg( theModuleType );
+                                md.Show();
+                                break;
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+#if NOT_USED
         private async void buttonReloadNetwork_click( object sender, RoutedEventArgs e )
         {
             var toSave = await MessageBox.YesNoCancel( "Would you like to SaveAs before reloading current file", "Reload File" );
@@ -315,28 +425,22 @@ namespace BrainSimulator
                 }
             }
         }
+#endif
 
-        private void ModuleList_KeyDown( object sender, KeyEventArgs e )
+        private async void AvailableModules_SelectionChanged( object sender, SelectionChangedEventArgs e )
         {
-            if( sender is ComboBox cb )
-                if( e.Key != Key.Enter && e.Key != Key.Escape )
-                    cb.IsDropDownOpen = true;
-        }
-
-        private void ModuleList_DropDownClosed( object sender, EventArgs e )
-        {
-            if( sender is ComboBox cb )
+            if( sender is AutoCompleteBox && e.AddedItems.Count > 0)
             {
-                if( cb.SelectedItem is not null )
+                var autoComp = ( AutoCompleteBox )sender;
+                if( autoComp.SelectedItem is not null )
                 {
+                    var moduleName = autoComp.SelectedItem as string;
+                    autoComp.SelectedItem = null;
+                    autoComp.Text = "";
 
-                    //                    string moduleName = ((Label)cb.SelectedItem).Content.ToString();
-                    string moduleName = cb.SelectedItem.ToString();
-                    cb.SelectedIndex = -1;
                     ActivateModule( moduleName );
                 }
             }
-            ReloadActiveModulesSP();
         }
 
         // General methods
@@ -345,7 +449,6 @@ namespace BrainSimulator
             // TODO see if the current USK is dirty?
             return true;
         }
-
 
         public ModuleBase CreateNewModule( string moduleTypeLabel, string moduleLabel = "" )
         {
@@ -463,48 +566,61 @@ namespace BrainSimulator
 
         public void UpdateModuleListsInUKS()
         {
-            theUKS.GetOrAddThought("BrainSim", null);
-            theUKS.GetOrAddThought("AvailableModule", "BrainSim");
-            theUKS.GetOrAddThought("ActiveModule", "BrainSim");
-            var availableListInUKS = theUKS.Labeled("AvailableModule").Children;
+            theUKS.GetOrAddThought( "BrainSim", null );
+            theUKS.GetOrAddThought( "AvailableModule", "BrainSim" );
+            theUKS.GetOrAddThought( "ActiveModule", "BrainSim" );
+            var availableListInUKS = theUKS.Labeled( "AvailableModule" ).Children;
 
             //add any missing modules
             var CSharpModules = Utils.GetListOfExistingCSharpModuleTypes();
-            foreach (var module in CSharpModules)
+            foreach( var module in CSharpModules )
             {
                 string name = module.Name;
-                Thought availableModule = availableListInUKS.FindFirst(x => x.Label == name);
-                if (availableModule is null)
-                    theUKS.GetOrAddThought(name, "AvailableModule");
+                Thought availableModule = availableListInUKS.FindFirst( x => x.Label == name );
+                if( availableModule is null )
+                    theUKS.GetOrAddThought( name, "AvailableModule" );
             }
             var PythonModules = moduleHandler.GetListOfExistingPythonModuleTypes();
-            foreach (var name in PythonModules)
+            foreach( var name in PythonModules )
             {
-                Thought availableModule = availableListInUKS.FindFirst(x => x.Label == name);
-                if (availableModule is null)
-                    theUKS.GetOrAddThought(name, "AvailableModule");
+                Thought availableModule = availableListInUKS.FindFirst( x => x.Label == name );
+                if( availableModule is null )
+                    theUKS.GetOrAddThought( name, "AvailableModule" );
             }
             //delete any non-existant modules
-            availableListInUKS = theUKS.Labeled("AvailableModule").Children;
-            foreach (Thought t in availableListInUKS)
+            availableListInUKS = theUKS.Labeled( "AvailableModule" ).Children;
+            foreach( Thought t in availableListInUKS )
             {
                 string name = t.Label;
-                if (CSharpModules.FindFirst(x=>x.Name == name) is not null) continue;
-                if (PythonModules.FindFirst(x => x == name) is not null) continue;
-                theUKS.DeleteAllChildren(t);
+                if( CSharpModules.FindFirst( x => x.Name == name ) is not null ) continue;
+                if( PythonModules.FindFirst( x => x == name ) is not null ) continue;
+                theUKS.DeleteAllChildren( t );
                 t.Delete();
             }
 
+            List<string> availableModules = new List<string>();
+
             //reconnect/delete any active modules
-            var activeListInUKS = theUKS.Labeled("ActiveModule").Children;
-            foreach(Thought t in activeListInUKS)
+            var activeListInUKS = theUKS.Labeled( "ActiveModule" ).Children;
+            foreach( Thought t in activeListInUKS )
             {
-                Thought parent = availableListInUKS.FindFirst(x => x.Label == t.Label.Substring(0, t.Label.Length - 1));
-                if (parent is not null)
-                    t.AddParent(parent);
+                var cleanName = t.Label.Substring( 0, t.Label.Length - 1 );
+                Thought parent = availableListInUKS.FindFirst( x => x.Label == cleanName );
+                if( parent is not null )
+                {
+
+                    Debug.WriteLine( "UpdateModuleListsInUKS() ActiveList: " + cleanName );
+                    availableModules.Add( cleanName );
+                    t.AddParent( parent );
+                }
                 else
                     t.Delete();
             }
+
+            availableModules.Sort();
+            
+            // update the control
+            AvailableModules.ItemsSource = availableModules;
         }
 
         public void InsertMandatoryModules()
@@ -539,12 +655,24 @@ namespace BrainSimulator
             return t.Label;
         }
 
+#if NOT_USED
         public ModuleBase GetModuleByLabel(string label)
         {
             return activeModules.FindFirst(x => x.Label == label);
-        }   
+        }
+#endif
 
-        public void CloseAllModuleDialogs()
+        private void DeleteModule( string moduleName )
+        {
+            ModuleBase mb = activeModules.FindFirst( x => x.Label == moduleName );
+            mb.CloseDlg();
+            mb.Closing();
+            activeModules.Remove( mb );
+            theUKS.Labeled( mb.Label )?.Delete();
+            ReloadActiveModulesSP();
+        }
+
+        private void CloseAllModuleDialogs()
         {
             lock (activeModules)
             {
@@ -558,7 +686,7 @@ namespace BrainSimulator
             }
         }
 
-        public void CloseAllModules()
+        private void CloseAllModules()
         {
             lock (activeModules)
             {
@@ -613,41 +741,6 @@ namespace BrainSimulator
 #endif
         }
 
-        private void LoadModuleTypeMenu()
-        {
-            var moduleTypes = Utils.GetListOfExistingCSharpModuleTypes();
-
-            foreach (var moduleType in moduleTypes)
-            {
-                string moduleName = moduleType.Name;
-                Thought t = theUKS.GetOrAddThought(moduleName, "AvailableModule");
-                //TODO: delete the following
-                t.AddParent("AvailableModule");
-            }
-
-            var pythonModules = moduleHandler.GetListOfExistingPythonModuleTypes();
-            foreach (var moduleType in pythonModules)
-            {
-                theUKS.GetOrAddThought(moduleType, "AvailableModule");
-            }
-
-            ModuleListComboBox.Items.Clear();
-
-            // We can't sort the items in the control so we have to do it first in a list then asign 
-            List<string> labels = [];
-            foreach (Thought t in theUKS.Labeled("AvailableModule").Children)
-            {
-                labels.Add(t.Label);                
-            }
-
-            labels.Sort();
-
-            labels.ForEach( label =>
-            {
-                ModuleListComboBox.Items.Add( label );
-            } );
-        }
-
         private void NewFile()
         {
             SuspendEngine();
@@ -659,9 +752,8 @@ namespace BrainSimulator
             CreateEmptyUKS();
             CurrentFileName = "";
 
-            LoadModuleTypeMenu();
-
             UpdateModuleListsInUKS();
+
             LoadActiveModules();
             ReloadActiveModulesSP();
             ShowAllModuleDialogs();
@@ -709,8 +801,6 @@ namespace BrainSimulator
                 
             this.CurrentFileName = fileName;
 
-            LoadModuleTypeMenu();
-
             UpdateModuleListsInUKS();
 
             LoadActiveModules();
@@ -745,11 +835,14 @@ namespace BrainSimulator
                 tb.Padding = new Thickness( 10, 3, 10, 3 );
                 tb.ContextMenu = new ContextMenu();
                 if( moduleType.Contains( ".py" ) )
-                { }
+                { 
+                }
                 else
                 {
-                    ModuleBase mod = activeModules.FindFirst( x => x.Label == t.Label );
-                    CreateContextMenu( mod, tb, tb.ContextMenu );
+                    // RHC Bug. Sometimes mod is null
+                    ModuleBase? mod = activeModules.FindFirst( x => x.Label == t.Label );
+                    if( mod is not null )
+                        CreateContextMenu( mod, tb, tb.ContextMenu );
                 }
                 tb.Background = new SolidColorBrush( Colors.LightGreen );
                 ActiveModuleSP.Children.Add( tb );
@@ -839,25 +932,92 @@ namespace BrainSimulator
 
         private void LoadMRUMenu()
         {
-            /*
             MRUListMenu.Items.Clear();
             StringCollection MRUList = (StringCollection)Properties.Settings.Default["MRUList"];
             if (MRUList is null)
                 MRUList = new StringCollection();
+
             foreach (string fileItem in MRUList)
             {
                 if (fileItem is null) continue;
+
                 string shortName = Path.GetFileNameWithoutExtension(fileItem);
                 MenuItem mi = new MenuItem() { Header = shortName };
-                mi.Click += buttonLoad_Click;
+                mi.Click += MainMenu_FileOpen;
                 ToolTip.SetTip( mi, fileItem );
                 MRUListMenu.Items.Add(mi);
-            }*/
+            }
+        }
+               
+
+        public void CreateContextMenu( ModuleBase nr, Control r, ContextMenu cm = null ) //for a selection
+        {
+            //cmCancelled = false;
+            if( cm is null )
+                cm = new ContextMenu();
+            cm.SetValue( moduleNameProperty, nr.Label );
+
+            StackPanel sp;
+            MenuItem mi = new MenuItem();
+            mi = new MenuItem();
+            mi.Header = "Delete";
+            mi.Click += ActiveModulesSP_ContextMenu_Click;
+            cm.Items.Add( mi );
+
+            mi = new MenuItem();
+            mi.Header = "Initialize";
+            mi.Click += ActiveModulesSP_ContextMenu_Click;
+            cm.Items.Add( mi );
+
+            if( supportCodeEditing == true )
+            {
+                mi = new MenuItem();
+                mi.Header = "View Source";
+                mi.Click += ActiveModulesSP_ContextMenu_Click;
+                cm.Items.Add( mi );
+
+                mi = new MenuItem();
+                mi.Header = "View Dialog Source";
+                mi.Click += ActiveModulesSP_ContextMenu_Click;
+                cm.Items.Add( mi );
+            }
+
+            mi = new MenuItem();
+            mi.Header = "Info...";
+            mi.Click += ActiveModulesSP_ContextMenu_Click;
+            cm.Items.Add( mi );
+
+            mi = new MenuItem();
+
+            ModuleBase m = activeModules.FindFirst( x => x.Label == nr.Label );
+            int i = activeModules.IndexOf( m );
+
+            if( activeModules[ i ] is not null )
+            {
+                var t = activeModules[ i ].GetType();
+                Type t1 = Type.GetType( t.ToString() + "Dlg" );
+                while( t1 is null && t.BaseType.Name != "ModuleBase" )
+                {
+                    t = t.BaseType;
+                    t1 = Type.GetType( t.ToString() + "Dlg" );
+                }
+                if( t1 is not null )
+                {
+                    cm.Items.Add( new MenuItem { Header = "Show Dialog" } );
+                    ( ( MenuItem )cm.Items[ cm.Items.Count - 1 ] ).Click += ActiveModulesSP_ContextMenu_Click;
+                    cm.Items.Add( new MenuItem { Header = "Hide Dialog" } );
+                    ( ( MenuItem )cm.Items[ cm.Items.Count - 1 ] ).Click += ActiveModulesSP_ContextMenu_Click;
+                }
+            }
         }
 
-
-
-
-
+        public static void OpenSource( string fileName )
+        {
+            Process process = new Process();
+            string taskFile = @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe";
+            ProcessStartInfo startInfo = new ProcessStartInfo( taskFile, "/edit " + fileName );
+            process.StartInfo = startInfo;
+            process.Start();
+        }
     }
 }

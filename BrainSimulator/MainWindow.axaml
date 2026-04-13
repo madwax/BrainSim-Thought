@@ -40,7 +40,7 @@
 						<Setter Property="Foreground" Value="White" />
 						<Setter Property="VerticalAlignment" Value="Center" />
 					</Style>
-					<Style Selector="^ > ComboBox">
+					<Style Selector="^ > AutoCompleteBox">
 						<Setter Property="Width" Value="270" />
 						<Setter Property="FontSize" Value="14" />
 						<Setter Property="Background" Value="White"/>
@@ -114,7 +114,7 @@
 					<Label IsVisible="True" Width="65"></Label>
 					<StackPanel Classes="AddModules" Orientation="Horizontal" HorizontalAlignment="Left">
 						<Label Content="Add Module:" Foreground="White"/>
-						<ComboBox x:Name="ModuleListComboBox" IsEditable="True" DropDownClosed="ModuleList_DropDownClosed" KeyDown="ModuleList_KeyDown" />
+						<AutoCompleteBox x:Name="AvailableModules" ClearSelectionOnLostFocus="True" SelectionChanged="AvailableModules_SelectionChanged" />
 					</StackPanel>
 				</StackPanel>
 			</DockPanel>
