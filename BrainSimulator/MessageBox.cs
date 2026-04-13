@@ -26,7 +26,7 @@ namespace BrainSimulator
         /// <param name="title"></param>
         public static async void Alert( string message, string title)
         {
-            var theMsgBox = MessageBoxManager.GetMessageBoxStandard( message, title, ButtonEnum.Ok );
+            var theMsgBox = MessageBoxManager.GetMessageBoxStandard( title, message, ButtonEnum.Ok );
             // don't care about the return
             await theMsgBox.ShowAsync();
         }
