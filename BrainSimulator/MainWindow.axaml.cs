@@ -56,7 +56,7 @@ namespace BrainSimulator
         public static UKS.UKS theUKS = moduleHandler.theUKS;
         private static StackPanel loadedModulesSP;
 
-        private bool supportCodeEditing = false;
+        public SourceEditing theCodeEditer = new SourceEditing();
 
         private string CurrentFileName
         {
@@ -89,9 +89,6 @@ namespace BrainSimulator
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
-
-            // set a local flag so we don't render code editing stuff if we can't do it.
-            supportCodeEditing = Utils.PlatformSupportCodeEditing();
         }
 
         // Support Dialogs
@@ -309,42 +306,25 @@ namespace BrainSimulator
                         switch( ( string )mi.Header )
                         {
                             case "View Source":
-                            case "View Dialog Source":
-                            {
-                                // should never get here but...
-                                if( supportCodeEditing == false ) return;
-#if SUPPORT_CODEEDIT
-                                string theModuleType = m.GetType().Name.ToString();
-
-                                if( ( string )mi.Header == "View Dialog Source" )
-                                    theModuleType += "Dlg.xaml";
-
-                                string cwd = System.IO.Directory.GetCurrentDirectory();
-                                if( cwd.Contains( "bin\\" ) )
-                                    cwd = cwd.ToLower().Substring( 0, cwd.IndexOf( "bin\\" ) );
-                                string fileName = cwd + @"modules\" + theModuleType + ".cs";
-                                if( File.Exists( fileName ) )
-                                    OpenSource( fileName );
-                                else
-                                {
-                                    fileName = cwd + @"BrainSim2modules\" + theModuleType + ".cs";
-                                    OpenSource( fileName );
-                                }
-#endif
+                                theCodeEditer.OpenInEditor( m.GetType().Name.ToString(), SourceEditing.FileTypes.ModuleSource );
                                 break;
-                            }
+
+                            case "View Dialog Layout":
+                                theCodeEditer.OpenInEditor( m.GetType().Name.ToString(), SourceEditing.FileTypes.DialogLayout );
+                                break;
+
+                            case "View Dialog Source":
+                                theCodeEditer.OpenInEditor( m.GetType().Name.ToString(), SourceEditing.FileTypes.DialogSource );
+                                break;
 
                             case "Delete":
-                            {
                                 if( indexToModule >= 0 )
                                 {
                                     DeleteModule( moduleName );
                                 }
                                 break;
-                            }
 
                             case "Initialize":
-                            {
                                 if( indexToModule >= 0 )
                                 {
                                     try
@@ -357,30 +337,26 @@ namespace BrainSimulator
                                     }
                                 }
                                 break;
-                            }
+
                             case "Show Dialog":
-                            {
                                 if( indexToModule >= 0 )
                                 {
                                     activeModules[ indexToModule ].OpenDlg();
                                 }
                                 break;
-                            }
+
                             case "Hide Dialog":
-                            {
                                 if( indexToModule >= 0 )
                                 {
                                     activeModules[ indexToModule ].CloseDlg();
                                 }
                                 break;
-                            }
+
                             case "Info...":
-                            {
                                 string theModuleType = m.GetType().Name.ToString();
                                 ModuleDescriptionDlg md = new ModuleDescriptionDlg( theModuleType );
                                 md.Show();
                                 break;
-                            }
 
                         }
                     }
@@ -948,7 +924,6 @@ namespace BrainSimulator
                 MRUListMenu.Items.Add(mi);
             }
         }
-               
 
         public void CreateContextMenu( ModuleBase nr, Control r, ContextMenu cm = null ) //for a selection
         {
@@ -969,7 +944,7 @@ namespace BrainSimulator
             mi.Click += ActiveModulesSP_ContextMenu_Click;
             cm.Items.Add( mi );
 
-            if( supportCodeEditing == true )
+            if( theCodeEditer.IsSupported() == true )
             {
                 mi = new MenuItem();
                 mi.Header = "View Source";
@@ -978,6 +953,11 @@ namespace BrainSimulator
 
                 mi = new MenuItem();
                 mi.Header = "View Dialog Source";
+                mi.Click += ActiveModulesSP_ContextMenu_Click;
+                cm.Items.Add( mi );
+
+                mi = new MenuItem();
+                mi.Header = "View Dialog Layout";
                 mi.Click += ActiveModulesSP_ContextMenu_Click;
                 cm.Items.Add( mi );
             }
@@ -1009,15 +989,6 @@ namespace BrainSimulator
                     ( ( MenuItem )cm.Items[ cm.Items.Count - 1 ] ).Click += ActiveModulesSP_ContextMenu_Click;
                 }
             }
-        }
-
-        public static void OpenSource( string fileName )
-        {
-            Process process = new Process();
-            string taskFile = @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe";
-            ProcessStartInfo startInfo = new ProcessStartInfo( taskFile, "/edit " + fileName );
-            process.StartInfo = startInfo;
-            process.Start();
         }
     }
 }

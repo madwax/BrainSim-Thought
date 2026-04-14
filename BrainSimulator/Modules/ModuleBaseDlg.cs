@@ -147,38 +147,8 @@ public class ModuleBaseDlg : Window
 
     private void SourceButton_Click(object sender, RoutedEventArgs e)
     {
-#if WINDOWS
         string theModuleType = this.GetType().Name.ToString();
-        string cwd = System.IO.Directory.GetCurrentDirectory();
-        cwd = cwd.ToLower().Replace("bin\\debug\\net8.0-windows", "") + @"modules\";
-        string dlgFilePath = FindFile(cwd, theModuleType + ".axaml.cs");
-        string csFilePath = FindFile(cwd, theModuleType.Substring(0, theModuleType.Length - 4) + ".cs");
-        csFilePath = "\"" + csFilePath + "\"";
-        dlgFilePath = "\"" + dlgFilePath + "\"";
-
-        //find visiaul studio
-        string taskFile = "";
-        if (!File.Exists(taskFile))
-            taskFile = @"C:\Program Files\Microsoft Visual Studio\18\Professional\Common7\IDE\devenv.exe";
-        if (!File.Exists(taskFile))
-            taskFile = @"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\devenv.exe";
-        if (!File.Exists(taskFile))
-            taskFile = @"C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\devenv.exe";
-        if (!File.Exists(taskFile))
-            taskFile = @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe";
-        if (!File.Exists(taskFile))
-            return;
-
-        //fire up the processes
-        Process processDlg = new();
-        ProcessStartInfo startInfo = new ProcessStartInfo(taskFile, "/edit " + dlgFilePath);
-        processDlg.StartInfo = startInfo;
-        processDlg.Start();
-        Process process = new();
-        ProcessStartInfo startInfo2 = new ProcessStartInfo(taskFile, "/edit " + csFilePath);
-        process.StartInfo = startInfo2;
-        process.Start();
-#endif
+        MainWindow.theWindow.theCodeEditer.OpenAllSourcesInEditor( theModuleType );
     }
 
     private void HelpButton_Click(object sender, RoutedEventArgs e)

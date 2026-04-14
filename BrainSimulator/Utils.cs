@@ -1310,13 +1310,5 @@ namespace BrainSimulator
         {
             return (++trackid).ToString("####");
         }
-
-        public static bool PlatformSupportCodeEditing()
-        {
-
-            return false;
-        }
-
-
     }
 }
