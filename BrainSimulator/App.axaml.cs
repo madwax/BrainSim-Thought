@@ -40,7 +40,6 @@ namespace BrainSimulator
 
         private void OnStarted( object sender, ControlledApplicationLifetimeStartupEventArgs e )
         {
-            MainWindow mainWindow = new();
             if( ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop )
             {
                 desktop.MainWindow.Show();
