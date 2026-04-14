@@ -185,4 +185,16 @@
     <Compile Remove="Modules\ModuleWord.cs" />
     <Compile Remove="Modules\ModuleWordDlg.axaml.cs" />
   </ItemGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <DefineConstants>WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <DefineConstants>LINUX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('FreeBSD'))">
+    <DefineConstants>FREEBSD</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <DefineConstants>MAC</DefineConstants>
+  </PropertyGroup>  
 </Project>
