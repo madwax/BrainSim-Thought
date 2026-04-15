@@ -18,7 +18,7 @@ namespace BrainSimulator
             Yes = 2,
             No = 3,
         }
-
+         
         /// <summary>
         /// Your basic Ok button message box
         /// </summary>
@@ -33,7 +33,7 @@ namespace BrainSimulator
 
         public static async Task<MessageBox.Buttons> YesNoCancel( string message, string title )
         {
-            var theMsgBox = MessageBoxManager.GetMessageBoxStandard( message, title, ButtonEnum.YesNoCancel );
+            var theMsgBox = MessageBoxManager.GetMessageBoxStandard( title, message, ButtonEnum.YesNoCancel );
             ButtonResult buttonIs = await theMsgBox.ShowWindowAsync();
 
             if( buttonIs == ButtonResult.Yes )
@@ -46,9 +46,6 @@ namespace BrainSimulator
             }
             return MessageBox.Buttons.Cancel;
         }
-
-
-
     }
 }
  
