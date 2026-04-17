@@ -4,13 +4,91 @@
              RequestedThemeVariant="Default"
              >
 	<Application.Resources>
+		<ResourceDictionary>
+			<FontFamily x:Key="AppFontFamily">Verdana</FontFamily>
+			<x:Double x:Key="AppFontSize">12</x:Double>
+			<SolidColorBrush x:Key="DialogFooterBackground" Color="#FF00FF" />
+			<SolidColorBrush x:Key="DialogBackground" Color="Yellow" />
+		</ResourceDictionary>
 	</Application.Resources>
 	<Application.Styles>
 		<SimpleTheme />
+		<!-- High level global styling -->
 		<Style Selector=":is(TopLevel)">
-			<Setter Property="FontFamily" Value="Verdana"/>
-			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+			<Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
+			<Setter Property="Background" Value="{DynamicResource DialogBackground}" />
 		</Style>
+		<Style Selector="Button">
+			<Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+			<Setter Property="FontSize" Value="{DynamicResource AppFontSize}"/>
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="Background" Value="White" />
+		</Style>
+		<Style Selector="Label">
+			<Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+			<Setter Property="FontSize" Value="{DynamicResource AppFontSize}"/>
+		</Style>
+
+		<!-- Controls ModuleBaseDlg shell layout -->
+		<Style Selector="DockPanel#dialogShell">
+			<Style Selector="^ Border#dialogShellContent" >
+			</Style>
+			<Style Selector="^ Border#dialogShellFooter" >
+				<Setter Property="Background" Value="{DynamicResource DialogFooterBackground}"/>
+				<Setter Property="MaxHeight" Value="40" />
+			</Style>
+		</Style>
+
+		<!-- The footer section of dialogs -->
+		<Style Selector="StackPanel#bottomBar">
+			<Setter Property="Spacing" Value="5" />
+			<Setter Property="MaxHeight" Value="40" />
+			<Setter Property="VerticalAlignment" Value="Bottom" />
+			<Setter Property="HorizontalAlignment" Value="Right" />
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Margin" Value="10,5,10,5" />
+			<Style Selector="^ Label#statusLabel">
+				<Setter Property="HorizontalAlignment" Value="Stretch" />
+				<Setter Property="Width" Value="NaN"/>
+				<Setter Property="Margin" Value="0,0,0,0" />
+				<Setter Property="FontSize" Value="18"/>
+				<Setter Property="Height" Value="25"/>
+			</Style>
+			<Style Selector="^ Button#sourceButton">
+				<Setter Property="Height" Value="25"/>
+				<Setter Property="Width" Value="40"/>
+				<Setter Property="FontSize" Value="10" />
+			</Style>
+			<Style Selector="^ Button#helpButton">
+				<Setter Property="VerticalAlignment" Value="Center" />
+				<Setter Property="Height" Value="15"/>
+				<Setter Property="Width" Value="15"/>
+				<Setter Property="FontSize" Value="5" />
+			</Style>
+		</Style>
+
+		<!-- The footer section of dialogs -->
+		<Style Selector="Grid#bottomBar">
+			<Setter Property="Margin" Value="10,5,10,5" />
+			<Style Selector="^ Label#statusLabel">
+				<Setter Property="HorizontalAlignment" Value="Stretch" />
+				<Setter Property="Margin" Value="0,0,0,0" />
+				<Setter Property="Height" Value="25"/>
+			</Style>
+			<Style Selector="^ Button#sourceButton">
+				<Setter Property="Height" Value="25"/>
+				<Setter Property="Width" Value="40"/>
+			</Style>
+			<Style Selector="^ Button#helpButton">
+				<Setter Property="Padding" Value="0,0,0,0" />
+				<Setter Property="VerticalAlignment" Value="Center" />
+				<Setter Property="Height" Value="30"/>
+				<Setter Property="Width" Value="35"/>
+			</Style>
+		</Style>
+
+
 	</Application.Styles>
 </Application>
 

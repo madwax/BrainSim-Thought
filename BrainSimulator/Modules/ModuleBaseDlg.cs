@@ -52,76 +52,88 @@ public class ModuleBaseDlg : Window
         // capture original content
         Control? originalContent = this.Content as Control;
 
-        // create outer grid (single row) and overlay bottom bar at the bottom
-        Grid shell = new()
+        DockPanel shell = new()
         {
-            Margin = this.Margin
+            Name="dialogShell",
+            LastChildFill=true
         };
-        shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-        if (originalContent is not null)
-        {
-            this.Content = null; // detach
-            Grid.SetRow(originalContent, 0);
-            shell.Children.Add(originalContent);
-        }
-
-        // bottom bar layout (overlay)
         Grid bottomBar = new()
         {
-            Margin = new Thickness(0),
-            VerticalAlignment = VerticalAlignment.Bottom,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            Name = "bottomBar"
         };
-        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // status stretch
-        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(35) });                    // src button
-        bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });                    // help button
-
-        Button helpButton = new Button
-        {
-            Content = "?",
-            FontSize = 24,
-            Width = 20,
-            Height = 25,
-            Padding = new Thickness(0, -6, 0, 0),
-            Name = "helpButton",
-            //ToolTip = "Show dialog help",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        helpButton.Click += HelpButton_Click;
-        Grid.SetColumn(helpButton, 2);
-
-        Button sourceButton = new Button
-        {
-            Content = "src",
-            Width = 33,
-            Height = 25,
-            Name = "sourceButton",
-            //ToolTip = "Show dialog source",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        sourceButton.Click += SourceButton_Click;
-        Grid.SetColumn(sourceButton, 1);
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 1, GridUnitType.Star ) } ); // status stretch
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // src button
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // help button
 
         statusLabel = new()
         {
             Content = "OK",
-            Name = "statusLabel",
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(10, 0, 0, 0),
-            FontSize = 18
+            Name = "statusLabel"
         };
-        Grid.SetColumn(statusLabel, 0);
 
-        bottomBar.Children.Add(helpButton);
-        bottomBar.Children.Add(sourceButton);
-        bottomBar.Children.Add(statusLabel);
+        Button sourceButton = new Button
+        {
+            Content = "src",
+            Name = "sourceButton"
+        };
+        sourceButton.Click += SourceButton_Click;
+        ToolTip.SetTip( sourceButton, "Show dialog sources" );
 
-        Grid.SetRow(bottomBar, 0);
-        shell.Children.Add(bottomBar);
+        Button helpButton = new Button
+        {
+            Content = "?",
+            Name = "helpButton"
+        };
+        helpButton.Click += HelpButton_Click;
+        ToolTip.SetTip( helpButton, "Show dialog help" );
+
+        Grid.SetColumn( statusLabel, 0 );
+        bottomBar.Children.Add( statusLabel );
+
+        Grid.SetColumn( sourceButton, 1 );
+        bottomBar.Children.Add( sourceButton );
+
+        Grid.SetColumn( helpButton, 2 );
+        bottomBar.Children.Add( helpButton );
+
+        Border borderFooter = new()
+        {
+            Name = "dialogShellFooter"
+        };
+        DockPanel.SetDock( borderFooter, Dock.Bottom );
+
+        borderFooter.Child = bottomBar;
+
+        shell.Children.Add( borderFooter );
+
+        if( originalContent is not null )
+        {
+            this.Content = null; // detach
+
+            Border borderContent = new()
+            {
+                Name = "dialogShellContent"
+            };
+
+            borderContent.Margin = this.Margin;
+            borderContent.Child = originalContent;
+
+            DockPanel.SetDock( borderContent, Dock.Top );
+            shell.Children.Add( borderContent );
+        }
+        else
+        {
+            // RHC - should put a label saying No Content
+            Label emptyness = new()
+            {
+                Name = "dialogShellNoContent",
+                Content = "No dialog content currently defined"
+            };
+
+            DockPanel.SetDock( emptyness, Dock.Top );
+            shell.Children.Add( emptyness );
+        }
 
         // set new content
         this.Content = shell;

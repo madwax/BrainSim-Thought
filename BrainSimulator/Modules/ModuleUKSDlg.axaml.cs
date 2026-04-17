@@ -44,6 +44,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     public static readonly StyledProperty<TreeViewItem> TreeViewItemProperty = AvaloniaProperty.Register<TreeViewItem, TreeViewItem>( "Thought" );
     public static readonly StyledProperty<Thought> LinkObjectProperty = AvaloniaProperty.Register<TreeViewItem, Thought>( "Thought" );
 
+
     private const int maxDepth = 20;
     private const int rootHistoryLimit = 8;
     private readonly List<string> _rootHistory = new();
@@ -51,6 +52,8 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     private bool mouseInWindow; //prevent auto-update while the mouse is in the tree
     private bool pauseRefreshing = false;  // prevent the tree control being updated while we do things like context menus.
     private bool contextMenuForceDraw = false; // True if the content menu needs to draw after its action.
+    private bool isTextChangingInternally = true;  //lockout so we can change the text without retriggering the event
+
     private List<string> treeviewCurrentExpandedItems = new();
     private string treeviewCurrentSelectedLabel = "";
     private TreeViewExpandedModes treeviewExpandedMode = TreeViewExpandedModes.Currently;
@@ -408,8 +411,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void TreeViewItem_DoubleTapped( object? sender, TappedEventArgs e )
     {
-        Debug.WriteLine( "TreeViewItem_DoubleTapped() >>" );
-
         if( sender is null ) { return; }
         if( sender is not TreeViewItem ) { return; }
         TreeViewItem tvi = sender as TreeViewItem;
@@ -421,15 +422,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             PopulateEmptyTreeViewItemWithChildren( tvi );
         }
-        Debug.WriteLine( "TreeViewItem_DoubleTapped() <<" );
     }
 
     //the treeview is populated only with expanded items or it would contain the entire UKS content
     //when an item is expanded, its content needs to be created into the treeview
     private void TreeViewItem_Expanded( object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine( "TreeViewItem_Expanded() >>" );
-
         if( sender is null ) { return; }
         if( sender is not TreeViewItem ) { return; }
 
@@ -447,7 +445,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             PopulateEmptyTreeViewItemWithChildren( tvi );
         }
-        Debug.WriteLine( "TreeViewItem_Expanded() <<" );
     }
 
     //find out which tree items are already expanded by recursively following the tree items 
@@ -537,7 +534,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
         menu.Opened += Menu_Opened;
         menu.Closed += Menu_Closed;
-        ApplyContextMenuTheme(menu);   // honor OS theme
+        //ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -645,7 +642,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         mi.SetValue(ThoughtObjectProperty, r.To);
         menu.Items.Add(mi);
 
-        ApplyContextMenuTheme(menu);   // honor OS theme
+        //ApplyContextMenuTheme(menu);   // honor OS theme
         return menu;
     }
 
@@ -745,8 +742,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         Title = "The Universal Knowledgs Store (UKS)  --  File: " + Path.GetFileNameWithoutExtension(theUKS.FileName);
     }
 
-    private bool _isTextChangingInternally = true;  //lockout so we can change the text without retriggering the event
-
     private void TextBoxRoot_KeyDown(object sender, KeyEventArgs e)
     {
         TextBox? tb = comboRoot.FindNameScope().Find<TextBox>( "PART_EditableTextBox" );
@@ -755,14 +750,14 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         // Allow text changes when keys like backspace, delete are pressed
         if (e.Key == Key.Back || e.Key == Key.Delete)
         {
-            _isTextChangingInternally = true;
+            isTextChangingInternally = true;
             int caretIndex = tb.CaretIndex;
             if (e.Key == Key.Back) caretIndex--;
             if (caretIndex < 0) caretIndex = 0;
             comboRoot.Text = comboRoot.Text.Substring(0, caretIndex);
             tb.CaretIndex = caretIndex;
             e.Handled = true;
-            _isTextChangingInternally = false;
+            isTextChangingInternally = false;
             if (e.Key == Key.Back)
                 textBoxRoot_TextChanged(null, null);
         }
@@ -774,7 +769,7 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     }
     private void textBoxRoot_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (_isTextChangingInternally)
+        if (isTextChangingInternally)
             return;
 
         string searchText = comboRoot.Text;
@@ -792,14 +787,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
                 if (tb is null) return;
                 int caretIndex = tb.CaretIndex;
-                _isTextChangingInternally = true;
+                isTextChangingInternally = true;
                 comboRoot.Text = suggestion;
                 tb.CaretIndex = caretIndex;
                 tb.SelectionStart = caretIndex;
                 tb.SelectionEnd = suggestion.Length - caretIndex;
-                // RHC - Do we have this?
-                //tb.SelectionOpacity = .4;
-                _isTextChangingInternally = false;
+                isTextChangingInternally = false;
             }
         }
         ModuleUKS parent = (ModuleUKS)ParentModule;
@@ -1038,26 +1031,15 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void UpdateRootHistoryItems()
     {
-        _isTextChangingInternally = true;
+        isTextChangingInternally = true;
         comboRoot.ItemsSource = null;
         comboRoot.ItemsSource = _rootHistory.ToList();
-        _isTextChangingInternally = false;
-    }
-
-    private static bool IsDarkMode()
-    {
-#if WINDOWS
-        const string personalize = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
-        object? value = Registry.GetValue(personalize, "AppsUseLightTheme", 1);
-        return value is int i && i == 0;
-#else
-        return false;
-#endif
+        isTextChangingInternally = false;
     }
 
     private void ApplyContextMenuTheme(ContextMenu menu)
     {
-        if (menu is null || !IsDarkMode()) return;
+        if (menu is null) return;
 
         var bg = new SolidColorBrush(Color.FromRgb(45, 45, 48));
         var fg = Brushes.White;
