@@ -1,0 +1,138 @@
+﻿<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!-- High level global styling -->
+	<Style Selector=":is(TopLevel)">
+		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}" />
+		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}" />
+		<Setter Property="Background" Value="{DynamicResource App.Background}" />
+		<Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+	</Style>
+
+	<Style Selector="Button,ComboBox">
+		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
+		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
+		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Control.Boarder.Color}" />
+		<Setter Property="Background" Value="{DynamicResource Control.Background}" />
+		<Setter Property="Foreground" Value="{DynamicResource Control.Foreground}" />
+
+		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Over.Boarder.Color}" />
+			<Setter Property="Background" Value="{DynamicResource Control.Over.Background}" />
+			<Setter Property="Foreground" Value="{DynamicResource Control.Over.Foreground}" />
+		</Style>
+		<Style Selector="^:pressed  /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Selected.Boarder.Color}" />
+			<Setter Property="Background" Value="{DynamicResource Control.Selected.Background}" />
+			<Setter Property="Foreground" Value="{DynamicResource Control.Selected.Foreground}" />
+		</Style>
+	</Style>
+
+	<Style Selector="CheckBox">
+		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
+		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
+		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Control.Boarder.Color}" />
+		<Setter Property="Background" Value="{DynamicResource Control.Background}" />
+		<Setter Property="Foreground" Value="{DynamicResource Control.Foreground}" />
+		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Over.Boarder.Color}" />
+		</Style>
+		<Style Selector="^:pressed  /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Selected.Boarder.Color}" />
+		</Style>
+	</Style>
+
+	<Style Selector="TextBox">
+		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
+		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
+		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Control.Boarder.Color}" />
+		<Setter Property="Background" Value="{DynamicResource Control.Background}" />
+		<Setter Property="Foreground" Value="{DynamicResource Control.Foreground}" />
+		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Over.Boarder.Color}" />
+		</Style>
+		<Style Selector="^:pressed  /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="BorderBrush" Value="{DynamicResource Control.Selected.Boarder.Color}" />
+		</Style>
+	</Style>
+
+	<Style Selector="TreeView">
+		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
+		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
+		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Control.Boarder.Color}" />
+		<Setter Property="Background" Value="{DynamicResource Control.Background}" />
+		<Setter Property="Foreground" Value="{DynamicResource Control.Foreground}" />
+	</Style>
+
+	<Style Selector="Label">
+		<Setter Property="FontFamily" Value="{DynamicResource App.FontFamily}"/>
+		<Setter Property="FontSize" Value="{DynamicResource App.FontSize}"/>
+	</Style>
+
+	<!-- Common Complex stuff -->
+	<Style Selector="Window DockPanel.Container">
+		<Style Selector="^ Border.Emptyness">
+			<Setter Property="Background" Value="Red" />
+			<Style Selector="^ Label">
+				<Setter Property="Foreground" Value="Black" />
+				<Setter Property="FontSize" Value="45" />
+			</Style>
+		</Style>
+		<Style Selector="^ Border.Content">
+		</Style>
+		<Style Selector="^ Border.Footer">
+			<Setter Property="Background" Value="{DynamicResource Footer.Background}" />
+
+			<Style Selector="^ Label#ReportStatus" >
+				<Setter Property="FontSize" Value="{DynamicResource Footer.Label.FontSize}" />
+				<Setter Property="Foreground" Value="{DynamicResource Footer.Foreground}" />
+
+				<Style Selector="^.Warning" >
+					<Setter Property="Background" Value="Yellow" />
+					<Setter Property="Foreground" Value="Black" />
+				</Style>
+				<Style Selector="^.Error" >
+					<Setter Property="Background" Value="Red" />
+					<Setter Property="Foreground" Value="Black" />
+				</Style>
+			</Style>
+			<Style Selector="^ Button#source" >
+			</Style>
+			<Style Selector="^ Button#help" >
+			</Style>
+		</Style>
+	</Style>
+
+	<!-- The shell layout used by ModuleBaseDlg for all dialogs -->
+	<Style Selector="DockPanel#dialogShell">
+		<!-- The dialog content which is moved into this position-->
+		<Style Selector="^ Border#dialogShellContent" /> 
+		<Style Selector="^ Border#dialogShellFooter" >
+			<Setter Property="Background" Value="{DynamicResource Footer.Background}" />
+			<Setter Property="MaxHeight" Value="40" />
+		</Style>
+	</Style>
+
+	<!-- The footer section of dialogs -->
+	<Style Selector="Grid#bottomBar">
+		<Setter Property="Margin" Value="10,5,10,5" />
+		<Style Selector="^ Label#statusLabel">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="Margin" Value="0,0,0,0" />
+			<Setter Property="Height" Value="25"/>
+			<Setter Property="FontSize" Value="{DynamicResource Footer.Label.FontSize}" />
+		</Style>
+		<Style Selector="^ Button#sourceButton">
+			<Setter Property="Height" Value="25"/>
+			<Setter Property="Width" Value="40"/>
+		</Style>
+		<Style Selector="^ Button#helpButton">
+			<Setter Property="Padding" Value="0,0,0,0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Height" Value="30"/>
+			<Setter Property="Width" Value="35"/>
+		</Style>
+	</Style>
+</Styles>

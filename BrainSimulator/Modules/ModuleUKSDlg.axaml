@@ -5,38 +5,85 @@
         Height="450" 
         Width="800" 
         ShowInTaskbar="False" 
-        Loaded="Dlg_Loaded">
-    <Grid >
-        <TreeView x:Name="theTreeView" FontSize="16"
-                  SizeChanged="TheTreeView_SizeChanged" 
-                  Margin="0,68,0,40"
-                  PointerEntered="TheTreeView_MouseEnter"
-                  PointerExited="TheTreeView_MouseLeave"
-                  PointerWheelChanged="theTreeView_MouseWheel"
-                  >
-        </TreeView>
-        <CheckBox x:Name="detailsCB" Content="Show Details" HorizontalAlignment="Left" Margin="131,10,0,0" Width="120" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBoxAuto" IsChecked="True" Content="Auto-Refresh" HorizontalAlignment="Left" Margin="131,39,0,0" Width="120" Checked="CheckBoxAuto_Checked" Unchecked="CheckBoxAuto_Unchecked" VerticalAlignment="Top"/>
-        <CheckBox x:Name="reverseCB" IsChecked="False" Content="Reverse Links." HorizontalAlignment="Left" Margin="256,10,0,0" Width="161" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked" RenderTransformOrigin="1.073,-0.658" VerticalAlignment="Top"/>
-        <CheckBox x:Name="showConditionals" IsChecked="False" Content="Show Conditionals" HorizontalAlignment="Left" Margin="256,39,0,0" Width="161" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked" RenderTransformOrigin="1.073,-0.658" VerticalAlignment="Top"/>
+        Loaded="OnLoaded"
+        Opened="OnOpened"
+        Closed="OnClosed"
+        >
+    <Window.Styles> 
+        <Style Selector="Grid#Settings">
+            <Setter Property="Background" Value="{DynamicResource Toolbar.Background}" />
+            <Style Selector="^ > Button, ^ > CheckBox" >
+                <Setter Property="Margin" Value="5,5,5,5" />				
+            </Style>
+            <Style Selector="^ > StackPanel" >
+                <Setter Property="Margin" Value="5,5,5,5" />	
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Style Selector="^ > Label">
+                    <Setter Property="FontSize" Value="14" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+                <Style Selector="^ > ComboBox">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+            </Style>
+            <Style Selector="^ > Label" >
+                <Setter Property="Margin" Value="5,5,5,5" />				
+                <Setter Property="FontSize" Value="14" />				
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+            <Style Selector="^ > Button#RefreshButton">
+                <Style Selector="^ Image">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+    				<Setter Property="Width" Value="18" />
+	    			<Setter Property="Height" Value="18" />
+                </Style>
+             </Style>
+        </Style>
+        <Style Selector="ContextMenu.ContextMenu">
+			<Setter Property="Background" Value="Red" />
+        </Style>
 
-        <Label Content="Root:" HorizontalAlignment="Left" Margin="424,4,0,0" Width="90" VerticalAlignment="Top"/>
-        <ComboBox x:Name="comboRoot"
-                  IsEditable="True"
-                  HorizontalAlignment="Left"
-                  Margin="467,8,0,0"
-                  Width="180"
-                  Height="25"
-                  VerticalAlignment="Top"
-                  IsTextSearchEnabled="False"
-                  Text="Thought"
-                  KeyDown="TextBoxRoot_KeyDown"/>
-        <Label Content="" x:Name="statusLabel"  HorizontalAlignment="Left" Margin="424,33,0,0" Width="220" Height="35" VerticalAlignment="Top"/>
-        <Button x:Name="InitializeButton" Content="Initialize" VerticalAlignment="Top" Height="25" Click="InitializeButton_Click" Margin="18,19,0,0" HorizontalAlignment="Left" Width="90"   />
-        <Button Content="Import" Height="25" HorizontalAlignment="Left" Margin="645,8,0,0" VerticalAlignment="Top" Width="70" Click="ImportButton_Click"/>
-        <Button Content="Export" Height="25"  HorizontalAlignment="Left" Margin="645,39,0,0" VerticalAlignment="Top" Width="70" Click="ExportButton_Click"/>
-        <Button x:Name="RefreshButton" Click="RefreshButton_Click" HorizontalAlignment="Left" Margin="108,36,0,0" Width="26" Height="26" VerticalAlignment="Top">
-            <Image Width="22" Height="22" Source="/Resources/Icons/refresh-3104.png" />
-        </Button>
-    </Grid>
+        <Style Selector="ContextMenu.ContextMenuLinks">
+			<Setter Property="Background" Value="Green" />
+        </Style>
+
+    </Window.Styles>
+        <Grid ColumnDefinitions="*" RowDefinitions="Auto,*" >
+			<Grid Name="Settings" ColumnDefinitions="auto,auto,auto,auto,auto" RowDefinitions="35,35" Grid.Row="0">
+                <Button Name="InitializeButton" Click="OnInitializeButton" Content="Initialize" Width="90" Grid.Column="0" Grid.Row="0" />
+                <Button Name="RefreshButton" Click="OnRefreshButton" Grid.Column=" 0" Grid.Row="1" IsEnabled="False" ToolTip.Tip="Refresh the Tree" >
+                    <Image Source="/Resources/Icons/refresh-3104.png" />
+                </Button>
+
+                <CheckBox Name="detailsCB" Content="Show Details" Width="120" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="1" Grid.Row="0"/>
+                <CheckBox Name="AutoRefresh" IsChecked="True" Content="Auto-Refresh" Width="120" IsCheckedChanged="OnAutoRefreshChanged" Grid.Column="1" Grid.Row="1" />
+
+                <CheckBox Name="reverseCB" IsChecked="False" Content="Reverse Links." Width="161" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="2" Grid.Row="0" />
+                <CheckBox Name="showConditionals" IsChecked="False" Content="Show Conditionals" Width="161" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="2" Grid.Row="1" />
+
+                <StackPanel Orientation="Horizontal" Grid.Column="3" Grid.Row="0">
+                    <Label Content="Root:" />
+                    <AutoCompleteBox Name="CurrentRoot" IsTextCompletionEnabled="True" TextChanged="OnCurrentRootInputChanged" KeyUp="OnCurrentRootKeyUp" Width="180" />
+                    <Button Name="RootHistory" Content="History" Click="OnCurrentRootHistory" >
+						<Button.ContextMenu>
+                            <ContextMenu Name="CurrentRootHistory" />
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+                <Label Content="" Name="UKSInformation" Width="220" Grid.Column="3" Grid.Row="1"/>
+
+                <Button Content="Import" Width="70" Click="OnImport" Grid.Column="4" Grid.Row="0" />
+                <Button Content="Export" Width="70" Click="OnExport" Grid.Column="4" Grid.Row="1" />
+            </Grid>
+            <TreeView Name="TheTreeView" 
+                      Grid.Row="1"
+                      SizeChanged="OnTheTreeViewSized" 
+                      PointerEntered="OnTheTreeViewPointerEnter"
+                      PointerExited="OnTheTreeViewPointerLeave" 
+                      PointerWheelChanged="OnTheTreeViewPointerWheel"
+                      >
+            </TreeView>
+        </Grid>
 </Window>

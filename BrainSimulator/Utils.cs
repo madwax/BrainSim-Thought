@@ -1128,7 +1128,7 @@ namespace BrainSimulator
             var options = new Avalonia.Platform.Storage.FilePickerOpenOptions
             {
                 Title = Utils.TitleUKSFileLoad,
-                FileTypeFilter = new[] { Utils.FilterXMLs }
+                FileTypeFilter = new[] { filter }
             };
 
             if( pathToStartIn.Length > 0 )

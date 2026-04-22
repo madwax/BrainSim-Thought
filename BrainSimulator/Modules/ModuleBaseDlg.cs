@@ -11,7 +11,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -52,30 +51,16 @@ public class ModuleBaseDlg : Window
         // capture original content
         Control? originalContent = this.Content as Control;
 
-        DockPanel shell = new()
-        {
-            Name="dialogShell",
-            LastChildFill=true
-        };
-
-        Grid bottomBar = new()
-        {
-            Name = "bottomBar"
-        };
-        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 1, GridUnitType.Star ) } ); // status stretch
-        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // src button
-        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // help button
-
         statusLabel = new()
         {
             Content = "OK",
-            Name = "statusLabel"
+            Name = "ReportStatus"
         };
 
         Button sourceButton = new Button
         {
             Content = "src",
-            Name = "sourceButton"
+            Name = "footerSource"
         };
         sourceButton.Click += SourceButton_Click;
         ToolTip.SetTip( sourceButton, "Show dialog sources" );
@@ -83,10 +68,19 @@ public class ModuleBaseDlg : Window
         Button helpButton = new Button
         {
             Content = "?",
-            Name = "helpButton"
+            Name = "footerHelp"
         };
         helpButton.Click += HelpButton_Click;
         ToolTip.SetTip( helpButton, "Show dialog help" );
+
+        // build the footer area up.
+
+        Grid bottomBar = new();
+        bottomBar.Classes.Add( "Footer" );
+
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 1, GridUnitType.Star ) } ); // status stretch
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // src button
+        bottomBar.ColumnDefinitions.Add( new ColumnDefinition { Width = new GridLength( 45 ) } );                    // help button
 
         Grid.SetColumn( statusLabel, 0 );
         bottomBar.Children.Add( statusLabel );
@@ -97,43 +91,40 @@ public class ModuleBaseDlg : Window
         Grid.SetColumn( helpButton, 2 );
         bottomBar.Children.Add( helpButton );
 
-        Border borderFooter = new()
-        {
-            Name = "dialogShellFooter"
-        };
+        Border borderFooter = new();
         DockPanel.SetDock( borderFooter, Dock.Bottom );
-
         borderFooter.Child = bottomBar;
+        borderFooter.Classes.Add( "Footer" );
 
+        DockPanel shell = new()
+        {
+            LastChildFill = true
+        };
+        shell.Classes.Add( "Container" );
         shell.Children.Add( borderFooter );
+
+        Border borderContent = new();
+        DockPanel.SetDock( borderContent, Dock.Top );
 
         if( originalContent is not null )
         {
             this.Content = null; // detach
 
-            Border borderContent = new()
-            {
-                Name = "dialogShellContent"
-            };
-
             borderContent.Margin = this.Margin;
             borderContent.Child = originalContent;
-
-            DockPanel.SetDock( borderContent, Dock.Top );
-            shell.Children.Add( borderContent );
+            borderContent.Classes.Add( "Content" );
         }
         else
         {
             // RHC - should put a label saying No Content
             Label emptyness = new()
             {
-                Name = "dialogShellNoContent",
                 Content = "No dialog content currently defined"
             };
-
-            DockPanel.SetDock( emptyness, Dock.Top );
-            shell.Children.Add( emptyness );
+            borderContent.Child = emptyness;
+            borderContent.Classes.Add( "Emptyness" );
         }
+        shell.Children.Add( borderContent );
 
         // set new content
         this.Content = shell;
@@ -197,21 +188,31 @@ public class ModuleBaseDlg : Window
 #endif
 
     /// <summary>
-    /// Sets a status message at the bottom of the dialog. Seets the background yellow if the color is red or null
+    /// Defines the background/foreground color of a message being displayed in the status area of the footer
+    /// </summary>
+    public enum StatusMode
+    {
+        Normal = 0,
+        Warning, 
+        Error
+    };
+
+    /// <summary>
+    /// Sets a status message at the bottom of the dialog.
     /// </summary>
     /// <param name="message"></param>
-    /// <param name="c">Defaults to red</param>
-    public void SetStatus(string message, Color? c = null)
+    /// <param name="mode">Defines what type of message classification we have to display, see enum StatuMode</param>
+    public void SetStatus(string message, StatusMode mode = StatusMode.Normal)
     {
-        if (c is null) c = Colors.Red;
-        statusLabel.Background = new SolidColorBrush(Colors.Gray);
-        if (c == Colors.Red && (message != "OK" && message != "" ))
-            statusLabel.Background = new SolidColorBrush(Colors.LemonChiffon);
-        if (message == "OK" || message == "")
-            statusLabel.Foreground = new SolidColorBrush(Colors.Black);
-        else
-            statusLabel.Foreground = new SolidColorBrush((Color)c);
-
+        statusLabel.Classes.Clear();
+        if( mode == StatusMode.Warning )
+        {
+            statusLabel.Classes.Add( "Warning" );
+        }
+        else if( mode == StatusMode.Error )
+        {
+            statusLabel.Classes.Add( "Error" );
+        }
         statusLabel.Content = message;
     }
     public string GetStatus()

@@ -98,7 +98,7 @@
 
 			<!-- The Toolbar -->
 			<DockPanel Classes="Toolbar" Grid.Row="0" Grid.Column="0" x:Name="MainToolBar" Grid.ColumnSpan="3">
-				<StackPanel Orientation="Horizontal">
+				<StackPanel Classes="Toolbar" Orientation="Horizontal">
 					<Button x:Name="NewButton" Click="MainMenu_FileNew" ToolTip.Tip="New UKS File">
 						<Image Source="/Resources/Icons/NewFile_16x.png" ></Image>
 					</Button>
