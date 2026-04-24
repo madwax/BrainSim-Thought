@@ -219,6 +219,10 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             if( CurrentRoot.SelectedItem is not null )
             {
                 var labelOfRootNode = CurrentRoot.SelectedItem.ToString();
+
+                ModuleUKS parent = ( ModuleUKS )base.ParentModule;
+                parent.SetSavedDlgAttribute( "Root", labelOfRootNode );
+
                 this.AddRootToHistory( labelOfRootNode );
             }
             else if( CurrentRoot.Text == "" )
