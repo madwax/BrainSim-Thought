@@ -57,10 +57,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         // When the context menu is closed do we force a draw?
         public bool contextMenuForceDraw = false;
 
-        // Used to see if we have a change in the number of throughts in UKS and if we should do an update.
-        public int numAtomicThoughts = 0;
-        // This will force an update to the treeview event if numAtomicThroughts == UKS
-        public bool forceUpdate = false;
         // This flag is used to rebuild expandedItemsLabels by enuming over all current treeview items and checking if they are expanded. 
         public bool rebuildExpendedItems = true;
         // The list of the labels of expanded treeviewitems.
@@ -154,7 +150,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 StartTimer();
                 // For the tree control to rebuild on next draw.
-                this.treeviewCache.forceUpdate = true;
                 RefreshButton.IsEnabled = false;
             }
             else
@@ -167,13 +162,11 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
     private void OnGeneralSettingChanged( object? sender, RoutedEventArgs e )
     {
-        this.treeviewCache.forceUpdate = true;
         Draw( false );
     }
 
     private void OnRefreshButton( object? sender, RoutedEventArgs e )
     {
-        this.treeviewCache.forceUpdate = true;
         Draw( false );
     }
 
@@ -193,7 +186,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             root = "Thought";
         CurrentRoot.Text = root;
 
-        this.treeviewCache.forceUpdate = true;
         Draw( false );
     }
 
@@ -237,7 +229,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
                 return;
             }
 
-            this.treeviewCache.forceUpdate = true;
             this.Draw( false );
         }
     }
@@ -259,7 +250,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
 
         CurrentRoot.Text = menuItemIs.Header.ToString();
 
-        this.treeviewCache.forceUpdate = true;
         Draw( false );
     }
 
@@ -337,7 +327,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     {
         if( AutoRefresh.IsChecked == true )
         {
-            this.treeviewCache.forceUpdate = true;
             Draw( false );
         }
     }
@@ -345,22 +334,10 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     private void OnTheTreeViewPointerEnter( object? sender, PointerEventArgs e )
     {
         this.treeviewCache.pointerOver = true;
-        /*
-        if( AutoRefresh.IsChecked == true )
-        {
-            this.treeviewCache.forceUpdate = true;
-            Draw( false );
-        }*/
     }
     private void OnTheTreeViewPointerLeave( object? sender, PointerEventArgs e )
     {
         this.treeviewCache.pointerOver = false;
-        /*
-        if( AutoRefresh.IsChecked == true )
-        {
-            this.treeviewCache.forceUpdate = true;
-            Draw( false );
-        }*/
     }
 
     //using the mouse-wheel while pressing ctrl key changes the font size
@@ -373,7 +350,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 if( TheTreeView.FontSize > 2 )
                     TheTreeView.FontSize -= 1;
-
             }
             else if( e.Delta.Y > 0.0 )
             {
@@ -432,10 +408,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
             {
                 tb.Focus();
                 tb.CaretIndex = tb.Text.Length;
-
-                // TODO - RHC Don't know if we should use this or what we have below
-                // tb.SelectionStart = 0;
-                //tb.SelectionEnd = tb.Text.Length;
             }
         }
     }
@@ -579,7 +551,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         {
             /// for the draw
             this.treeviewCache.contextMenuForceDraw = false;
-            this.treeviewCache.forceUpdate = true;
             Draw( true );
         }
     }
@@ -591,7 +562,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         if( AutoRefresh is null || AutoRefresh.IsChecked == false )
             return;
 
-        this.treeviewCache.forceUpdate = true;
         updateViewTimer.Start();
     }
 
@@ -605,19 +575,6 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
         // Don't update the tree if the context menu is open
         if( this.treeviewCache.contextMenuOpen == true )
             return;
-
-        if( this.treeviewCache.forceUpdate == false )
-        {
-            //if( this.treeviewCache.numAtomicThoughts == theUKS.AtomicThoughts.Count() )
-            //    return;
-        }
-        else
-        {
-            this.treeviewCache.forceUpdate = false;
-        }
-
-        // cache the current number of thoughts
-        this.treeviewCache.numAtomicThoughts = theUKS.AtomicThoughts.Count();
 
         try
         {
