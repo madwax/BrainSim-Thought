@@ -127,15 +127,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <AvaloniaXaml Remove="Modules\Agents\**" />
+    <!--<AvaloniaXaml Remove="Modules\Agents\**" />-->
     <AvaloniaXaml Remove="Modules\Vision\**" />
     <Compile Remove="Modules\Vision\**" />
     <EmbeddedResource Remove="Modules\Agents\**" />
     <EmbeddedResource Remove="Modules\Vision\**" />
-    <None Remove="Modules\Agents\**" />
+    <!--<None Remove="Modules\Agents\**" />-->
     <None Remove="Modules\Vision\**" />
   </ItemGroup>
   <ItemGroup>
+    <AvaloniaXaml Remove="Modules\Agents\ModuleAddCountsDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\Agents\ModuleBalanceTreeDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\Agents\ModuleClassCreateDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\Agents\ModuleRemoveRedundancyDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleActionDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAddToMentalModelDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAttentionDlg.axaml" />
@@ -147,12 +151,19 @@
     <AvaloniaXaml Remove="Modules\ModuleSoundOutDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleStressTestDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleTextDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\ModuleTextInDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\ModuleUKSQueryDlg.axaml" />    
+    <AvaloniaXaml Remove="Modules\ModuleTextInDlg.axaml" />    
     <AvaloniaXaml Remove="Modules\ModuleWellBeingDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleWordDlg.axaml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Modules\Agents\ModuleAddCounts.cs" />
+    <Compile Remove="Modules\Agents\ModuleAddCountsDlg.axaml.cs" />
+    <Compile Remove="Modules\Agents\ModuleBalanceTree.cs" />
+    <Compile Remove="Modules\Agents\ModuleBalanceTreeDlg.axml.cs" />
+    <Compile Remove="Modules\Agents\ModuleClassCreate.cs" />
+    <Compile Remove="Modules\Agents\ModuleClassCreateDlg.axaml.cs" />
+    <Compile Remove="Modules\Agents\ModuleRemoveRedundancy.cs" />
+    <Compile Remove="Modules\Agents\ModuleRemoveRedundancyDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAction.cs" />
     <Compile Remove="Modules\ModuleActionDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAddToMentalModel.cs" />
@@ -178,8 +189,6 @@
     <Compile Remove="Modules\ModuleTextDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleTextIn.cs" />
     <Compile Remove="Modules\ModuleTextInDlg.axaml.cs" />
-    <Compile Remove="Modules\ModuleUKSQuery.cs" />
-    <Compile Remove="Modules\ModuleUKSQueryDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWellBeing.cs" />
     <Compile Remove="Modules\ModuleWellBeingDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWord.cs" />

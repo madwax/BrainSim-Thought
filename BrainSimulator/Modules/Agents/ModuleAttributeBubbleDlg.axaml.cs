@@ -10,28 +10,54 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
 
-using System.Windows;
-using System.Windows.Controls;
+using System.Collections.Generic;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+
+
 
 namespace BrainSimulator.Modules
 {
-    public partial class ModuleAttributeBubbleDlg : ModuleBaseDlg
+    public partial class ModuleAttributeBubbleDlg : ModuleBaseDlg, ISendDebugString
     {
+        private List< string > pendingDebugMessages = new List< string >();
+
         public ModuleAttributeBubbleDlg()
         {
             InitializeComponent();
         }
 
+        public void OnDebugString( string msg )
+        {
+            pendingDebugMessages.Add( msg );
+
+            if( pendingDebugMessages.Count == 1 )
+            {
+                Dispatcher.UIThread.Post( () =>
+                {
+                    this.Draw( false );
+                } );
+            }
+        }
+
         public override bool Draw(bool checkDrawTimer)
         {
             if (!base.Draw(checkDrawTimer)) return false;
-            //this has a timer so that no matter how often you might call draw, the dialog
-            //only updates 10x per second
-            ModuleAttributeBubble parent = (ModuleAttributeBubble)base.ParentModule;
-            tbMessages.Text = parent.debugString;
-            //tbMessages.ScrollToEnd();
+
+            if( pendingDebugMessages.Count > 0 )
+            {
+                foreach( string item in pendingDebugMessages )
+                {
+                    DebugMessages.Items.Add( item );
+                }
+
+                // scroll to the bottom
+                DebugMessageView.Offset = new Avalonia.Vector( DebugMessageView.Offset.X, DebugMessageView.Extent.Height - DebugMessageView.Viewport.Height );
+            }
             return true;
         }
 

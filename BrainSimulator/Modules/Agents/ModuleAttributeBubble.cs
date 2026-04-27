@@ -21,14 +21,19 @@ using UKS;
 
 namespace BrainSimulator.Modules;
 
+public interface ISendDebugString
+{
+    void OnDebugString( string msg );
+}
+
 public class ModuleAttributeBubble : ModuleBase
 {
+
     // Fill this method in with code which will execute
     // once for each cycle of the engine
     public override void Fire()
     {
         //This agent works on a timer and "Fire" is not used
-
         Init();
 
         UpdateDialog();
@@ -37,8 +42,32 @@ public class ModuleAttributeBubble : ModuleBase
     public bool isEnabled { get; set; }
 
     private Timer timer;
-    //private UKS.UKS theUKS1;
-    public string debugString = "Initialized\n";
+    
+    private ISendDebugString sendDebugTo = null;
+
+    public void RegisterDebugString( ISendDebugString obj )
+    {
+        if( this.sendDebugTo != null )
+            throw new Exception( "ModuleAttributeBubble() Trying to register another ISendDebugString object" );
+
+        this.sendDebugTo = obj;
+    }
+    public void UnregisterDebugString( ISendDebugString obj )
+    {
+        if( this.sendDebugTo == obj )
+        {
+            this.sendDebugTo = null;
+        }
+    }
+
+    public void DebugString( string msg )
+    {
+        if( sendDebugTo != null )
+        {
+            sendDebugTo.OnDebugString( msg );
+        }
+    }
+
     private void Setup()
     {
         if (timer is null)
@@ -76,7 +105,7 @@ public class ModuleAttributeBubble : ModuleBase
 
     public void DoTheWork()
     {
-        debugString = "Bubbler Started\n";
+        DebugString( "Bubbler Started\n" );
         foreach (Thought t in theUKS.AtomicThoughts)
         {
             if (t.Label == "Animal")
@@ -84,7 +113,7 @@ public class ModuleAttributeBubble : ModuleBase
             if (t.HasAncestor("Object"))
                 BubbleChildAttributes(t);
         }
-        debugString += "Bubbler Finished\n";
+        DebugString( "Bubbler Finished\n" );
         UpdateDialog();
     }
     void BubbleChildAttributes(Thought t)
@@ -149,7 +178,7 @@ public class ModuleAttributeBubble : ModuleBase
                 if (r is not null)
                 {
                     t.RemoveLink(r);
-                    debugString += $"Removed {r} \n";
+                    this.DebugString( $"Removed {r} \n" );
                 }
                 continue;
             }
@@ -169,43 +198,44 @@ public class ModuleAttributeBubble : ModuleBase
             float newWeight = currentWeight + targetWeight;
             if (newWeight > 0.99f) newWeight = 0.99f;
 
-            if (positiveCount > totalCount / 2)
-                if (newWeight != currentWeight || r is null)
+            if( positiveCount > totalCount / 2 )
+            {
+                if( newWeight != currentWeight || r is null )
                 {
-                    if (newWeight < .5)
+                    if( newWeight < .5 )
                     {
-                        if (r is not null)
+                        if( r is not null )
                         {
-                            t.RemoveLink(r);
-                            debugString += $"Removed {r.ToString()} \n";
+                            t.RemoveLink( r );
+                            this.DebugString( $"Removed {r.ToString()} \n" ); 
                         }
                     }
                     else
                     {
                         //bubble the property
-                        r = t.AddLink(rr.linkType, rr.target);
+                        r = t.AddLink( rr.linkType, rr.target );
                         r.Weight = newWeight;
                         r.Fire();
-                        debugString += $"Added  {r.ToString()}   {r.Weight.ToString(".0")} \n";
+                        this.DebugString( $"Added  {r.ToString()}   {r.Weight.ToString( ".0" )} \n" );
 
-                        foreach (Thought t1 in t.Children)
+                        foreach( Thought t1 in t.Children )
                         {
-                            Thought rrr = t1.RemoveLink(rr.linkType,rr.target);
-                            debugString += $"Removed {rrr.ToString()} \n";
+                            Thought rrr = t1.RemoveLink( rr.linkType, rr.target );
+                            this.DebugString( $"Removed {rrr.ToString()} \n" );
                         }
                         //if there is a conflicting link, delete it
-                        for (int j = 0; j < t.LinksTo.Count; j++)
+                        for( int j = 0; j < t.LinksTo.Count; j++ )
                         {
-                            if (LinksConflict(new LinkDest(r), new LinkDest(t.LinksTo[j])))
+                            if( LinksConflict( new LinkDest( r ), new LinkDest( t.LinksTo[ j ] ) ) )
                             {
-                                t.RemoveLink(t.LinksTo[j]);
+                                t.RemoveLink( t.LinksTo[ j ] );
                                 j--;
                             }
                         }
                     }
                 }
+            }
         }
-
     }
 
 
