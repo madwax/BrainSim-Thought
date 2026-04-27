@@ -12,15 +12,16 @@
  */
 
 
-using System;
-using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Threading;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -320,4 +321,37 @@ abstract public class ModuleBase
     {
         return null;
     }
+
+    /// RHC Clean up
+    /// Moved from ModeuleAttributeBubble as it was being used in a few places in the codebase.
+    //@{
+
+    public static List<Thought> FindCommonParents( Thought t, Thought t1 )
+    {
+        //BORROWED from UKSStatement.cs line 323
+        List<Thought> commonParents = new List<Thought>();
+        foreach( Thought p in t.Parents )
+            if( t1.Parents.Contains( p ) )
+                commonParents.Add( p );
+        return commonParents;
+    }
+
+    //if the given thought is an instance of its parent, get the parent
+    public static Thought GetInstanceType( Thought t )
+    {
+        bool EndsInInteger( string input )
+        {
+            // Regular expression to check if the string ends with a sequence of digits
+            return Regex.IsMatch( input, @"\d+$" );
+        }
+        Thought useLinkType = t;
+        while( useLinkType.Parents.Count > 0 && EndsInInteger( useLinkType.Label ) &&
+            !t.Label.Contains( "." ) && useLinkType.Label.StartsWith( useLinkType.Parents[ 0 ].Label ) )
+            useLinkType = useLinkType.Parents[ 0 ];
+        return useLinkType;
+    }
+
+
+    //@}
+
 }

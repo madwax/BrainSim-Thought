@@ -220,13 +220,13 @@ public class ModuleAttributeBubble : ModuleBase
         if (r1.linkType == r2.linkType && r1.target == r2.target) return false;
         if (r1.linkType == r2.linkType)
         {
-            var parents = FindCommonParents(r1.target, r2.target);
+            var parents = ModuleBase.FindCommonParents( r1.target, r2.target);
             foreach (var parent in parents)
                 if (parent.HasProperty("isExclusive") || parent.HasProperty("allowMultiple")) return true;
         }
         if (r1.target == r2.target)
         {
-            var parents = FindCommonParents(r1.target, r2.target);
+            var parents = ModuleBase.FindCommonParents(r1.target, r2.target);
             foreach (var parent in parents)
                 if (parent.HasProperty("isExclusive")) return true;
 
@@ -244,7 +244,7 @@ public class ModuleAttributeBubble : ModuleBase
                 foreach (Thought t2 in r2RelAttribs)
                 {
                     if (t1 == t2) continue;
-                    List<Thought> commonParents = FindCommonParents(t1, t2);
+                    List<Thought> commonParents = ModuleBase.FindCommonParents(t1, t2);
                     foreach (Thought t3 in commonParents)
                     {
                         if (t3.HasProperty("isexclusive") || t3.HasProperty("allowMultiple"))
@@ -260,38 +260,9 @@ public class ModuleAttributeBubble : ModuleBase
         return false;
     }
 
-
-    private static List<Thought> FindCommonParents(Thought t, Thought t1)
-    {
-        //BORROWED from UKSStatement.cs line 323
-        List<Thought> commonParents = new List<Thought>();
-        foreach (Thought p in t.Parents)
-            if (t1.Parents.Contains(p))
-                commonParents.Add(p);
-        return commonParents;
-    }
-
-
     bool BubbleNeeded()
     {
         return true;
-    }
-
-
-
-    //if the given thought is an instance of its parent, get the parent
-    public static Thought GetInstanceType(Thought t)
-    {
-        bool EndsInInteger(string input)
-        {
-            // Regular expression to check if the string ends with a sequence of digits
-            return Regex.IsMatch(input, @"\d+$");
-        }
-        Thought useLinkType = t;
-        while (useLinkType.Parents.Count > 0 && EndsInInteger(useLinkType.Label) && 
-            !t.Label.Contains(".") && useLinkType.Label.StartsWith(useLinkType.Parents[0].Label))
-            useLinkType = useLinkType.Parents[0];
-        return useLinkType;
     }
 
     // Fill this method in with code which will execute once

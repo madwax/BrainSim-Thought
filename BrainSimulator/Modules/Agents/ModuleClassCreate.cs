@@ -15,7 +15,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using UKS;
-using static BrainSimulator.Modules.ModuleAttributeBubble;
+//using static BrainSimulator.Modules.ModuleAttributeBubble;
 
 namespace BrainSimulator.Modules;
 
