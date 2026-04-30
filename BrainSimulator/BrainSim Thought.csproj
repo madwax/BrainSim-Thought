@@ -194,6 +194,10 @@
     <Compile Remove="Modules\ModuleWord.cs" />
     <Compile Remove="Modules\ModuleWordDlg.axaml.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Modules\Agents\ModuleAttributeBubble.cs" />
+    <Compile Include="Modules\Agents\ModuleAttributeBubbleDlg.axaml.cs" />
+  </ItemGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>WINDOWS</DefineConstants>
   </PropertyGroup>
