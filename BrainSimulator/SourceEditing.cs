@@ -63,6 +63,7 @@ namespace BrainSimulator
             return "";
         }
 
+#if WINDOWS
         private static string FindVisualStudioPath()
         {
             foreach( var filepath in VisualStudioFilepaths )
@@ -74,6 +75,7 @@ namespace BrainSimulator
             }
             return "";
         }
+#endif        
 
         public SourceEditing()
         {
