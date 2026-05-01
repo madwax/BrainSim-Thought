@@ -18,8 +18,6 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-
-
 namespace BrainSimulator.Modules
 {
     public partial class ModuleAttributeBubbleDlg : ModuleBaseDlg, ISendDebugString
@@ -57,6 +55,8 @@ namespace BrainSimulator.Modules
 
                 // scroll to the bottom
                 DebugMessageView.Offset = new Avalonia.Vector( DebugMessageView.Offset.X, DebugMessageView.Extent.Height - DebugMessageView.Viewport.Height );
+
+                pendingDebugMessages.Clear();
             }
             return true;
         }

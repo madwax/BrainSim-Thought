@@ -38,7 +38,6 @@
     <EnableAvaloniaXamlCompilation>True</EnableAvaloniaXamlCompilation>    
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Modules\Agents\**" />
     <Compile Remove="Tools\*.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -130,16 +129,12 @@
     <!--<AvaloniaXaml Remove="Modules\Agents\**" />-->
     <AvaloniaXaml Remove="Modules\Vision\**" />
     <Compile Remove="Modules\Vision\**" />
-    <EmbeddedResource Remove="Modules\Agents\**" />
+    <!--<EmbeddedResource Remove="Modules\Agents\**" />-->
     <EmbeddedResource Remove="Modules\Vision\**" />
     <!--<None Remove="Modules\Agents\**" />-->
     <None Remove="Modules\Vision\**" />
   </ItemGroup>
   <ItemGroup>
-    <AvaloniaXaml Remove="Modules\Agents\ModuleAddCountsDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\Agents\ModuleBalanceTreeDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\Agents\ModuleClassCreateDlg.axaml" />
-    <AvaloniaXaml Remove="Modules\Agents\ModuleRemoveRedundancyDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleActionDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAddToMentalModelDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAttentionDlg.axaml" />
@@ -156,14 +151,6 @@
     <AvaloniaXaml Remove="Modules\ModuleWordDlg.axaml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Modules\Agents\ModuleAddCounts.cs" />
-    <Compile Remove="Modules\Agents\ModuleAddCountsDlg.axaml.cs" />
-    <Compile Remove="Modules\Agents\ModuleBalanceTree.cs" />
-    <Compile Remove="Modules\Agents\ModuleBalanceTreeDlg.axml.cs" />
-    <Compile Remove="Modules\Agents\ModuleClassCreate.cs" />
-    <Compile Remove="Modules\Agents\ModuleClassCreateDlg.axaml.cs" />
-    <Compile Remove="Modules\Agents\ModuleRemoveRedundancy.cs" />
-    <Compile Remove="Modules\Agents\ModuleRemoveRedundancyDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAction.cs" />
     <Compile Remove="Modules\ModuleActionDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleAddToMentalModel.cs" />

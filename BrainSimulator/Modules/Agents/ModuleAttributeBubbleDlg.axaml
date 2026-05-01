@@ -9,7 +9,6 @@
         <ScrollViewer Name="DebugMessageView" Margin="25,24,20,86" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     	    <ListBox Name="DebugMessages" ></ListBox>	
         </ScrollViewer>
-        <!--<TextBox Name="tbMessages" Margin="25,24,20,86" TextWrapping="Wrap" Text="" VerticalScrollBarVisibility="Auto"/>-->
-        <CheckBox Name="Enable" HorizontalAlignment="Left" Margin="18,0,0,34" Content="Enabled" IsChecked="False" Checked="Enable_Checked" Unchecked="Enable_Checked" Height="19" VerticalAlignment="Bottom" />
+        <CheckBox Name="Enable" HorizontalAlignment="Left" Margin="18,0,0,34" Content="Enabled" IsChecked="False" IsCheckedChanged="Enable_Checked" Height="19" VerticalAlignment="Bottom" />
     </Grid>
 </Window>

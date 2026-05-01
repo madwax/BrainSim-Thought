@@ -11,8 +11,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace BrainSimulator.Modules
 {
@@ -30,7 +32,6 @@ namespace BrainSimulator.Modules
             //only updates 10x per second
             ModuleAddCounts parent = (ModuleAddCounts)base.ParentModule;
             tbMessages.Text = parent.debugString;
-            tbMessages.ScrollToEnd();
             return true;
         }
 
