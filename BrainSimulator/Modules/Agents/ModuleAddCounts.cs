@@ -37,7 +37,7 @@ public class ModuleAddCounts : ModuleBase
 
     private Timer timer;
     //private UKS.UKS theUKS1;
-    public string debugString = "Initialized\n";
+
     private void Setup()
     {
         if (timer is null)
@@ -57,13 +57,13 @@ public class ModuleAddCounts : ModuleBase
 
     public void DoTheWork()
     {
-        debugString = "Agent Started\n";
+        DebugString( "Agent Started" );
         for (int i = 0; i < theUKS.AtomicThoughts.Count; i++)
         {
             Thought t = theUKS.AtomicThoughts[i];
             AddCountLinks(t);
         }
-        debugString += "Agent  Finished\n";
+        DebugString( "Agent  Finished" );
         UpdateDialog();
     }
 
@@ -86,7 +86,7 @@ public class ModuleAddCounts : ModuleBase
                     string newRelLabel = useLinkType.ToString() + "." + match.bestCount.ToString();
                     Thought newLinkType = theUKS.GetOrAddThought(newRelLabel, useLinkType.Parents[0]);
                     Thought rAdded = theUKS.AddStatement(r.From.Label, newLinkType, match.tMatch);
-                    debugString += $"Added: {rAdded}\n";
+                    DebugString( $"Added: {rAdded}" );
                 }
             }
         }

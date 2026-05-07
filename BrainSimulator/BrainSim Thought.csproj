@@ -126,12 +126,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <!--<AvaloniaXaml Remove="Modules\Agents\**" />-->
     <AvaloniaXaml Remove="Modules\Vision\**" />
     <Compile Remove="Modules\Vision\**" />
-    <!--<EmbeddedResource Remove="Modules\Agents\**" />-->
     <EmbeddedResource Remove="Modules\Vision\**" />
-    <!--<None Remove="Modules\Agents\**" />-->
     <None Remove="Modules\Vision\**" />
   </ItemGroup>
   <ItemGroup>
@@ -180,10 +177,6 @@
     <Compile Remove="Modules\ModuleWellBeingDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWord.cs" />
     <Compile Remove="Modules\ModuleWordDlg.axaml.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Modules\Agents\ModuleAttributeBubble.cs" />
-    <Compile Include="Modules\Agents\ModuleAttributeBubbleDlg.axaml.cs" />
   </ItemGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>WINDOWS</DefineConstants>

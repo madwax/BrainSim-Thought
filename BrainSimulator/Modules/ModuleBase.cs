@@ -11,13 +11,13 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -38,8 +38,12 @@ abstract public class ModuleBase
     public Point dlgSize;
     public bool dlgIsOpen = false;
 
-    //public static ModuleUKS UKS = null;
     public UKS.UKS theUKS = null;
+
+    // Delegate used to expose the debugging message stream from the module.
+    // If the linked dialog wants to get the debug stream then is must register for it.
+    public delegate void DebugStreamerFunc( string msg );
+    private DebugStreamerFunc debugStringHandler;
 
     public ModuleBase()
     {
@@ -48,6 +52,16 @@ abstract public class ModuleBase
         {
             Label = moduleName[6..];
         }
+    }
+
+    public void RegisterDebugString( DebugStreamerFunc handler )
+    {
+        this.debugStringHandler += handler;
+    }
+
+    public void DebugString( string msg )
+    {
+        this.debugStringHandler( msg );
     }
 
     abstract public void Fire();

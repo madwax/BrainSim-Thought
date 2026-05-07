@@ -37,7 +37,7 @@ public class ModuleBalanceTree : ModuleBase
 
     private Timer timer;
     //private UKS.UKS theUKS1;
-    public string debugString = "Initialized\n";
+
     private int maxChildren = 6;
     private int minCommonAttributes = 3;
     public int MaxChildren { get => maxChildren; set => maxChildren = value; }
@@ -58,10 +58,9 @@ public class ModuleBalanceTree : ModuleBase
         }).Start();
     }
 
-
     public void DoTheWork()
     {
-        debugString = "Agent Started\n";
+        DebugString( "Agent Started" );
         for (int i = 0; i < theUKS.AtomicThoughts.Count; i++)
         {
             Thought t = theUKS.AtomicThoughts[i];
@@ -70,15 +69,15 @@ public class ModuleBalanceTree : ModuleBase
                 HandleExcessiveChildren(t);
             }
         }
-        debugString += "Agent  Finished\n";
+        DebugString( "Agent  Finished" );
         UpdateDialog();
     }
     void HandleExcessiveChildren(Thought t)
     {
-        while (t.Children.Count > MaxChildren)
+        while( t.Children.Count > MaxChildren )
         {
-            Thought newParent = theUKS.AddThought(t.Label, t);
-            debugString += $"Created new class:  {newParent.Label} \n";
+            Thought newParent = theUKS.AddThought( t.Label, t );
+            DebugString( $"Created new class:  {newParent.Label}" );
             while (newParent.Children.Count < MaxChildren)
             {
                 Thought theChild = t.Children[0];

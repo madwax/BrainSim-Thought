@@ -15,7 +15,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using UKS;
-//using static BrainSimulator.Modules.ModuleAttributeBubble;
 
 namespace BrainSimulator.Modules;
 
@@ -35,8 +34,7 @@ public class ModuleClassCreate : ModuleBase
     public bool isEnabled { get; set; }
 
     private Timer timer;
-    //private UKS.UKS theUKS1;
-    public string debugString = "Initialized\n";
+
     private int maxChildren = 12;
     private int minCommonAttributes = 3;
     public int MaxChildren { get => maxChildren; set => maxChildren = value; }
@@ -57,10 +55,9 @@ public class ModuleClassCreate : ModuleBase
         }).Start();
     }
 
-
     public void DoTheWork()
     {
-        debugString = "Agent Started\n";
+        DebugString( "Agent Started" );
         for (int i = 0; i < theUKS.AtomicThoughts.Count; i++)
         {
             Thought t = theUKS.AtomicThoughts[i];
@@ -69,7 +66,7 @@ public class ModuleClassCreate : ModuleBase
                 HandleClassWithCommonAttributes(t);
             }
         }
-        debugString += "Agent  Finished\n";
+        DebugString( "Agent  Finished" );
         UpdateDialog();
     }
 
@@ -102,7 +99,9 @@ public class ModuleClassCreate : ModuleBase
             {
                 Thought newParent = theUKS.GetOrAddThought(t.Label + "." + key.linkType + "." + key.target, t);
                 newParent.AddLink(key.linkType, key.target);
-                debugString += "Created new subclass " + newParent;
+
+                DebugString( "Created new subclass " + newParent );
+
                 foreach (Link r in key.links)
                 {
                     Thought tChild = (Thought)r.From;

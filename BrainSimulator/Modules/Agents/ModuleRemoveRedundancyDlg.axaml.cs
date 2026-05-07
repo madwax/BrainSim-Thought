@@ -10,10 +10,11 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
 
-using System.Windows;
-using System.Windows.Controls;
+
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace BrainSimulator.Modules
 {
@@ -22,16 +23,16 @@ namespace BrainSimulator.Modules
         public ModuleRemoveRedundancyDlg()
         {
             InitializeComponent();
+
+            this.Loaded += OnEnableDebugStream;
         }
 
         public override bool Draw(bool checkDrawTimer)
         {
             if (!base.Draw(checkDrawTimer)) return false;
-            //this has a timer so that no matter how often you might call draw, the dialog
-            //only updates 10x per second
-            ModuleRemoveRedundancy parent = (ModuleRemoveRedundancy)base.ParentModule;
-            tbMessages.Text = parent.debugString;
-            tbMessages.ScrollToEnd();
+
+            this.DrawDebugStrings( DebugMessages, DebugMessageView );
+
             return true;
         }
 

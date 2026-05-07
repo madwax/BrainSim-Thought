@@ -20,44 +20,20 @@ using Avalonia.VisualTree;
 
 namespace BrainSimulator.Modules
 {
-    public partial class ModuleAttributeBubbleDlg : ModuleBaseDlg, ISendDebugString
+    public partial class ModuleAttributeBubbleDlg : ModuleBaseDlg
     {
-        private List< string > pendingDebugMessages = new List< string >();
-
         public ModuleAttributeBubbleDlg()
         {
             InitializeComponent();
-        }
 
-        public void OnDebugString( string msg )
-        {
-            pendingDebugMessages.Add( msg );
-
-            if( pendingDebugMessages.Count == 1 )
-            {
-                Dispatcher.UIThread.Post( () =>
-                {
-                    this.Draw( false );
-                } );
-            }
+            this.Loaded += OnEnableDebugStream;
         }
 
         public override bool Draw(bool checkDrawTimer)
         {
             if (!base.Draw(checkDrawTimer)) return false;
 
-            if( pendingDebugMessages.Count > 0 )
-            {
-                foreach( string item in pendingDebugMessages )
-                {
-                    DebugMessages.Items.Add( item );
-                }
-
-                // scroll to the bottom
-                DebugMessageView.Offset = new Avalonia.Vector( DebugMessageView.Offset.X, DebugMessageView.Extent.Height - DebugMessageView.Viewport.Height );
-
-                pendingDebugMessages.Clear();
-            }
+            this.DrawDebugStrings( DebugMessages, DebugMessageView );
             return true;
         }
 

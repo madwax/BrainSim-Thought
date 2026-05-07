@@ -22,6 +22,8 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.Layout;
 using Avalonia.Media;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace BrainSimulator.Modules;
 
@@ -43,7 +45,7 @@ public class ModuleBaseDlg : Window
         this.Loaded += ModuleBaseDlg_Loaded;
     }
 
-    private void ModuleBaseDlg_Loaded(object sender, RoutedEventArgs e)
+    private void ModuleBaseDlg_Loaded(object? sender, RoutedEventArgs e)
     {
         if (initializedLayout) return;
         initializedLayout = true;
@@ -218,5 +220,66 @@ public class ModuleBaseDlg : Window
     public string GetStatus()
     {
         return statusLabel.Content.ToString();
+    }
+
+    /// General debugging stream used by most of the agents.
+    private List<string> debugStreamMessages = new List<string>();
+    private readonly object debugStringMessageLock = new();
+
+    /// <summary>
+    /// The 
+    /// </summary>
+    /// <param name="msg"></param>
+    private void OnDebugStreamMessage( string msg )
+    {
+        int count = 0;
+        {
+            lock( debugStringMessageLock )
+            {
+                debugStreamMessages.Add( msg );
+                count = debugStreamMessages.Count;
+            }
+        }
+
+        if( count == 1 )
+        {
+            // schedule a draw on the dialog.
+            Dispatcher.UIThread.Post( () =>
+            {
+                this.Draw( false );
+            } );
+        }
+    }
+
+    /// <summary>
+    ///   Add this.Loaded += OnEnableDebugStream; to the constructor of the dialog that will display the debug stream.
+    /// </summary>
+    public void OnEnableDebugStream( object? sender, RoutedEventArgs e )
+    {
+        this.ParentModule.RegisterDebugString( this.OnDebugStreamMessage );
+    }
+
+    /// <summary>
+    /// Used to update and draw the debug strings of a module.
+    /// Avalonia Listbox unlike WPF's does not have a scroll option, you have to put it in a scrollViewer
+    /// </summary>
+    /// <param name="listBox"></param>
+    /// <param name="scrollView"></param>
+    public void DrawDebugStrings( Avalonia.Controls.ListBox listBox, Avalonia.Controls.ScrollViewer scrollView )
+    {
+        lock( debugStringMessageLock )
+        {
+            if( debugStreamMessages.Count > 0 )
+            {
+                foreach( string msg in debugStreamMessages )
+                {
+                    listBox.Items.Add( msg );
+                }
+                // scroll to the bottom
+                scrollView.Offset = new Avalonia.Vector( scrollView.Offset.X, scrollView.Extent.Height - scrollView.Viewport.Height );
+
+                debugStreamMessages.Clear();
+            }
+        }
     }
 }

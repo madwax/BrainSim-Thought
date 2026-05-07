@@ -32,10 +32,8 @@ public class ModuleRemoveRedundancy : ModuleBase
     }
 
     public bool isEnabled { get; set; }
-
     private Timer timer;
-    //private UKS.UKS theUKS1;
-    public string debugString = "Initialized\n";
+
     private void Setup()
     {
         if (timer is null)
@@ -55,12 +53,12 @@ public class ModuleRemoveRedundancy : ModuleBase
 
     public void DoTheWork()
     {
-        debugString = "Agent Started\n";
+        DebugString( "Agent Started" );
         foreach (Link t in theUKS.AtomicThoughts)
         {
             RemoveRedundantAttributes(t);
         }
-        debugString += "Agent  Finished\n";
+        DebugString( "Agent  Finished" );
         UpdateDialog();
     }
 
@@ -80,9 +78,12 @@ public class ModuleRemoveRedundancy : ModuleBase
                     {
                         t.RemoveLink(r);
                         i--;
-                        debugString += "Removed: ";
+                        DebugString( $"Removed: {r}   ({r.Weight:0.00})" );
                     }
-                    debugString += $"{r}   ({r.Weight:0.00})\n";
+                    else
+                    {
+                        DebugString( $"{r}   ({r.Weight:0.00})" );
+                    }
                 }
             }
         }

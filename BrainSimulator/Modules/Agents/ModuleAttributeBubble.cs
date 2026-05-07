@@ -21,11 +21,6 @@ using UKS;
 
 namespace BrainSimulator.Modules;
 
-public interface ISendDebugString
-{
-    void OnDebugString( string msg );
-}
-
 public class ModuleAttributeBubble : ModuleBase
 {
 
@@ -42,31 +37,6 @@ public class ModuleAttributeBubble : ModuleBase
     public bool isEnabled { get; set; }
 
     private Timer timer;
-    
-    private ISendDebugString sendDebugTo = null;
-
-    public void RegisterDebugString( ISendDebugString obj )
-    {
-        if( this.sendDebugTo != null )
-            throw new Exception( "ModuleAttributeBubble() Trying to register another ISendDebugString object" );
-
-        this.sendDebugTo = obj;
-    }
-    public void UnregisterDebugString( ISendDebugString obj )
-    {
-        if( this.sendDebugTo == obj )
-        {
-            this.sendDebugTo = null;
-        }
-    }
-
-    public void DebugString( string msg )
-    {
-        if( sendDebugTo != null )
-        {
-            sendDebugTo.OnDebugString( msg );
-        }
-    }
 
     private void Setup()
     {
@@ -82,25 +52,6 @@ public class ModuleAttributeBubble : ModuleBase
         {
             DoTheWork();
         }).Start();
-    }
-
-    public class LinkDest
-    {
-        public Thought linkType;
-        public Thought target;
-        public List<Link> links = new();
-        public LinkDest()
-        { }
-        public LinkDest(Link r)
-        {
-            linkType = r.LinkType;
-            target = r.To;
-            links.Add(r);
-        }
-        public override string ToString()
-        {
-            return $"{linkType.Label} -> {target.Label}  :  {links.Count}";
-        }
     }
 
     public void DoTheWork()
@@ -264,7 +215,7 @@ public class ModuleAttributeBubble : ModuleBase
             IReadOnlyList<Thought> r1RelAttribs = r1.linkType.GetAttributes();
             IReadOnlyList<Thought> r2RelAttribs = r2.linkType.GetAttributes();
 
-            Thought r1Not = r1RelAttribs.FindFirst(x => x.Label == "not" || x.Label == "no");
+            Thought r1Not = r1RelAttribs.FindFirst(x => x.Label == "not" || x.Label == "no"); 
             Thought r2Not = r2RelAttribs.FindFirst(x => x.Label == "not" || x.Label == "no");
             if (r1Not is null && r2Not is not null || r1Not is not null && r2Not is null)
                 return true;

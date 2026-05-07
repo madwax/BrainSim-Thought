@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Balance Tree Agent" Height="250" Width="300" Background="Gray" ShowInTaskbar="False">
     <Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" >
-        <Button Content="Run Once" HorizontalAlignment="Left" Height="30" Margin="100,0,0,29" VerticalAlignment="bottom" Width="105" Click="Button_Click"/>
+        <Button Content="Run Once" HorizontalAlignment="Left" Height="30" Margin="100,0,0,29" VerticalAlignment="Bottom" Width="105" Click="Button_Click"/>
         <ScrollViewer Name="DebugMessageView" Margin="25,24,20,86" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     	    <ListBox Name="DebugMessages" ></ListBox>	
         </ScrollViewer>

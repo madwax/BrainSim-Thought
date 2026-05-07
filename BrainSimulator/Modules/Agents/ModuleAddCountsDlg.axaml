@@ -8,7 +8,9 @@
         ShowInTaskbar="False">
     <Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" >
         <Button Content="Run Once" HorizontalAlignment="Left" Height="30" Margin="100,0,0,29" VerticalAlignment="Bottom" Width="105" Click="Button_Click"/>
-        <TextBox Name="tbMessages" Margin="25,24,20,86" TextWrapping="Wrap" Text=""/>
+        <ScrollViewer Name="DebugMessageView" Margin="25,24,20,86" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+    	    <ListBox Name="DebugMessages" ></ListBox>	
+        </ScrollViewer>
         <CheckBox Name="Enable" HorizontalAlignment="Left" Margin="18,0,0,34" Content="Enabled" IsChecked="False" VerticalAlignment="Bottom" IsCheckedChanged="Enable_Checked" />
     </Grid>
   </Window>

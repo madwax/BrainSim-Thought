@@ -28,10 +28,8 @@ namespace BrainSimulator.Modules
         public override bool Draw(bool checkDrawTimer)
         {
             if (!base.Draw(checkDrawTimer)) return false;
-            //this has a timer so that no matter how often you might call draw, the dialog
-            //only updates 10x per second
-            ModuleAddCounts parent = (ModuleAddCounts)base.ParentModule;
-            tbMessages.Text = parent.debugString;
+
+            this.DrawDebugStrings( DebugMessages, DebugMessageView );
             return true;
         }
 

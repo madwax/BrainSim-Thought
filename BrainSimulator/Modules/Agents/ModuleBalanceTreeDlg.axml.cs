@@ -24,16 +24,14 @@ namespace BrainSimulator.Modules
         public ModuleBalanceTreeDlg()
         {
             InitializeComponent();
+            this.Loaded += OnEnableDebugStream;
         }
 
         public override bool Draw(bool checkDrawTimer)
         {
             if (!base.Draw(checkDrawTimer)) return false;
-            //this has a timer so that no matter how often you might call draw, the dialog
-            //only updates 10x per second
-            ModuleBalanceTree parent = (ModuleBalanceTree)base.ParentModule;
-            tbMessages.Text = parent.debugString;
-            tbMessages.ScrollToEnd();
+
+            this.DrawDebugStrings( DebugMessages, DebugMessageView );
             return true;
         }
 
