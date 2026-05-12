@@ -83,6 +83,7 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
     <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.13" />
+    <PackageReference Include="AvaloniaGraphControl" Version="0.7.0" />
     <PackageReference Include="MessageBox.Avalonia" Version="3.3.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -131,7 +132,7 @@
     <EmbeddedResource Remove="Modules\Vision\**" />
     <None Remove="Modules\Vision\**" />
   </ItemGroup>
-  <ItemGroup>
+  <!--  <ItemGroup>
     <AvaloniaXaml Remove="Modules\ModuleActionDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAddToMentalModelDlg.axaml" />
     <AvaloniaXaml Remove="Modules\ModuleAttentionDlg.axaml" />
@@ -177,7 +178,7 @@
     <Compile Remove="Modules\ModuleWellBeingDlg.axaml.cs" />
     <Compile Remove="Modules\ModuleWord.cs" />
     <Compile Remove="Modules\ModuleWordDlg.axaml.cs" />
-  </ItemGroup>
+  </ItemGroup>-->
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>WINDOWS</DefineConstants>
   </PropertyGroup>

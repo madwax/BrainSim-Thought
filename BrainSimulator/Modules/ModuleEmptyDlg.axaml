@@ -1,13 +1,7 @@
-﻿<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleEmptyDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window x:Class="BrainSimulator.Modules.ModuleEmptyDlg"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BrainSimulator.Modules"
-        mc:Ignorable="d"
-        Title="Empty Dialog Template" Height="170" Width="560" Background="Gray" ShowInTaskbar="False" >
-
+        Title="Empty Dialog Template" Height="170" Width="560" ShowInTaskbar="False" >
     <Grid Margin="0,0,0,20" >
-
     </Grid>
-</local:ModuleBaseDlg>
+</Window>

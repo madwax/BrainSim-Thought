@@ -631,12 +631,10 @@ namespace BrainSimulator
             return t.Label;
         }
 
-#if NOT_USED
         public ModuleBase GetModuleByLabel(string label)
         {
             return activeModules.FindFirst(x => x.Label == label);
         }
-#endif
 
         private void DeleteModule( string moduleName )
         {

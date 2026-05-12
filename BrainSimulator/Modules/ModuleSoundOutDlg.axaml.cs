@@ -11,9 +11,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace BrainSimulator.Modules;
 
@@ -47,7 +48,7 @@ public partial class ModuleSoundOutDlg : ModuleBaseDlg
         }
     }
 
-    private void cbCadence_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void cbCadence_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ParentModule is ModuleSoundOut module && cbCadence.SelectedItem is ComboBoxItem item)
         {
@@ -58,7 +59,7 @@ public partial class ModuleSoundOutDlg : ModuleBaseDlg
         }
     }
 
-    private void cbPitchOffset_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void cbPitchOffset_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ParentModule is ModuleSoundOut module && cbPitchOffset.SelectedItem is ComboBoxItem item)
         {

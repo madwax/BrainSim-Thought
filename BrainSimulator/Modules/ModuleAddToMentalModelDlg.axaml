@@ -1,29 +1,32 @@
-<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleAddToMentalModelDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window x:Class="BrainSimulator.Modules.ModuleAddToMentalModelDlg"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BrainSimulator.Modules"
-        mc:Ignorable="d"
-        Title="Add to Mental Model" Height="121" Width="360" Background="Gray" ShowInTaskbar="False" FontSize="16">
-
-    <Grid Margin="12">
+        Title="Add to Mental Model" Height="121" Width="360" ShowInTaskbar="False" >
+    <Grid>
         <TextBlock Text="Thought" VerticalAlignment="Top" Margin="0,4,0,0" HorizontalAlignment="Left" />
-        <ComboBox x:Name="ThoughtBox" Height="24" Width="150" Margin="79,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-                  IsEditable="True"
-                  IsTextSearchEnabled="False"
-                  StaysOpenOnEdit="True"
-                  Loaded="ThoughtBox_Loaded"/>
+        <!-- TODO Port problem No StaysOpenOnEdit, had to remove -->
+        <AutoCompleteBox Name="ThoughtBox" Height="24" Width="150" Margin="79,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+            IsTextCompletionEnabled="True"
+            Loaded="ThoughtBox_Loaded"
+            KeyDown="ThoughtBox_KeyDown"
+            TextChanged="ThoughtBox_TextChanged"
+            />
+        <Button Name="ThoughtBoxHistory" Content="History" Click="ThoughtBoxHistory_Clicked" Margin="230,1,0,0"  >
+			<Button.ContextMenu>
+                <ContextMenu Name="ThoughtBoxHistory_Current" />
+            </Button.ContextMenu>
+        </Button>
+
 
         <TextBlock Text="Az&#186;" VerticalAlignment="Top" Margin="0,36,0,0" HorizontalAlignment="Left" />
-        <TextBox x:Name="AzimuthBox" Height="24" Width="50" Margin="35,37,0,0" Text="0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+        <TextBox Name="AzimuthBox" Height="24" Width="50" Margin="35,37,0,0" Text="0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
 
         <TextBlock Text="Elev&#186;" VerticalAlignment="Top" Margin="90,38,0,0" HorizontalAlignment="Left" />
-        <TextBox x:Name="ElevationBox" Height="24" Width="50"  Margin="129,36,0,0" Text="0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+        <TextBox Name="ElevationBox" Height="24" Width="50"  Margin="129,36,0,0" Text="0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
 
         <TextBlock Text="Dist" VerticalAlignment="Top" Margin="187,37,0,0" HorizontalAlignment="Left" Width="396" />
-        <TextBox x:Name="DistanceBox" Height="24" Width="50" Margin="219,36,0,0" Text="1" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <TextBox Name="DistanceBox" Height="24" Width="50" Margin="219,36,0,0" Text="1" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
         <Button Content="OK" Width="70" Height="24" Click="Ok_Click" Margin="274,36,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
     </Grid>
-</local:ModuleBaseDlg>
+</Window>

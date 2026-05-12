@@ -1098,15 +1098,21 @@ namespace BrainSimulator
             MimeTypes = new[] { "text/plain" }
         };
 
-
+        public static FilePickerFileType FilterWordListFile { get; } = new( "Word List Files" )
+        {
+            Patterns = new[] { "*.txt", "*.*" },
+            AppleUniformTypeIdentifiers = new[] { "Text Files", "All Files" },
+            MimeTypes = new[] { "text/plain", "application/octet-stream" }
+        };
 
         //public const string FilterImages = "Image Files|*.png;*.jpg;*.bmp";
         //public const string FilterWavs = "wav Files|*.wav";
 
-        public const string TitleBrainSimImport = "Select a Brain Simulator file to import";
-        public const string TitleBrainSimExport = "Select a Brain Simulator file to export";
-        public const string TitleUKSFileLoad = "Select a Brain UKS Content File to load";
-        public const string TitleUKSFileSave = "Select a Brain UKS Content File to save";
+        public const string TitleBrainSimLoadWordList = "Select a Brain Simulator Word List File";
+        public const string TitleBrainSimImport = "Select a Brain Simulator file to Import";
+        public const string TitleBrainSimExport = "Select a Brain Simulator file to Export";
+        public const string TitleUKSFileLoad = "Select a Brain UKS Content File to Load";
+        public const string TitleUKSFileSave = "Select a Brain UKS Content File to Save";
 
         //public const string TitleImagesLoad = "Select an image file for input";
         //public const string TitleImagesSave = "Select a name to save the image";

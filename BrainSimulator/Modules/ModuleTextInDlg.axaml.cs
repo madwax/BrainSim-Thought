@@ -11,14 +11,15 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using Pluralize.NET;
 using System;
 using System.Collections.Generic; // added
-using System.Linq;                 // added
-using System.Windows;
-using System.Windows.Controls; // added
-using System.Windows.Input;
-using System.Windows.Media;    // added
+using Pluralize.NET;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -163,9 +164,9 @@ public partial class ModuleTextInDlg : ModuleBaseDlg
             Color bar = Color.FromArgb(80, 0, 240, 0); // semi-transparent green
             var brush = new LinearGradientBrush
             {
-                StartPoint = new Point(0, 0.5),
-                EndPoint = new Point(1, 0.5),
-                GradientStops = new GradientStopCollection
+                StartPoint = new RelativePoint( 0.0, 0.5, RelativeUnit.Relative ),
+                EndPoint = new RelativePoint( 1, 0.5, RelativeUnit.Relative ),
+                GradientStops = new GradientStops
                 {
                     new GradientStop(bar, 0),
                     new GradientStop(bar, conf),

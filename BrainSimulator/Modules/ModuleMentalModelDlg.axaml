@@ -1,26 +1,23 @@
-<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleMentalModelDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window x:Class="BrainSimulator.Modules.ModuleMentalModelDlg"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"      
-        xmlns:local="clr-namespace:BrainSimulator.Modules"
-        mc:Ignorable="d"
-        Title="MentelModel Dialog Template" Height="220" Width="620" Background="Gray" ShowInTaskbar="False" >
-
+        Title="MentelModel Dialog Template" Height="220" Width="620" ShowInTaskbar="False" >
     <Grid>
         <Border Grid.Row="0" Background="DarkGray" ClipToBounds="True" Margin="0,0,0,65">
-            <Canvas x:Name="theCanvas"
+            <Canvas Name="theCanvas"
                     Background="DarkGray"
                     ClipToBounds="True"
-                    MouseWheel="TheCanvas_MouseWheel"
-                    MouseLeftButtonDown="TheCanvas_MouseLeftButtonDown"
-                    MouseLeftButtonUp="TheCanvas_MouseLeftButtonUp"
-                    MouseMove="TheCanvas_MouseMove"
-                    MouseLeave="TheCanvas_MouseLeave">
+                    PointerWheelChanged="TheCanvas_MouseWheel"
+                    PointerPressed="TheCanvas_PointerPressed"
+                    PointerReleased="TheCanvas_PointerReleased"
+                    PointerMoved="TheCanvas_MouseMove"
+                    PointerExited="TheCanvas_MouseLeave"
+                    PointerEntered="TheCanvas_MouseEnter"
+                    >
                 <Canvas.RenderTransform>
                     <TransformGroup>
-                        <ScaleTransform x:Name="CanvasScale" />
-                        <TranslateTransform x:Name="CanvasTranslate" />
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                        <TranslateTransform X="0" Y="0" />
                     </TransformGroup>
                 </Canvas.RenderTransform>
             </Canvas>
@@ -28,7 +25,7 @@
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,35">
             <TextBlock Text="Zoom" Margin="0,0,6,0" VerticalAlignment="Center"/>
-            <Slider x:Name="ZoomSlider"
+            <Slider Name="ZoomSlider"
                     Width="180"
                     Minimum="0.25"
                     Maximum="4"
@@ -44,4 +41,4 @@
             <TextBlock Text="Pan: drag   Zoom: wheel/slider" Margin="14,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
     </Grid>
-</local:ModuleBaseDlg>
+</Window>

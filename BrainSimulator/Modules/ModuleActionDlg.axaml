@@ -1,11 +1,7 @@
-<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleActionDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window x:Class="BrainSimulator.Modules.ModuleActionDlg"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BrainSimulator.Modules"
-        mc:Ignorable="d"
-        Title="Action" Height="200" Width="360" Background="Gray" ShowInTaskbar="False" FontSize="16">
+        Title="Action" Height="200" Width="360" ShowInTaskbar="False">
     <Grid x:Name="RootGrid" Margin="12" SizeChanged="Grid_SizeChanged">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -19,7 +15,7 @@
         </Grid.ColumnDefinitions>
 
         <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Last Context:"/>
-        <TextBox x:Name="LastContextTextBox"
+        <TextBox Name="LastContextTextBox"
                  Grid.Row="0" Grid.Column="1"
                  Margin="6,0,0,0"
                  IsReadOnly="True"
@@ -27,11 +23,11 @@
                  VerticalContentAlignment="Center"/>
 
         <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Last Action:"/>
-        <TextBox x:Name="LastActionTextBox"
+        <TextBox Name="LastActionTextBox"
                  Grid.Row="2" Grid.Column="1"
                  Margin="6,0,0,0"
                  IsReadOnly="True"
                  TextWrapping="Wrap"
                  VerticalContentAlignment="Center"/>
     </Grid>
-</local:ModuleBaseDlg>
+</Window>

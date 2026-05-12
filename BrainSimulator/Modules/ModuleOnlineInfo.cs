@@ -27,11 +27,11 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Linq;
 using Pluralize.NET;
-using System.Windows.Xps;
+
 using static System.Net.Mime.MediaTypeNames;
 using System.ComponentModel;
 using System.Configuration;
-using System.Windows.Documents;
+
 using UKS;
 
 namespace BrainSimulator.Modules

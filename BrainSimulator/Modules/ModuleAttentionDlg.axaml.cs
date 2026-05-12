@@ -11,14 +11,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -30,40 +26,40 @@ public partial class ModuleAttentionDlg : ModuleBaseDlg
         InitializeComponent();
     }
 
-    public override bool Draw(bool checkDrawTimer)
+    public override bool Draw( bool checkDrawTimer )
     {
-        if (!base.Draw(checkDrawTimer)) return false;
+        if( !base.Draw( checkDrawTimer ) ) return false;
 
-        if (ParentModule is ModuleAttention parent)
+        if( ParentModule is ModuleAttention parent )
         {
             HorizontalSlider.Value = parent.CenterAzimuthDeg.Degrees;
             VerticalSlider.Value = parent.CenterElevationDeg.Degrees;
             UpdateValueLabels();
-            if (FocusValue is not null)
+            if( FocusValue is not null )
                 FocusValue.Text = parent.CurrentFocus?.Label ?? "(none)";
         }
 
         return true;
     }
 
-    private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void Slider_ValueChanged( object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e )
     {
-        if (ParentModule is not ModuleAttention parent) return;
+        if( ParentModule is not ModuleAttention parent ) return;
 
-        parent.SetCenterOfAttention(Angle.FromDegrees((float)HorizontalSlider.Value), Angle.FromDegrees((float)VerticalSlider.Value));
+        parent.SetCenterOfAttention( Angle.FromDegrees( ( float )HorizontalSlider.Value ), Angle.FromDegrees( ( float )VerticalSlider.Value ) );
         UpdateValueLabels();
     }
 
     private void UpdateValueLabels()
     {
-        if (HorizontalValue is not null)
+        if( HorizontalValue is not null )
             HorizontalValue.Text = $"{HorizontalSlider.Value:0.0}°";
-        if (VerticalValue is not null)
+        if( VerticalValue is not null )
             VerticalValue.Text = $"{VerticalSlider.Value:0.0}°";
     }
 
-    private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void TheGrid_SizeChanged( object sender, SizeChangedEventArgs e )
     {
-        Draw(false);
+        Draw( false );
     }
 }

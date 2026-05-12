@@ -12,10 +12,11 @@
  */
 using System;
 using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -27,13 +28,45 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         InitializeComponent();
     }
 
-    private void btnAdd_Click(object sender, RoutedEventArgs e)
+    private void btnAdd_Click(object? sender, RoutedEventArgs e)
     {
         AddCurrentWord();
     }
 
     bool _isTextChangingInternally = false;
-    private void txtWord_PreviewKeyDown(object sender, KeyEventArgs e)
+
+    private void GenerateSuggestion()
+    {
+        var module = ParentModule as ModuleWord;
+        if( module is null ) return;
+
+        string searchText = txtWord.Text;
+        if( !string.IsNullOrEmpty( searchText ) )
+        {
+            //get the first suggestion
+            string suggestion = module.GetWordSuggestion( txtWord.Text );
+            //get the real label to get the capitalization right
+            if( suggestion is not null ) suggestion = ThoughtLabels.GetThought( "w:" + suggestion )?.Label;
+
+            if( suggestion is not null && !suggestion.Equals( searchText, StringComparison.OrdinalIgnoreCase ) )
+            {
+                //this sets up the suggesstion in the textbox so it can be easily overwritten
+                suggestion = suggestion[ 2.. ];
+                int caretIndex = txtWord.CaretIndex;
+                _isTextChangingInternally = true;
+                txtWord.Text = suggestion;
+                txtWord.CaretIndex = caretIndex;
+                txtWord.SelectionStart = caretIndex;
+                int newCaretPosition = suggestion.Length - caretIndex;
+                if( newCaretPosition < 0 ) newCaretPosition = 0;
+                txtWord.SelectionEnd = newCaretPosition;
+                // txtWord.SelectionOpacity = .4;
+                _isTextChangingInternally = false;
+            }
+        }
+    }
+
+    private void txtWord_PreviewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Back || e.Key == Key.Delete)
         {
@@ -47,15 +80,18 @@ public partial class ModuleWordDlg : ModuleBaseDlg
             _isTextChangingInternally = false;
             //get a new suggestion
             if (e.Key == Key.Back)
-                txtWord_TextChanged(null, null);
+            {
+                this.GenerateSuggestion();
+            }
         }
-        if (e.Key == Key.Enter)
+        else if( e.Key == Key.Enter )
         {
             AddCurrentWord();
-            txtWord.SelectionLength = 0;
+            txtWord.SelectionEnd = 0;
         }
     }
-    private void txtWord_TextChanged(object sender, TextChangedEventArgs e)
+
+    private void txtWord_TextChanged(object? sender, TextChangedEventArgs e)
     {
         if (_isTextChangingInternally)
             return;
@@ -64,47 +100,13 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         var module = ParentModule as ModuleWord;
         if (module is null) return;
 
-        foreach (var change in e.Changes)
+        // TODO - RHC - Port node.  WPF told us what changed but Avalonia does not so we just have to call RebuildQueueFromCurrentText()
+        if( string.IsNullOrEmpty( txtWord.Text ) == false )
         {
-            // change.Offset: starting index
-            // change.AddedLength: chars added
-            // change.RemovedLength: chars removed
-            if (change.AddedLength > 0)
-            {
-                string added = txtWord.Text.Substring(change.Offset, change.AddedLength);
-                module.EnqueueLetters(added);
-            }
-            if (change.RemovedLength > 0)
-            {
-                // handle removals (e.g., rebuild queue or remove that range)
-                module.RebuildQueueFromCurrentText(txtWord.Text);
-            }
+            module.RebuildQueueFromCurrentText( txtWord.Text );
         }
 
-        string searchText = txtWord.Text;
-        if (!string.IsNullOrEmpty(searchText))
-        {
-            //get the first suggestion
-            string suggestion = module.GetWordSuggestion(txtWord.Text);
-            //get the real label to get the capitalization right
-            if (suggestion is not null) suggestion = ThoughtLabels.GetThought("w:" + suggestion)?.Label;
-
-            if (suggestion is not null && !suggestion.Equals(searchText, StringComparison.OrdinalIgnoreCase))
-            {
-                //this sets up the suggesstion in the textbox so it can be easily overwritten
-                suggestion = suggestion[2..];
-                int caretIndex = txtWord.CaretIndex;
-                _isTextChangingInternally = true;
-                txtWord.Text = suggestion;
-                txtWord.CaretIndex = caretIndex;
-                txtWord.SelectionStart = caretIndex;
-                int newCaretPosition = suggestion.Length - caretIndex;
-                if (newCaretPosition < 0) newCaretPosition = 0;
-                txtWord.SelectionLength = newCaretPosition;
-                txtWord.SelectionOpacity = .4;
-                _isTextChangingInternally = false;
-            }
-        }
+        this.GenerateSuggestion();
     }
 
     private void AddCurrentWord()
@@ -121,32 +123,32 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         if (module != null)
         {
             module.AddWordSpelling(word);
-            SetStatus($"Spelling added: {word}", Colors.Black);
+            SetStatus($"Spelling added: {word}" );
             //txtWord.Clear();
             txtWord.Focus();
         }
         else
         {
-            SetStatus("Error: Module not found.", Colors.Red);
+            SetStatus("Error: Module not found.", StatusMode.Error );
         }
     }
 
-    private void btnBrowse_Click(object sender, RoutedEventArgs e)
+    private async void btnBrowse_Click(object? sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Select Word List File",
-            Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-            CheckFileExists = true
-        };
+        var openToPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+        var filepathToWordFile = await Utils.OpenFileDialog( this, Utils.TitleBrainSimLoadWordList, Utils.FilterWordListFile, openToPath );
 
-        if (openFileDialog.ShowDialog() == true)
+        if( string.IsNullOrEmpty( filepathToWordFile ) )
         {
-            txtFilePath.Text = openFileDialog.FileName;
+            SetStatus( "User failed to select Word List File.", StatusMode.Error );
+            return;
         }
+
+        SetStatus( "Using Word List File: " + filepathToWordFile );
+        txtFilePath.Text = filepathToWordFile;
     }
 
-    private void btnLoad_Click(object sender, RoutedEventArgs e)
+    private void btnLoad_Click(object? sender, RoutedEventArgs e)
     {
         string filePath = txtFilePath.Text?.Trim();
         
@@ -158,7 +160,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
 
         if (!File.Exists(filePath))
         {
-            SetStatus("File not found.");
+            SetStatus("File not found " + filePath );
             return;
         }
 
@@ -173,7 +175,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         }
         else
         {
-            SetStatus("Error: Module not found.");
+            SetStatus("Error: Module not found.", StatusMode.Error );
         }
     }
 }

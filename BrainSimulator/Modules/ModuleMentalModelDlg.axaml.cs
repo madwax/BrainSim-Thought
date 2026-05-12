@@ -11,89 +11,129 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using UKS;
+using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 namespace BrainSimulator.Modules;
 
 public partial class ModuleMentalModelDlg : ModuleBaseDlg
 {
+    // Used to track the current pointer as we don't have access to this data like we did in WPF
+    struct PointerCache
+    {
+        public PointerCache() 
+        {
+        }
+
+        // Mouse position relative to the canvas
+        public Point pos = new Point( 0,0 );
+        public bool leftDown = false;
+        public bool rightDown = false;
+    };
+
     private Point _panStart;
     private bool _isPanning;
     private bool _suppressZoom;
-    private Point _lastMousePos;
+
+    private PointerCache _pointer = new();
+
+    // We have to cache the objects because they can't be named?
+    private ScaleTransform? canvasScale = null;
+    private TranslateTransform? canvasTranslate = null;
 
     public ModuleMentalModelDlg()
     {
         InitializeComponent();
-        Loaded += (_, _) => ZoomSlider.Value = 1.0; // ensure initial scale
+        Loaded += OnLoaded;
     }
 
-    public override bool Draw(bool checkDrawTimer)
+    private void OnLoaded( object? sender, RoutedEventArgs e )
     {
-        if (!base.Draw(checkDrawTimer)) return false;
+        ZoomSlider.Value = 1.0;
+        var transformGroup = ( TransformGroup )theCanvas.RenderTransform;
+        foreach( Transform t in transformGroup.Children )
+        {
+            if( t is ScaleTransform sform )
+            {
+                canvasScale = sform;
+            }
+            else if( t is TranslateTransform tform )
+            {
+                canvasTranslate = tform;
+            }
+        }
+    }
+
+    public override bool Draw( bool checkDrawTimer )
+    {
+        if( !base.Draw( checkDrawTimer ) ) return false;
         //this has a timer so that no matter how often you might call draw, the dialog
         //only updates 10x per second
-        ModuleMentalModel parent = (ModuleMentalModel)base.ParentModule;
-        DrawCells(parent);
+        ModuleMentalModel parent = ( ModuleMentalModel )base.ParentModule;
+        DrawCells( parent );
         return true;
     }
-    private void DrawCells(ModuleMentalModel parent)
+    private void DrawCells( ModuleMentalModel parent )
     {
-        if (theCanvas is null) return;
-        if (theCanvas.IsMouseOver && Mouse.RightButton != MouseButtonState.Pressed)
+        if( theCanvas is null ) return;
+        if( theCanvas.IsPointerOver && this._pointer.rightDown == false ) // Mouse.RightButton != MouseButtonState.Pressed )
         {
-            SetStatus("Paused");
+            SetStatus( "Paused" );
             return;
         }
-        if (GetStatus() == "Paused")
-            SetStatus("OK");
+        if( GetStatus() == "Paused" )
+            SetStatus( "OK" );
         theCanvas.Children.Clear();
 
         var cells = parent._cells;
-        if (cells is null || cells.Length == 0) return;
+        if( cells is null || cells.Length == 0 ) return;
 
-        double canvasWidth = Math.Max(1, theCanvas.ActualWidth);
-        double canvasHeight = Math.Max(1, theCanvas.ActualHeight);
+        var sz = this.Bounds.Size;
+        double canvasWidth = Math.Max( 1, sz.Width );
+        double canvasHeight = Math.Max( 1, sz.Height );
 
         int ringCount = cells.Length;
         // Build elevation band edges from the binning function; fallback to uniform if mismatch
-        List<double> edges = BuildElevationEdges(parent, ringCount);
+        List<double> edges = BuildElevationEdges( parent, ringCount );
         double yAcc = 0;
 
-        for (int r = ringCount-1; r >= 0; r--)
+        for( int r = ringCount - 1; r >= 0; r-- )
         {
-            if (cells[r] is null || cells[r].Length == 0) continue;
+            if( cells[ r ] is null || cells[ r ].Length == 0 ) continue;
 
-            double ringHeight = ((edges[r + 1] - edges[r]) / 180.0) * canvasHeight;
-            int rays = cells[r].Length;
+            double ringHeight = ( ( edges[ r + 1 ] - edges[ r ] ) / 180.0 ) * canvasHeight;
+            int rays = cells[ r ].Length;
             //double cellWidth = canvasWidth / rays;
             double y = yAcc;
             yAcc += ringHeight;
 
             // Precompute warped x-edges for this ring
-            double[] xEdges = new double[rays + 1];
-            for (int i = 0; i <= rays; i++)
+            double[] xEdges = new double[ rays + 1 ];
+            for( int i = 0; i <= rays; i++ )
             {
-                double t = (double)i / rays;          // [0,1]
-                double x = (t * 2.0) - 1.0;           // [-1,1]
-                double u = parent.InvertWarp (x); // warped [-1,1]
-                xEdges[i] = (u + 1.0) * 0.5 * canvasWidth;          // [0,width]
+                double t = ( double )i / rays;          // [0,1]
+                double x = ( t * 2.0 ) - 1.0;           // [-1,1]
+                double u = parent.InvertWarp( x ); // warped [-1,1]
+                xEdges[ i ] = ( u + 1.0 ) * 0.5 * canvasWidth;          // [0,width]
             }
 
-            for (int k = 0; k < rays; k++)
+            for( int k = 0; k < rays; k++ )
             {
-                double xLeft = xEdges[k];
+                double xLeft = xEdges[ k ];
 
                 //double x = k * cellWidth;
-                double cellWidth = Math.Max(1e-3, xEdges[k + 1] - xLeft);
+                double cellWidth = Math.Max( 1e-3, xEdges[ k + 1 ] - xLeft );
 
                 var rect = new Rectangle
                 {
@@ -103,205 +143,299 @@ public partial class ModuleMentalModelDlg : ModuleBaseDlg
                     Stroke = Brushes.DarkGray,
                     StrokeThickness = 1,
                 };
-                Thought t = cells[r][k];
-                rect.Tag = t.Label;
-                rect.MouseLeftButtonDown += Rect_MouseLeftButtonDown;
-                ToolTipService.SetHorizontalOffset(rect, 22);
-                ToolTipService.SetVerticalOffset(rect, 22);
 
-                if (cells[r][k] == parent.Center)
+                Thought t = cells[ r ][ k ];
+                rect.Tag = t.Label;
+                rect.PointerPressed += Rect_PointerLeftButtonDown;
+
+                if( cells[ r ][ k ] == parent.Center )
                     rect.Fill = Brushes.Pink;
-                if (t.LastFiredTime > DateTime.Now - TimeSpan.FromSeconds(1))
+                if( t.LastFiredTime > DateTime.Now - TimeSpan.FromSeconds( 1 ) )
                     rect.Fill = Brushes.AliceBlue;
-                Link ThoughtAtLocation = t.LinksTo.FindFirst(x => x.LinkType.Label == "_mm:contains");
-                if (ThoughtAtLocation is not null)
+                Link ThoughtAtLocation = t.LinksTo.FindFirst( x => x.LinkType.Label == "_mm:contains" );
+                if( ThoughtAtLocation is not null )
                 {
                     rect.Fill = Brushes.Yellow;
-                    if (ThoughtAtLocation.To.Label == "attention") rect.Fill = Brushes.Green;
+                    if( ThoughtAtLocation.To.Label == "attention" ) rect.Fill = Brushes.Green;
 
-                    var containsLinks = t.LinksTo.Where(x => x.LinkType.Label == "_mm:contains").ToList();
-                    rect.ToolTip = string.Join("\r\n", containsLinks.Select(FormatContainsTooltip));
+                    var containsLinks = t.LinksTo.Where( x => x.LinkType.Label == "_mm:contains" ).ToList();
+
+                    var toolTip = string.Join( "\r\n", containsLinks.Select( FormatContainsTooltip ) );
+
+                    ToolTip.SetTip( rect, toolTip );
+                    ToolTip.SetVerticalOffset( rect, 22 );
+                    ToolTip.SetHorizontalOffset( rect, 22 );
                 }
-                Canvas.SetLeft(rect, xLeft);
-                Canvas.SetTop(rect, y);
-                theCanvas.Children.Add(rect);
+                Canvas.SetLeft( rect, xLeft );
+                Canvas.SetTop( rect, y );
+                theCanvas.Children.Add( rect );
             }
         }
     }
 
-    private static List<double> BuildElevationEdges(ModuleMentalModel parent, int ringCount)
+    private static List<double> BuildElevationEdges( ModuleMentalModel parent, int ringCount )
     {
         List<double> edges = new() { -90 };
-        int lastBin = parent.GetBinFromElevation(-90);
+        int lastBin = parent.GetBinFromElevation( -90 );
 
-        for (double deg = -89.5; deg <= 90.0; deg += 0.5)
+        for( double deg = -89.5; deg <= 90.0; deg += 0.5 )
         {
-            int bin = parent.GetBinFromElevation((float)deg);
-            if (bin != lastBin)
+            int bin = parent.GetBinFromElevation( ( float )deg );
+            if( bin != lastBin )
             {
-                edges.Add(deg);
+                edges.Add( deg );
                 lastBin = bin;
             }
         }
-        edges.Add(90);
+        edges.Add( 90 );
 
         // Fallback to uniform spacing if the binning did not produce the expected count
-        if (edges.Count != ringCount + 1)
+        if( edges.Count != ringCount + 1 )
         {
-            edges = Enumerable.Range(0, ringCount + 1)
-                              .Select(i => -90 + i * (180.0 / ringCount))
+            edges = Enumerable.Range( 0, ringCount + 1 )
+                              .Select( i => -90 + i * ( 180.0 / ringCount ) )
                               .ToList();
         }
         return edges;
     }
 
-    private void Rect_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Rect_PointerLeftButtonDown( object? sender, PointerPressedEventArgs e )
     {
-        if (ParentModule is not ModuleMentalModel module) return;
-        if (sender is not Rectangle r) return;
-        Thought t = module.theUKS.Labeled(r.Tag.ToString());
-        if (t != null)
+        Debug.WriteLine( "*.Rect_PointerLeftButtonDown() Pos:" + this._pointer.pos + " left:" + this._pointer.leftDown + " right:" + this._pointer.rightDown + " pan:" + _isPanning );
+
+
+        if( ParentModule is not ModuleMentalModel module ) return;
+        if( sender is not Rectangle r ) return;
+        if( e.Properties.IsLeftButtonPressed == false ) return;
+
+        var labelToLookUp = r.Tag.ToString();
+
+        Debug.WriteLine( "*.Rect_PointerLeftButtonDown() label:" + labelToLookUp );
+
+        Thought t = module.theUKS.Labeled( labelToLookUp );
+        if( t != null )
         {
             t.Fire();
-            t.LinksTo.FindFirst(x => x.LinkType.Label == "above")?.To.Fire();
-            t.LinksTo.FindFirst(x => x.LinkType.Label == "rightOf")?.To.Fire();
+            t.LinksTo.FindFirst( x => x.LinkType.Label == "above" )?.To.Fire();
+            t.LinksTo.FindFirst( x => x.LinkType.Label == "rightOf" )?.To.Fire();
         }
     }
 
-    private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void TheGrid_SizeChanged( object sender, SizeChangedEventArgs e )
     {
-        Draw(false);
+        Draw( false );
     }
 
-    private void ZoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void ZoomSlider_ValueChanged( object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e )
     {
-        if (_suppressZoom) return;
+        if( _suppressZoom ) return;
 
-        Point focus = Mouse.GetPosition(theCanvas);
-        if (double.IsNaN(focus.X) || double.IsNaN(focus.Y) || focus == default)
-            focus = new Point(theCanvas.ActualWidth * 0.5, theCanvas.ActualHeight * 0.5);
+        var sz = this.Bounds.Size;
 
-        ApplyZoom(ZoomSlider.Value, focus);
+        Point focus = this._pointer.pos;
+
+        if( double.IsNaN( this._pointer.pos.X ) || double.IsNaN( this._pointer.pos.Y ) || this._pointer.pos == default )
+            focus = new Point( sz.Width * 0.5, sz.Height * 0.5 );
+
+        Debug.WriteLine( "*.ZoomSlider_ValueChanged() value:" + ZoomSlider.Value + " Pos:" + focus );
+
+        ApplyZoom( ZoomSlider.Value, focus );
     }
 
-    private void ResetView_Click(object sender, RoutedEventArgs e)
+    private void ResetView_Click( object sender, RoutedEventArgs e )
     {
         _suppressZoom = true;
         ZoomSlider.Value = 1.0;
         _suppressZoom = false;
 
-        CanvasTranslate.X = 0;
-        CanvasTranslate.Y = 0;
-        CanvasScale.ScaleX = 1;
-        CanvasScale.ScaleY = 1;
+        canvasTranslate.X = 0;
+        canvasTranslate.Y = 0;
+        canvasScale.ScaleX = 1;
+        canvasScale.ScaleY = 1;
     }
 
-    private void RotateLeft_Click(object sender, RoutedEventArgs e)
+    private void RotateLeft_Click( object sender, RoutedEventArgs e )
     {
-        if (ParentModule is not ModuleMentalModel module) return;
-        module.RotateMentalModel(Angle.FromDegrees(15), Angle.FromDegrees(0));
-        Draw(false);
+        if( ParentModule is not ModuleMentalModel module ) return;
+        module.RotateMentalModel( Angle.FromDegrees( 15 ), Angle.FromDegrees( 0 ) );
+        Draw( false );
     }
 
-    private void RotateRight_Click(object sender, RoutedEventArgs e)
+    private void RotateRight_Click( object sender, RoutedEventArgs e )
     {
-        if (ParentModule is not ModuleMentalModel module) return;
-        module.RotateMentalModel(Angle.FromDegrees(-15), Angle.FromDegrees(0));
-        Draw(false);
+        if( ParentModule is not ModuleMentalModel module ) return;
+        module.RotateMentalModel( Angle.FromDegrees( -15 ), Angle.FromDegrees( 0 ) );
+        Draw( false );
     }
 
-    private void RotateUp_Click(object sender, RoutedEventArgs e)
+    private void RotateUp_Click( object sender, RoutedEventArgs e )
     {
-        if (ParentModule is not ModuleMentalModel module) return;
-        module.MoveMentalModel(5f);
-        Draw(false);
+        if( ParentModule is not ModuleMentalModel module ) return;
+        module.MoveMentalModel( 5f );
+        Draw( false );
     }
 
-    private void RotateDown_Click(object sender, RoutedEventArgs e)
+    private void RotateDown_Click( object sender, RoutedEventArgs e )
     {
-        if (ParentModule is not ModuleMentalModel module) return;
-        module.MoveMentalModel(-5f);
-        Draw(false);
+        if( ParentModule is not ModuleMentalModel module ) return;
+        module.MoveMentalModel( -5f );
+        Draw( false );
     }
 
-    private void TheCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
+    private void TheCanvas_MouseWheel( object sender, PointerWheelEventArgs e )
     {
-        double delta = e.Delta > 0 ? 0.1 : -0.1;
-        double target = Math.Clamp(ZoomSlider.Value + delta, ZoomSlider.Minimum, ZoomSlider.Maximum);
-        Point focus = e.GetPosition(theCanvas);
-        ApplyZoom(target, focus);
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        double delta = e.Delta.X > 0 ? 0.1 : -0.1;
+
+        double target = Math.Clamp( ZoomSlider.Value + delta, ZoomSlider.Minimum, ZoomSlider.Maximum );
+
+
+        Debug.WriteLine( "*.TheCanvas_MouseWheel() value:" + target + " Pos:" + this._pointer.pos );
+
+        // use the last know mouse position relative to the canvas.
+        ApplyZoom( target, this._pointer.pos );
 
         _suppressZoom = true;
         ZoomSlider.Value = target;
         _suppressZoom = false;
     }
 
-    private void TheCanvas_MouseMove(object sender, MouseEventArgs e)
+    private void TheCanvas_MouseMove( object sender, PointerEventArgs e )
     {
-        _lastMousePos = e.GetPosition(theCanvas);
-        if (!_isPanning) return;
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        Debug.WriteLine( "*.TheCanvas_MouseMove() Pos:" + this._pointer.pos + " in pan:" + this._isPanning );
+
+        if( !_isPanning ) return;
+
+        Vector delta = this._pointer.pos - this._panStart;
+
+        canvasTranslate.X += delta.X;
+        canvasTranslate.Y += delta.Y;
+
+        Debug.WriteLine( "*.TheCanvas_MouseMove()   Delta: " + delta );
+
+        /*
 
         // use parent (untransformed) space to avoid twitch when the canvas moves
-        var parent = theCanvas.Parent as IInputElement;
-        Point current = e.GetPosition(parent);
-        Vector delta = current - _panStart;
-        _panStart = current;
+        var parent = theCanvas.Parent as Visual;
+        if( parent is not null )
+        {
+            Point current = e.GetPosition( parent );
+            Vector delta = current - _panStart;
+            _panStart = current;
 
-        CanvasTranslate.X += delta.X;
-        CanvasTranslate.Y += delta.Y;
+            canvasTranslate.X += delta.X;
+            canvasTranslate.Y += delta.Y;
+        }
+        */
     }
 
-    private void TheCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void TheCanvas_PointerPressed( object? sender, PointerPressedEventArgs e )
     {
-        _isPanning = true;
-        var parent = theCanvas.Parent as IInputElement;
-        _panStart = e.GetPosition(parent);
-        theCanvas.CaptureMouse();
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        Debug.WriteLine( "*.TheCanvas_MouseMove() Pos:" + this._pointer.pos + " in pan:" + this._isPanning );
+
+        // only want left mouse button.
+        if( this._pointer.rightDown == false )
+        {
+            e.Handled = false;
+        }
+        else
+        {
+            this._isPanning = true;
+            this._panStart = this._pointer.pos;
+        }
+        Debug.WriteLine( "*.TheCanvas_PointerReleased() Pos:" + this._pointer.pos + " left:" + this._pointer.leftDown + " right:" + this._pointer.rightDown + " pan:" + _isPanning );
     }
 
-    private void TheCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    private void TheCanvas_PointerReleased( object? sender, PointerReleasedEventArgs e )
     {
-        _isPanning = false;
-        theCanvas.ReleaseMouseCapture();
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        if( _isPanning == true && this._pointer.rightDown == false )
+        {
+            Debug.WriteLine( "   No Panning" );
+            _isPanning = false;
+        }
+        else
+        {
+            e.Handled = false;
+        }
+
+        Debug.WriteLine( "*.TheCanvas_PointerReleased() Pos:" + this._pointer.pos + " left:" + this._pointer.leftDown + " right:" + this._pointer.rightDown + " pan:" + this._isPanning );
     }
 
-    private void TheCanvas_MouseLeave(object sender, MouseEventArgs e)
+    private void TheCanvas_MouseLeave( object sender, PointerEventArgs e )
     {
-        _isPanning = false;
-        theCanvas.ReleaseMouseCapture();
+        /*
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        //_isPanning = false;
+
+        Debug.WriteLine( "*.TheCanvas_MouseLeave() Pos:" + this._pointer.pos + " left:" + this._pointer.leftDown + " right:" + this._pointer.rightDown + " pan:" + _isPanning );
+        //theCanvas.ReleaseMouseCapture();
+        */
     }
 
-    private void ApplyZoom(double newScale, Point focus)
+    private void TheCanvas_MouseEnter( object sender, PointerEventArgs e )
     {
-        double oldScale = CanvasScale.ScaleX;
-        newScale = Math.Clamp(newScale, ZoomSlider.Minimum, ZoomSlider.Maximum);
-        if (Math.Abs(newScale - oldScale) < 1e-6) return;
+        /*
+        this._pointer.pos = e.GetPosition( theCanvas );
+        this._pointer.rightDown = e.Properties.IsRightButtonPressed;
+        this._pointer.leftDown = e.Properties.IsLeftButtonPressed;
+
+        _isPanning = ( _isPanning == true && this._pointer.rightDown == true );
+
+        Debug.WriteLine( "*.TheCanvas_MouseEnter() Pos:" + this._pointer.pos + " left:" + this._pointer.leftDown + " right:" + this._pointer.rightDown + " pan:" + _isPanning );
+        //theCanvas.ReleaseMouseCapture();
+        */
+    }
+
+    private void ApplyZoom( double newScale, Point focus )
+    {
+        double oldScale = canvasScale.ScaleX;
+        newScale = Math.Clamp( newScale, ZoomSlider.Minimum, ZoomSlider.Maximum );
+        if( Math.Abs( newScale - oldScale ) < 1e-6 ) return;
 
         double ratio = newScale / oldScale;
 
         // Adjust translate so the focus point stays under the cursor
-        CanvasTranslate.X = focus.X * (1 - ratio) + CanvasTranslate.X * ratio;
-        CanvasTranslate.Y = focus.Y * (1 - ratio) + CanvasTranslate.Y * ratio;
+        canvasTranslate.X = focus.X * ( 1 - ratio ) + canvasTranslate.X * ratio;
+        canvasTranslate.Y = focus.Y * ( 1 - ratio ) + canvasTranslate.Y * ratio;
 
-        CanvasScale.ScaleX = newScale;
-        CanvasScale.ScaleY = newScale;
+        canvasScale.ScaleX = newScale;
+        canvasScale.ScaleY = newScale;
     }
 
-    private string FormatContainsTooltip(Link l)
+    private string FormatContainsTooltip( Link l )
     {
         string label = l.To?.Label ?? "(null)";
-        double d = GetDistanceFromLink(l);
-        if (d > 0)
+        double d = GetDistanceFromLink( l );
+        if( d > 0 )
             return $"{label} (d={d:0.})";
         return label;
     }
 
-    private double GetDistanceFromLink(Link l)
+    private double GetDistanceFromLink( Link l )
     {
-        var dLink = l.LinksTo.FirstOrDefault(x => x.LinkType?.Label == "distance");
-        if (dLink?.To?.Label?.StartsWith("distance:") == true &&
-            double.TryParse(dLink.To.Label["distance:".Length..], out double val))
+        var dLink = l.LinksTo.FirstOrDefault( x => x.LinkType?.Label == "distance" );
+        if( dLink?.To?.Label?.StartsWith( "distance:" ) == true &&
+            double.TryParse( dLink.To.Label[ "distance:".Length.. ], out double val ) )
             return val;
         return 0;
     }
+
 }

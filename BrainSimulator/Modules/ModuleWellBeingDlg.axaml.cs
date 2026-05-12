@@ -12,8 +12,10 @@
  */
 
 using System;
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace BrainSimulator.Modules;
 
@@ -26,10 +28,10 @@ public partial class ModuleWellBeingDlg : ModuleBaseDlg
         InitializeComponent();
     }
 
-    public override bool Draw(bool checkDrawTimer)
+    public override bool Draw( bool checkDrawTimer )
     {
-        if (!base.Draw(checkDrawTimer)) return false;
-        if (_isUpdating) return true;
+        if( !base.Draw( checkDrawTimer ) ) return false;
+        if( _isUpdating ) return true;
 
         _isUpdating = true;
         WellBeingSlider.Value = ModuleWellBeing.State;
@@ -37,28 +39,30 @@ public partial class ModuleWellBeingDlg : ModuleBaseDlg
         return true;
     }
 
-    private void WellBeingSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void WellBeingSlider_ValueChanged( object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e )
     {
-        if (_isUpdating) return;
+        if( _isUpdating ) return;
         _isUpdating = true;
-        ModuleWellBeing.SetState((float)e.NewValue);
+        ModuleWellBeing.SetState( ( float )e.NewValue );
         _isUpdating = false;
     }
 
-    private void IncreaseButton_Click(object sender, RoutedEventArgs e)
+    private void IncreaseButton_Click( object? sender, RoutedEventArgs e )
     {
         ModuleWellBeing.Increase();
-        Draw(false);
+        Draw( false );
     }
 
-    private void DecreaseButton_Click(object sender, RoutedEventArgs e)
+    private void DecreaseButton_Click( object? sender, RoutedEventArgs e )
     {
         ModuleWellBeing.Decrease();
-        Draw(false);
+        Draw( false );
     }
 
-    private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void TheGrid_SizeChanged( object? sender, SizeChangedEventArgs e )
     {
-        Draw(false);
+        Draw( false );
     }
+
+
 }

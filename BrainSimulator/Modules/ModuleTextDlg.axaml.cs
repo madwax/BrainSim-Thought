@@ -13,13 +13,12 @@
  
 
 using System;
-using System.Diagnostics;
 using System.IO;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Input;
 using UKS;
 
 namespace BrainSimulator.Modules;
@@ -40,12 +39,12 @@ public partial class ModuleTextDlg : ModuleBaseDlg
         return true;
     }
 
-    private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void TheGrid_SizeChanged(object? sender, SizeChangedEventArgs e)
     {
         Draw(false);
     }
 
-    private void BtnAdd_Click(object sender, RoutedEventArgs e)
+    private void BtnAdd_Click(object? sender, RoutedEventArgs e)
     {
         string phrase = tbPhrase.Text ?? string.Empty;
 
@@ -54,36 +53,37 @@ public partial class ModuleTextDlg : ModuleBaseDlg
         SetStatus(message);
     }
 
-    private void btnBrowse_Click(object sender, RoutedEventArgs e)
+    private async void btnBrowse_Click(object? sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Select Word List File",
-            Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-            CheckFileExists = true
-        };
+        var openToPath = Utils.GetOrAddDocumentsSubFolder( Utils.UKSContentFolder );
+        var filepathToWordFile = await Utils.OpenFileDialog( this, Utils.TitleBrainSimLoadWordList, Utils.FilterWordListFile, openToPath );
 
-        if (openFileDialog.ShowDialog() == true)
+        if( string.IsNullOrEmpty( filepathToWordFile ) )
         {
-            txtFilePath.Text = openFileDialog.FileName;
-            var module = ParentModule as ModuleText;
-            module.CancelIncrementalLoad();
+            SetStatus( "User failed to select Word List File.", StatusMode.Error );
+            return;
         }
+
+        SetStatus( "Using Word List File: " + filepathToWordFile );
+        txtFilePath.Text = filepathToWordFile;
+
+        var module = ParentModule as ModuleText;
+        module.CancelIncrementalLoad();
     }
 
-    private async void btnLoad_Click(object sender, RoutedEventArgs e)
+    private async void btnLoad_Click(object? sender, RoutedEventArgs e)
     {
         string filePath = txtFilePath.Text?.Trim();
 
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            SetStatus("Please select a file first.");
+            SetStatus("Please select a file first.", StatusMode.Warning);
             return;
         }
 
         if (!File.Exists(filePath))
         {
-            SetStatus("File not found.");
+            SetStatus("File not found.", StatusMode.Error );
             return;
         }
 
@@ -98,16 +98,16 @@ public partial class ModuleTextDlg : ModuleBaseDlg
             }
             catch (Exception ex)
             {
-                SetStatus($"Error loading file: {ex.Message}");
+                SetStatus($"Error loading file: {ex.Message}", StatusMode.Error );
             }
         }
         else
         {
-            SetStatus("Error: Module not found.");
+            SetStatus("Error: Module not found.", StatusMode.Error);
         }
     }
 
-    private void btnTrigram_Click(object sender, RoutedEventArgs e)
+    private void btnTrigram_Click(object? sender, RoutedEventArgs e)
     {
         var module = ParentModule as ModuleText;
         if (module != null)
@@ -118,11 +118,11 @@ public partial class ModuleTextDlg : ModuleBaseDlg
         }
         else
         {
-            SetStatus("Error: Module not found.");
+            SetStatus("Error: Module not found.", StatusMode.Error );
         }
     }
 
-    private void tbPhrase_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    private void tbPhrase_PreviewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key is Key.Enter)
         {

@@ -15,9 +15,10 @@
 // Contains confidential and  proprietary information and programs which may not be distributed without a separate license
 //  
 
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace BrainSimulator.Modules
 {

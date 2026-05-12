@@ -10,16 +10,9 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
 using UKS;
 
 namespace BrainSimulator.Modules;

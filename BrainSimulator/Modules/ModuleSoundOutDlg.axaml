@@ -1,19 +1,14 @@
-﻿<local:ModuleBaseDlg x:Class="BrainSimulator.Modules.ModuleSoundOutDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window x:Class="BrainSimulator.Modules.ModuleSoundOutDlg"
+        xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BrainSimulator.Modules"
-        mc:Ignorable="d"
-        Title="Sound Out" Height="170" Width="360" Background="Gray" ShowInTaskbar="False" FontSize="16" >
-
+        Title="Sound Out" Height="170" Width="360" ShowInTaskbar="False">
     <Grid >
         <Button Content="Play Sound" Width="120" Height="30" Click="PlaySound_Click" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top"/>
 
         <!-- Add these after existing controls -->
         <StackPanel Orientation="Horizontal" Margin="81,48,0,0" HorizontalAlignment="Left" Width="270" Height="23" VerticalAlignment="Top">
             <Label Content="Cadence:" VerticalAlignment="Center" Width="100" Height="34"/>
-            <ComboBox x:Name="cbCadence" Width="150" Margin="5,0" 
+            <ComboBox Name="cbCadence" Width="150" Margin="5,0" 
               SelectionChanged="cbCadence_SelectionChanged">
                 <ComboBoxItem Content="50" />
                 <ComboBoxItem Content="75" />
@@ -23,10 +18,9 @@
                 <ComboBoxItem Content="200" />
             </ComboBox>
         </StackPanel>
-
         <StackPanel Orientation="Horizontal" Margin="81,83,0,0" HorizontalAlignment="Left" Width="263" Height="23" VerticalAlignment="Top">
             <Label Content="Pitch Offset:" VerticalAlignment="Center" Width="100" Height="37"/>
-            <ComboBox x:Name="cbPitchOffset" Width="150" Margin="5,0"
+            <ComboBox Name="cbPitchOffset" Width="150" Margin="5,0"
               SelectionChanged="cbPitchOffset_SelectionChanged">
                 <ComboBoxItem Content="-12" />
                 <ComboBoxItem Content="-6" />
@@ -36,4 +30,4 @@
             </ComboBox>
         </StackPanel>
     </Grid>
-</local:ModuleBaseDlg>
+</Window>

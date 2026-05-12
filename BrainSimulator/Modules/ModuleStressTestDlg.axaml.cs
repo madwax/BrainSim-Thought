@@ -15,16 +15,10 @@
 // Contains confidential and  proprietary information and programs which may not be distributed without a separate license
 //  
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using Pluralize.NET;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using UKS;
 
 namespace BrainSimulator.Modules
@@ -68,7 +62,7 @@ namespace BrainSimulator.Modules
                 bool isValid = int.TryParse(textInput.Text, out count);
                 if (isValid)
                 {
-                    String message = ModuleStressTest.AddManyTestItems(count);
+                    string message = ModuleStressTest.AddManyTestItems(count);
                     txtOutput.Text = message;
                 }
                 else

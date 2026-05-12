@@ -10,19 +10,6 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Xml.Serialization;
-using UKS;
-using static System.Math;
 
 namespace BrainSimulator.Modules;
 
@@ -55,6 +42,7 @@ public class ModuleShowGraph : ModuleBase
     public override void SetUpBeforeSave()
     {
     }
+
     public override void SetUpAfterLoad()
     {
     }
@@ -62,6 +50,5 @@ public class ModuleShowGraph : ModuleBase
     // called whenever the UKS performs an Initialize()
     public override void UKSInitializedNotification()
     {
-
     }
 }

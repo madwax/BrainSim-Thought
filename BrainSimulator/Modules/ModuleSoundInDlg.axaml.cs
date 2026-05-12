@@ -13,18 +13,40 @@
  
 
 using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+using System.Collections.Generic;
+
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using UKS;
 
 namespace BrainSimulator.Modules;
 
 public partial class ModuleSoundInDlg : ModuleBaseDlg
 {
+    /** TODO - RHC - Porting Note.
+     * Avalonia is missing on KeyEventArgs the IsRepeat property so we have to do it roll are own.
+     */
+    // Which key, And if it is pressed (down) 
+    private Dictionary<Key,bool> keyDownStates = new ();
+
+    private bool RejectKeyDown(Key key)
+    {
+        var currentTime = System.Environment.TickCount64;
+
+        if( keyDownStates.ContainsKey( key ) )
+        {
+            var time = keyDownStates[key];
+        }
+        else
+        {
+
+        }
+
+        return false;
+    }
+
     public ModuleSoundInDlg()
     {
         InitializeComponent();
@@ -47,7 +69,20 @@ public partial class ModuleSoundInDlg : ModuleBaseDlg
 
     private void Dlg_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.IsRepeat) return;
+        // Stop repeating 
+        if( this.keyDownStates.ContainsKey( e.Key ) )
+        {
+            if( this.keyDownStates[ e.Key ] == true )
+            {
+                // Already down
+                return;
+            }
+        }
+        else
+        {
+            this.keyDownStates[ e.Key ] = true;
+        }
+
         if (sender is not ModuleSoundInDlg dlg) return;
         if (ParentModule is not ModuleSoundIn module) return;
         switch (e.Key)
@@ -74,9 +109,21 @@ public partial class ModuleSoundInDlg : ModuleBaseDlg
 
     private void Dlg_PreviewKeyUp(object sender, KeyEventArgs e)
     {
-        if (e.IsRepeat) return;
-        if (sender is not ModuleSoundInDlg dlg) return;
-        if (ParentModule is not ModuleSoundIn module) return;
+        if( sender is not ModuleSoundInDlg dlg ) return;
+        if( ParentModule is not ModuleSoundIn module ) return;
+
+        // Stop repeating 
+        if( this.keyDownStates.ContainsKey( e.Key ) )
+        {
+            if( this.keyDownStates[ e.Key ] == false )
+            {
+                // Already Up
+                return;
+            }
+
+            this.keyDownStates[ e.Key ] = false;
+        }
+
         switch (e.Key)
         {
             case Key.Z: module.StopNote(60); break;

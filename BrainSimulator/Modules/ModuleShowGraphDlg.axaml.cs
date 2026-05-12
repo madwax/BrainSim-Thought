@@ -10,18 +10,16 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
-//
 
-
-
-
-using Microsoft.Msagl.Drawing;
-using Microsoft.Msagl.GraphViewerGdi;
-using System.Drawing; // for Color
-using System.Windows;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform;
+using AvaloniaGraphControl;
 using UKS;
 
-
+// TODO RHC Test Test Test
 namespace BrainSimulator.Modules
 {
     public partial class ModuleShowGraphDlg : ModuleBaseDlg
@@ -41,13 +39,50 @@ namespace BrainSimulator.Modules
             return true;
         }
 
-        private void TheGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void TheGrid_SizeChanged(object? sender, SizeChangedEventArgs e)
         {
             //DrawTheGraph();
         }
 
         private void DrawTheGraph()
         {
+
+            string root = "Object";
+            ModuleShowGraph parent = ( ModuleShowGraph )base.ParentModule;
+            Thought uksDlg = parent.theUKS.Labeled( "ModuleUKS0" );
+            if( uksDlg is not null )
+            {
+                foreach( var r in uksDlg.LinksTo )
+                {
+                    if( r.LinkType.Label == "hasAttribute" && r.To.Label.StartsWith( "Root" ) )
+                    {
+                        root = ( string )r.To.V;
+                    }
+                }
+            }
+
+            /// TODO - RHC Needs more work!
+
+            Graph graph = new();
+
+            Thought theRoot = parent.theUKS.Labeled( root );
+            foreach( Thought t in theRoot.Descendants )
+            {
+                var sourceNode = t.Label;
+                foreach( Link r in t.LinksTo )
+                {
+                    if( r.From != theRoot )
+                    {
+                        var targetNode = r.To.Label;
+                        var edgeLabel = r.LinkType.Label;
+                        graph.Edges.Add( new Edge( sourceNode, targetNode, edgeLabel ) );
+                    }
+                }
+            }
+
+            this.theGraph.Graph = graph;
+ 
+            /*
             //get the root to save the contents of from the UKS dialog root
             string root = "Object";
             ModuleShowGraph parent = (ModuleShowGraph)base.ParentModule;
@@ -94,9 +129,10 @@ namespace BrainSimulator.Modules
 
             viewer.Graph = g;
             wfHost.Child = viewer;   //
+            */
         }
 
-        private void ButtonRefresh_Click(object sender, RoutedEventArgs e)
+        private void ButtonRefresh_Click(object? sender, RoutedEventArgs e)
         {
             DrawTheGraph();
         }
