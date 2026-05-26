@@ -1,6 +1,7 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleUKSDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:BrainSimulator"
         Title="Universal Knowledge Store (UKS)" 
         Height="450" 
         Width="800" 
@@ -50,7 +51,7 @@
         </Style>
 
     </Window.Styles>
-        <Grid ColumnDefinitions="*" RowDefinitions="Auto,*" >
+        <Grid ColumnDefinitions="*" RowDefinitions="Auto,*,Auto" >
 			<Grid Name="Settings" ColumnDefinitions="auto,auto,auto,auto,auto" RowDefinitions="35,35" Grid.Row="0">
                 <Button Name="InitializeButton" Click="OnInitializeButton" Content="Initialize" Width="90" Grid.Column="0" Grid.Row="0" />
                 <Button Name="RefreshButton" Click="OnRefreshButton" Grid.Column=" 0" Grid.Row="1" IsEnabled="False" ToolTip.Tip="Refresh the Tree" >
@@ -73,7 +74,6 @@
                     </Button>
                 </StackPanel>
                 <Label Content="" Name="UKSInformation" Width="220" Grid.Column="3" Grid.Row="1"/>
-
                 <Button Content="Import" Width="70" Click="OnImport" Grid.Column="4" Grid.Row="0" />
                 <Button Content="Export" Width="70" Click="OnExport" Grid.Column="4" Grid.Row="1" />
             </Grid>
@@ -85,5 +85,6 @@
                       PointerWheelChanged="OnTheTreeViewPointerWheel"
                       >
             </TreeView>
+			<local:ModuleFooter Grid.Row="2" />
         </Grid>
 </Window>

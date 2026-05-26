@@ -50,6 +50,8 @@ public class ModuleBaseDlg : Window
         if (initializedLayout) return;
         initializedLayout = true;
 
+#if false
+
         // capture original content
         Control? originalContent = this.Content as Control;
 
@@ -130,6 +132,7 @@ public class ModuleBaseDlg : Window
 
         // set new content
         this.Content = shell;
+#endif
     }
 
 #if TO_REMOVE
@@ -206,6 +209,8 @@ public class ModuleBaseDlg : Window
     /// <param name="mode">Defines what type of message classification we have to display, see enum StatuMode</param>
     public void SetStatus(string message, StatusMode mode = StatusMode.Normal)
     {
+        if( statusLabel is null ) return;
+
         statusLabel.Classes.Clear();
         if( mode == StatusMode.Warning )
         {
@@ -219,6 +224,8 @@ public class ModuleBaseDlg : Window
     }
     public string GetStatus()
     {
+        if( statusLabel is null ) return "";
+
         return statusLabel.Content.ToString();
     }
 

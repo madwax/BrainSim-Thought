@@ -1,38 +1,55 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleUKSStatementDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:BrainSimulator"
         Title="UKS Add Statement" 
         ShowInTaskbar="False">
-    <Window.Styles>
-		<Style Selector="Label"><Setter Property="FontSize" Value="16"/></Style>
-		<Style Selector="TextBox"><Setter Property="FontSize" Value="16"/></Style>
-		<Style Selector="ComboBox"><Setter Property="FontSize" Value="16"/></Style>
-		<Style Selector="Button"><Setter Property="FontSize" Value="16"/></Style>
-		<Style Selector="CheckBox"><Setter Property="FontSize" Value="14"/></Style>
-    </Window.Styles>
-    <Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" Margin="0,0,0,0" >
-        <Label Name="sourceeLabel" Content="From" HorizontalAlignment="Left" Margin="10,20,0,0" Width="68" VerticalAlignment="Top"/>
-        <Label Name="linkTypeLabel" Content="Type" HorizontalAlignment="Left" Margin="10,60,0,0" Width="68" VerticalAlignment="Top" />
-        <Label Name="targetLabel" Content="To" HorizontalAlignment="Left" Margin="10,100,0,0" Width="68" VerticalAlignment="Top"/>
-        <Label Name="conficenceLabel" Content="Confidence" HorizontalAlignment="Left" Margin="362,14,0,0" Width="100" VerticalAlignment="Top"/>
-        <Label Name="durationLabel" Content="Duration" HorizontalAlignment="Left" Margin="369,71,0,0" Width="100" VerticalAlignment="Top"/>
-        <TextBox Name="sourceText" TabIndex="1" VerticalAlignment="Top"  Margin="78,20,174,0" TextChanged="Text_TextChanged"/>
-        <ComboBox Name="sourceCombo" TabIndex="1" VerticalAlignment="Top"  Margin="78,20,174,0" IsVisible="False" />
-        <TextBox Name="linkText" TabIndex="2" VerticalAlignment="Top" Margin="78,60,174,0" TextChanged="Text_TextChanged"/>
-        <TextBox Name="targetText" TabIndex="3" VerticalAlignment="Top" Margin="78,100,174,0" TextChanged="Text_TextChanged" />
-        <Slider Name="confidenceSlider" Minimum="0" Maximum="1" IsSnapToTickEnabled="True" TickFrequency="0.1" TickPlacement="BottomRight" Value=".9" HorizontalAlignment="Left" Margin="362,44,0,0" VerticalAlignment="Top" Width="100"/>
-        <ComboBox Name="durationCombo" SelectedIndex="0" HorizontalAlignment="Left" Margin="366,101,0,0" VerticalAlignment="Top" Width="100">
-            <ComboBoxItem Content="Eternal"/>
-            <ComboBoxItem Content="1 hr" />
-            <ComboBoxItem Content="5 min" />
-            <ComboBoxItem Content="1 min" />
-            <ComboBoxItem Content="30 sec" />
-            <ComboBoxItem Content="10 sec" />
-        </ComboBox>
-        <Button Name="BtnAddLink" IsDefault="True" Content="Add/Update" VerticalAlignment="Top" Margin="78,143,0,0" 
-				Click="BtnAddLink_Click" 
-				HorizontalAlignment="Left" Width="159"/>
-        <CheckBox Name="setConfCB" Content="Set Confidence/Duration" IsChecked="True" Margin="269,142,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="200"/>
-        <CheckBox Name="eventCB" Content="This is an Event" IsChecked="False" Margin="269,164,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="200"/>
-    </Grid>
+	<Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" Margin="10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="40"/>
+			<ColumnDefinition Width="150"/>
+			<ColumnDefinition Width="10"/>
+			<ColumnDefinition Width="80"/>
+			<ColumnDefinition Width="150"/>
+		</Grid.ColumnDefinitions>
+			
+		<Label Grid.Row="0" Grid.Column="0" Name="sourceeLabel" Content="From" />
+
+		<TextBox Grid.Row="0" Grid.Column="1"  Name="sourceText" TabIndex="1" TextChanged="Text_TextChanged" />
+		<ComboBox Grid.Row="0" Grid.Column="1" Name="sourceCombo" TabIndex="1" IsVisible="False" SelectionChanged="SourceCombo_Selected" />
+
+		<Label Grid.Row="0" Grid.Column="3" Name="conficenceLabel" Content="Confidence" />
+		<Slider Grid.Row="0" Grid.Column="4" Name="confidenceSlider" Minimum="0" Maximum="1" IsSnapToTickEnabled="True" TickFrequency="0.1" TickPlacement="BottomRight" Value=".9" />
+
+		<Label Grid.Row="1" Grid.Column="3" Name="durationLabel" Content="Duration" />
+		<ComboBox Grid.Row="1" Grid.Column="4" Name="durationCombo" SelectedIndex="0" >
+			<ComboBoxItem Content="Eternal"/>
+			<ComboBoxItem Content="1 hr" />
+			<ComboBoxItem Content="5 min" />
+			<ComboBoxItem Content="1 min" />
+			<ComboBoxItem Content="30 sec" />
+			<ComboBoxItem Content="10 sec" />
+		</ComboBox>
+
+		<Label Grid.Row="1" Grid.Column="0" Name="linkTypeLabel" Content="Type" />
+		<TextBox Grid.Row="1" Grid.Column="1" Name="linkText" TabIndex="2" TextChanged="Text_TextChanged"/>
+
+		<Label Grid.Row="2" Grid.Column="0" Name="targetLabel" Content="To" />
+		<TextBox Grid.Row="2" Grid.Column="1" Name="targetText" TabIndex="3" TextChanged="Text_TextChanged" />
+		<CheckBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Name="setConfCB" Content="Set Confidence/Duration" IsChecked="True"/>
+
+		<Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="BtnAddLink" IsDefault="True" Content="Add/Update" Click="BtnAddLink_Click" />
+		<CheckBox Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Name="eventCB" Content="This is an Event" IsChecked="False"/>
+
+		<local:ModuleFooter Grid.Row="4" Grid.ColumnSpan="5"/>
+	</Grid>
 </Window>

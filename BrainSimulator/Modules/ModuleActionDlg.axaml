@@ -1,13 +1,15 @@
 <Window x:Class="BrainSimulator.Modules.ModuleActionDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Action" Height="200" Width="360" ShowInTaskbar="False">
-    <Grid x:Name="RootGrid" Margin="12" SizeChanged="Grid_SizeChanged">
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Action" Width="360" ShowInTaskbar="False">
+    <Grid x:Name="RootGrid" SizeChanged="Grid_SizeChanged" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="8"/>
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="110"/>
             <ColumnDefinition Width="200"/>
@@ -29,5 +31,6 @@
                  IsReadOnly="True"
                  TextWrapping="Wrap"
                  VerticalContentAlignment="Center"/>
+		<local:ModuleFooter Grid.Row="3" Grid.ColumnSpan="3" />
     </Grid>
 </Window>

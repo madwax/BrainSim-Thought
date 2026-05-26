@@ -37,7 +37,8 @@
 	
 	<Application.Styles>
 		<SimpleTheme />
-		<StyleInclude Source="/AppStyles.axaml" />
+		<StyleInclude Source="/Styling/AppStyles.axaml" />
+		<StyleInclude Source="/Styling/ModuleBase.axaml" />
 	</Application.Styles>
 </Application>
 

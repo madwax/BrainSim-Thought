@@ -1,7 +1,15 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleEmptyDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Empty Dialog Template" Height="170" Width="560" ShowInTaskbar="False" >
-    <Grid Margin="0,0,0,20" >
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Empty Dialog Template" Width="560" ShowInTaskbar="False" >
+    <Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
+		<local:ModuleFooter Grid.Row="0" Grid.Column="0"/>
     </Grid>
 </Window>

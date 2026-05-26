@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+			 d:DesignWidth="300"
+             x:Class="BrainSimulator.ModuleFooter"
+>
+	<UserControl.Styles>
+		<Style Selector="Grid#Footer">
+			<Setter Property="Background" Value="Red" />
+			<Style Selector="^ Label#statusLabel">
+				<Setter Property="Background" Value="Green" />
+				<Setter Property="Height" Value="28" />
+				<Setter Property="FontSize" Value="26" />
+			</Style>
+			<Style Selector="^ Button#sourceButton">
+				<Setter Property="Background" Value="Yellow" />
+				<Setter Property="Width" Value="24" />
+				<Setter Property="Height" Value="24" />
+			</Style>
+			<Style Selector="^ Button#helpButton">
+				<Setter Property="Background" Value="Blue" />
+				<Setter Property="Width" Value="24" />
+				<Setter Property="Height" Value="24" />
+			</Style>
+		</Style>
+	</UserControl.Styles>
+	<Grid ColumnDefinitions="*,Auto,Auto" Name="Footer" Margin="0">
+		<Label Grid.Column="0" Name="statusLabel" />
+		<Button Grid.Column="1" Name="sourceButton" ></Button>
+		<Button Grid.Column="2" Name="helpButton" ></Button>
+	</Grid>
+</UserControl>

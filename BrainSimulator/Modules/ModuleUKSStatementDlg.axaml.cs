@@ -40,6 +40,23 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         return true;
     }
 
+    /// <summary>
+    /// Used to swap the source text and source combo controls on the form.
+    /// </summary>
+    /// <param name="toEnable"></param>
+    private void ShowSourceCombo( bool toEnable )
+    {
+        if( toEnable == true )
+        {
+            sourceCombo.IsVisible = true;
+            sourceText.IsVisible = false;
+        }
+        else
+        {
+            sourceCombo.IsVisible = false;
+            sourceText.IsVisible = true;
+        }
+    }
 
     //these get the data back from the combobox selection 
     Thought tSource = null;
@@ -100,43 +117,37 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
                 To = UKSStatement.theUKS.GetOrAddThought(sourceParts[2])
             };
             var existing = UKSStatement.theUKS.GetLinks(r2);
-            if (existing.Count == 0)
-                tSource = UKSStatement.theUKS.AddStatement(sourceParts[0], sourceParts[1], sourceParts[2]);
+            if( existing.Count == 0 )
+            {
+                tSource = UKSStatement.theUKS.AddStatement( sourceParts[ 0 ], sourceParts[ 1 ], sourceParts[ 2 ] );
+            }
             else
             {
                 // multiple matches, create a dropdown in the UI to select which one?
-                sourceCombo.IsVisible = true;
+                ShowSourceCombo( true );
 
                 sourceCombo.Items.Clear();
                 ComboBoxItem cbi = new ComboBoxItem { Content = "<New>" };
                 ToolTip.SetTip( cbi, "Create a new Link" );
 
-                cbi.PointerReleased += ComboItem_Clicked;
-
-                sourceCombo.Items.Add(cbi);
+                sourceCombo.Items.Add( cbi );
                 sourceCombo.SelectedIndex = 0;
-
                 sourceCombo.IsDropDownOpen = true;
 
-                //Dispatcher.BeginInvoke(DispatcherPriority.Input, () => sourceCombo.IsDropDownOpen = true);
-
-                foreach (var t in existing)
+                foreach( var t in existing )
                 {
                     string toolTipText = "";
-                    foreach (var r in t.LinksTo.Where(x => x.LinkType.Label != "is-a"))
+                    foreach( var r in t.LinksTo.Where( x => x.LinkType.Label != "is-a" ) )
                         toolTipText += r.ToString() + "\n";
-                    if (!string.IsNullOrEmpty(toolTipText))
-                        toolTipText = toolTipText[..^1];
+                    if( !string.IsNullOrEmpty( toolTipText ) )
+                        toolTipText = toolTipText[ ..^1 ];
 
                     cbi = new()
                     {
                         Content = t,
                     };
                     ToolTip.SetTip( cbi, toolTipText );
-
-                    cbi.PointerReleased += ComboItem_Clicked;
-
-                    sourceCombo.Items.Add(cbi);
+                    sourceCombo.Items.Add( cbi );
                 }
                 return;
             }
@@ -186,26 +197,36 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         tSource = null;
     }
 
-    private void ComboItem_Clicked(object? sender, PointerReleasedEventArgs e)
+    private void SourceCombo_Selected(object? sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ComboBoxItem cbi) return;
-        ModuleUKSStatement UKSStatement = (ModuleUKSStatement)ParentModule;
-
-        sourceCombo.IsVisible = false;
-
-        if (cbi.Content.ToString() == "<New>")
+        if( sourceCombo.IsVisible == false )
         {
-            var sourceParts = UKSStatement.Singular(sourceText.Text.Split(" ", StringSplitOptions.RemoveEmptyEntries));
-            if (sourceParts.Length == 3)
+            return;
+        }
+
+        ShowSourceCombo( false );
+
+        ComboBoxItem cbi = ( sourceCombo.SelectedItem as ComboBoxItem );
+        if( cbi is null )
+        {
+            return;
+        }
+
+        ModuleUKSStatement UKSStatement = ( ModuleUKSStatement )ParentModule;
+
+        if( cbi.Content.ToString() == "<New>" )
+        {
+            var sourceParts = UKSStatement.Singular( sourceText.Text.Split( " ", StringSplitOptions.RemoveEmptyEntries ) );
+            if( sourceParts.Length == 3 )
             {
-                tSource = UKSStatement.theUKS.AddStatement(sourceParts[0], sourceParts[1], sourceParts[2]);
+                tSource = UKSStatement.theUKS.AddStatement( sourceParts[ 0 ], sourceParts[ 1 ], sourceParts[ 2 ] );
                 sourceText.Text = tSource.ToString();
             }
         }
         else
         {
             sourceText.Text = cbi.Content.ToString();
-            tSource = (Thought)cbi.Content;
+            tSource = ( Thought )cbi.Content;
         }
     }
 
@@ -267,27 +288,4 @@ public partial class ModuleUKSStatementDlg : ModuleBaseDlg
         }
         return true;
     }
-
-    //private void sourceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    //{
-    //    ModuleUKSStatement UKSStatement = (ModuleUKSStatement)ParentModule;
-    //    sourceCombo.Visibility = Visibility.Hidden;
-    //    if (sourceCombo.SelectedValue.ToString() == "<New>")
-    //    {
-    //        var sourceParts = UKSStatement.Singular(sourceText.Text.Split(" ", StringSplitOptions.RemoveEmptyEntries));
-    //        if (sourceParts.Length == 3)
-    //        {
-    //            Thought r1 = UKSStatement.AddLink(sourceParts[0], sourceParts[1], sourceParts[2]);
-    //            sourceText.Text = r1.ToString();
-    //        }
-    //    }
-    //    else
-    //    {
-    //        if (sourceCombo.SelectedItem is ComboBoxItem cbi)
-    //        {
-    //            sourceText.Text = cbi.Content.ToString();
-    //            tSource = (Thought)cbi.Content;
-    //        }
-    //    }
-    //}
 }

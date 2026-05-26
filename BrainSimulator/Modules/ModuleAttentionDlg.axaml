@@ -1,28 +1,35 @@
 <Window x:Class="BrainSimulator.Modules.ModuleAttentionDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Attention" Height="220" Width="520" ShowInTaskbar="False">
-    <Grid x:Name="TheGrid" Margin="10,10,10,40" SizeChanged="TheGrid_SizeChanged">
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Attention" Width="520" ShowInTaskbar="False">
+    <Grid x:Name="TheGrid" SizeChanged="TheGrid_SizeChanged">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>  
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+
+		</Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="100"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="40"/>
         </Grid.ColumnDefinitions>
 
         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="Center of Attention" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
-        <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Horizontal (90&#176;)" />
+        
+		<TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Horizontal (90&#176;)" />
         <Slider Name="HorizontalSlider" Grid.Row="1" Grid.Column="1" Minimum="-180" Maximum="180" TickFrequency="10" IsSnapToTickEnabled="False" ValueChanged="Slider_ValueChanged" />
         <TextBlock Name="HorizontalValue" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Width="60" TextAlignment="Right"/>
-        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Vertical (90&#176;)" />
+        
+		<TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Vertical (90&#176;)" />
         <Slider Name="VerticalSlider" Grid.Row="2" Grid.Column="1" Minimum="-90" Maximum="90" TickFrequency="5" IsSnapToTickEnabled="False" ValueChanged="Slider_ValueChanged" />
         <TextBlock Name="VerticalValue" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Width="60" TextAlignment="Right"/>
-        <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Current Focus:" />
-        <TextBlock Name="FocusValue" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="4,4,0,0" TextTrimming="CharacterEllipsis"/>
-    </Grid>
+
+		<TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Current Focus:" />
+        <TextBlock Name="FocusValue" Grid.Row="3" Grid.Column="1" TextTrimming="CharacterEllipsis"/>
+
+		<local:ModuleFooter Grid.Row="4" Grid.ColumnSpan="2"/>
+	</Grid>
 </Window>
