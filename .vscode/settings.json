@@ -1,0 +1,6 @@
+{
+  "axaml.trace.server": "verbose",
+  "editor.indentSize": "tabSize",
+  "editor.detectIndentation": false,
+  "editor.tabSize": 4
+}

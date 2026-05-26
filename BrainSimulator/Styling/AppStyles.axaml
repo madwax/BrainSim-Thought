@@ -75,6 +75,4 @@
 		<Setter Property="FontFamily" Value="{DynamicResource App.FontFamily}"/>
 		<Setter Property="FontSize" Value="{DynamicResource App.FontSize}"/>
 	</Style>
-
-
 </Styles>

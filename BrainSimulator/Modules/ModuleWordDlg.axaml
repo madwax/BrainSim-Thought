@@ -1,14 +1,27 @@
 <Window x:Class="BrainSimulator.Modules.ModuleWordDlg"
-        xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:local="clr-namespace:BrainSimulator"
-        Title="Add word spelling" 
-        Width="550" 
-        ShowInTaskbar="False"  >
-	<StackPanel Orientation="Vertical">
-        <Grid RowDefinitions="30,Auto,30,Auto" ColumnDefinitions="50,*,50,50" Margin="10">
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:BrainSimulator"
+    Title="Add word spelling" 
+    Width="550" 
+    ShowInTaskbar="False"  >
+    <StackPanel Orientation="Vertical">
+        <Grid Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
             <!-- Header -->
-            <Label Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Content="Add Word Spelling" FontWeight="Bold" FontSize="14" />
+            <Label Grid.Row="0" Grid.ColumnSpan="4" Content="Add Word Spelling" FontWeight="Bold" FontSize="14" />
 
             <!-- Single Word Input -->
             <Label Grid.Row="1" Grid.Column="0" Content="Word:" />
@@ -16,15 +29,13 @@
             <Button Grid.Row="1" Grid.Column="2" Name="btnAdd" Content="Add" Click="btnAdd_Click" />
 
             <!-- File Loading Section -->
-		    <Label Grid.Row="2" Grid.Column="0" Grid.RowSpan="4" Content="Load from File" FontWeight="Bold" />
-		
+            <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Content="Load from File" FontWeight="Bold" />
+        
             <Label Grid.Row="3" Grid.Column="0" Content="File:"/>
             <TextBox Grid.Row="3" Grid.Column="1" Name="txtFilePath" IsReadOnly="True" FontSize="18" />
             <Button Grid.Row="3" Grid.Column="2" Name="btnBrowse" Content="Browse..." Click="btnBrowse_Click" />
             <Button Grid.Row="3" Grid.Column="3" Name="btnLoad" Content="Load" Click="btnLoad_Click" />
         </Grid>
-	    <local:ModuleFooter />
-	</StackPanel>
-
-
+        <local:ModuleFooter/>
+    </StackPanel>
 </Window>

@@ -1,52 +1,92 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleUKSQueryDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BrainSimulator"
         Title="UKS Query" 
-        Height="550" 
         Width="530" 
-        ShowInTaskbar="False"  >
-    <Grid Name="theGrid" Margin="0,0,0,0" >
-        <TabControl Name="WhichSearch" Background="DarkGray" SelectedIndex="1" Margin="0,36,0,35">
-            <TabItem Header="Get Attribs" FontSize="18" Background="LightGray">
-                <Grid>
-                    <Label Content="From"        HorizontalAlignment="Left"   Height="33"   Margin="10,20,0,0"       FontSize="16" Width="68" VerticalAlignment="Top"/>
-                    <Label Content="Type"        HorizontalAlignment="Left"   Height="33"   Margin="10,70,0,0"    FontSize="16" Width="68" VerticalAlignment="Top"/>
-                    <Label Content="To"      HorizontalAlignment="Left"   Height="33"   Margin="10,120,0,0"   FontSize="16" Width="68" VerticalAlignment="Top"/>
-                    <Label Content="Filter"      HorizontalAlignment="Left"   Height="33"   Margin="10,170,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top" />
-                    <Label Content="Result"      HorizontalAlignment="Left"   Height="33"   Margin="10,280,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"/>
+        ShowInTaskbar="False" >
+	<Window.Styles>
+        <Style Selector="TabItem" >
+            <Style Selector="^ Grid">
+                <Style Selector="^ Label">
+                    <Setter Property="FontSize" Value="18" />
+                    <Setter Property="Background" Value="rgb(210,210,210)"/>
+                </Style>
+            </Style>
+		</Style>
+	</Window.Styles>
+    <StackPanel Orientation="Vertical" >
+        <Grid Name="theGrid" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-                    <TextBox Name="SourceTextForAttribs"    TabIndex="1"  Height="33" VerticalAlignment="Top" Margin="78,20,0,0" HorizontalAlignment="Left" Width="278" TextChanged="Text_TextChanged"/>
-                    <TextBox Name="TypeTextForAttribs"      TabIndex="2"  Height="33" VerticalAlignment="Top" Margin="78,70,0,0" HorizontalAlignment="Left" Width="278" TextChanged="Text_TextChanged"/>
-                    <TextBox Name="TargetTextForAttribs"    TabIndex="3"  Height="33" VerticalAlignment="Top" Margin="78,120,0,0" HorizontalAlignment="Left" Width="278"  TextChanged="Text_TextChanged"/>
-                    <TextBox Name="FilterTextForAttribs"    TabIndex="4"  Height="32" VerticalAlignment="Top" Margin="78,170,0,0" HorizontalAlignment="Left" Width="278" TextChanged="Text_TextChanged"/>
-                    <TextBox Name="ResultTextForAttribs"    TabIndex="5"  FontSize="18" Margin="78,280,36,10"  TextWrapping="Wrap"/>
+            <CheckBox Grid.Row="0" Name="AutoRefresh" Content="Auto-Refresh" IsChecked="True" Checked="OnAutoRefresh"/>
 
-                    <Button Name="ForAttribsQuery" IsDefault="True" Height="32" VerticalAlignment="Top" Margin="375,120,0,25" Click="OnForAttribsQuery" HorizontalAlignment="Left" Width="120"/>
-                    <CheckBox Name="FullLinksForAttribs" Content="Full Links" FontSize="16" HorizontalAlignment="Left" Height="22" Margin="78,220,0,0" VerticalAlignment="Top" Width="226"/>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Search by Attribs" FontSize="18" Background="LightGray" >
-                <Grid>
-                    <Label Content="Type"        HorizontalAlignment="Left"   Height="33"   Margin="10,20,0,0"    FontSize="16" Width="68" VerticalAlignment="Top" />
-                    <Label Content="To"      HorizontalAlignment="Left"   Height="33"   Margin="10,70,0,0"   FontSize="16" Width="68" VerticalAlignment="Top" />
-                    <Label Content="Ancestor"      HorizontalAlignment="Left"   Height="33"   Margin="10,120,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"  />
-                    <Label Content="Query"      HorizontalAlignment="Left"   Height="33"   Margin="10,170,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"/>
-                    <Label Content="Result"      HorizontalAlignment="Left"   Height="33"   Margin="15,336,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"/>
+            <TabControl Grid.Row="1" Name="WhichSearch" Background="DarkGray" SelectedIndex="1" Height="400">
+                <TabItem Header="Get Attribs" FontSize="18" Background="LightGray">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="280"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <TextBox Name="TypeTextByAttribs"      TabIndex="2"  Height="33" VerticalAlignment="Top"   FontSize="16"     Margin="78,20,213,0" TextChanged="Text_TextChanged"  KeyDown="Text_PreviewKeyDown"/>
-                    <TextBox Name="TargetTextByAttribs"    TabIndex="3"  Height="33" VerticalAlignment="Top"   FontSize="16"   Margin="78,70,213,0" TextChanged="Text_TextChanged"  KeyDown="Text_PreviewKeyDown"/>
-                    <TextBox Name="AncestorTextByAttribs"    TabIndex="4"  Height="32" VerticalAlignment="Top"   FontSize="16"   Margin="78,120,213,0" TextChanged="Text_TextChanged" KeyDown="Text_PreviewKeyDown"/>
-                    <!-- fix-->
-                    <TextBox Name="QueryTextByAttribs"    TabIndex="5"   FontSize="16" Margin="78,170,36,177"  TextWrapping="Wrap" AcceptsReturn="True" RenderTransformOrigin="0.5,0.5" />
-                    <TextBox Name="ResultTextByAttribs"    TabIndex="5"   FontSize="18" Margin="78,0,36,10"  TextWrapping="Wrap" Height="152" VerticalAlignment="Bottom"/>
-                    <Button IsDefault="True" Content="New" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,21,102,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="63" />
-                    <Button IsDefault="True" Content="Add" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,21,38,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="63" />
-                    <Button Content="Clear" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,72,36,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="127" />
-                    <Button Name="LearnByAttribs" Content="Learn" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,121,103,0" Click="BtnLearn_Click" HorizontalAlignment="Right" Width="60" />
-                    <Button Name="NoSearchByAttribs" Content="No" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,121,38,0" Click="BtnNo_Click" HorizontalAlignment="Right" Width="60" />
-                </Grid>
-            </TabItem>
-        </TabControl>
-        <CheckBox Name="AutoRefresh" Content="Auto-Refresh" IsChecked="True" HorizontalAlignment="Left" Margin="86,12,0,0" VerticalAlignment="Top" Checked="OnAutoRefresh"/>
-    </Grid>
+                        <Label Grid.Row="0" Grid.Column="0" Content="From" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Name="SourceTextForAttribs" TabIndex="1" TextChanged="Text_TextChanged"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Content="Type" Width="68" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Name="TypeTextForAttribs" TabIndex="2" TextChanged="Text_TextChanged"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="To" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Name="TargetTextForAttribs" TabIndex="3" TextChanged="Text_TextChanged"/>
+                        <Button Grid.Row="2" Grid.Column="2" Name="ForAttribsQuery" IsDefault="True" Click="OnForAttribsQuery" Width="100"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Filter" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Name="FilterTextForAttribs" TabIndex="4" TextChanged="Text_TextChanged"/>
+
+                        <CheckBox  Grid.Row="4" Grid.Column="1" Name="FullLinksForAttribs" Content="Full Links"/>
+
+                        <Label Grid.Row="5" Grid.Column="0" Content="Result" />
+                        <TextBox Grid.Row="5" Grid.Column="1" Name="ResultTextForAttribs" TabIndex="5" TextWrapping="Wrap"/>                        
+                        
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Search by Attribs" FontSize="18" Background="LightGray" >
+                    <Grid Margin="15" RowSpacing="15" ColumnSpacing="15">
+                        <Label Content="Type"        HorizontalAlignment="Left"   Height="33"   Margin="10,20,0,0"    FontSize="16" Width="68" VerticalAlignment="Top" />
+                        <Label Content="To"      HorizontalAlignment="Left"   Height="33"   Margin="10,70,0,0"   FontSize="16" Width="68" VerticalAlignment="Top" />
+                        <Label Content="Ancestor"      HorizontalAlignment="Left"   Height="33"   Margin="10,120,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"  />
+                        <Label Content="Query"      HorizontalAlignment="Left"   Height="33"   Margin="10,170,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"/>
+                        <Label Content="Result"      HorizontalAlignment="Left"   Height="33"   Margin="15,336,0,0"   FontSize="16"  Width="68" VerticalAlignment="Top"/>
+
+                        <TextBox Name="TypeTextByAttribs"      TabIndex="2"  Height="33" VerticalAlignment="Top"   FontSize="16"     Margin="78,20,213,0" TextChanged="Text_TextChanged"  KeyDown="Text_PreviewKeyDown"/>
+                        <TextBox Name="TargetTextByAttribs"    TabIndex="3"  Height="33" VerticalAlignment="Top"   FontSize="16"   Margin="78,70,213,0" TextChanged="Text_TextChanged"  KeyDown="Text_PreviewKeyDown"/>
+                        <TextBox Name="AncestorTextByAttribs"    TabIndex="4"  Height="32" VerticalAlignment="Top"   FontSize="16"   Margin="78,120,213,0" TextChanged="Text_TextChanged" KeyDown="Text_PreviewKeyDown"/>
+                        <!-- fix-->
+                        <TextBox Name="QueryTextByAttribs"    TabIndex="5"   FontSize="16" Margin="78,170,36,177"  TextWrapping="Wrap" AcceptsReturn="True" RenderTransformOrigin="0.5,0.5" />
+                        <TextBox Name="ResultTextByAttribs"    TabIndex="5"   FontSize="18" Margin="78,0,36,10"  TextWrapping="Wrap" Height="152" VerticalAlignment="Bottom"/>
+                        <Button IsDefault="True" Content="New" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,21,102,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="63" />
+                        <Button IsDefault="True" Content="Add" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,21,38,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="63" />
+                        <Button Content="Clear" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,72,36,0" Click="BtnLinks_Click" HorizontalAlignment="Right" Width="127" />
+                        <Button Name="LearnByAttribs" Content="Learn" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,121,103,0" Click="BtnLearn_Click" HorizontalAlignment="Right" Width="60" />
+                        <Button Name="NoSearchByAttribs" Content="No" Height="32" VerticalAlignment="Top" FontSize="16" Margin="0,121,38,0" Click="BtnNo_Click" HorizontalAlignment="Right" Width="60" />
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        <local:ModuleFooter />
+    </StackPanel>
 </Window>

@@ -1,37 +1,50 @@
 <Window x:Class="BrainSimulator.Modules.ModuleWellBeingDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:BrainSimulator"
         Title="Well-Being" 
-        Height="170" 
-        Width="360" 
-        Background="Gray" 
-        ShowInTaskbar="False" 
-        FontSize="16" >
-    <Grid >
-        <Slider Name="WellBeingSlider"
+        Width="300" 
+        ShowInTaskbar="False">
+    <StackPanel Orientation="Vertical">
+        <Grid Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Slider Grid.Row="0" 
+                Grid.ColumnSpan="3"
+                Name="WellBeingSlider"
                 Minimum="-1" Maximum="1"
                 LargeChange="0.1" SmallChange="0.05"
                 TickFrequency="0.5" IsSnapToTickEnabled="False" TickPlacement="Outside"
-                Height="40" VerticalAlignment="Top"
-                Margin="20,37,20,0"
+                Width="250"
                 ValueChanged="WellBeingSlider_ValueChanged"/>
-        <RepeatButton Name="DecreaseButton" FontSize="24"
-                      Padding="0"
-                      Width="40" Height="30"
-                      HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                      Margin="80,0,0,35"
-                      Delay="250" Interval="100"
-                      Click="DecreaseButton_Click">
-            <TextBlock Text="-" HorizontalAlignment="Center" VerticalAlignment="Center" Height="36"/>
-        </RepeatButton>
-        <RepeatButton x:Name="IncreaseButton" FontSize="24"
-                      Padding="0"
-                      Width="40" Height="30"
-                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                      Margin="0,0,86,35"
-                      Delay="250" Interval="100"
-                      Click="IncreaseButton_Click">
-            <TextBlock Text="+" VerticalAlignment="Center" Height="36"/>
-        </RepeatButton>
-    </Grid>
+            <RepeatButton Grid.Row="1" Grid.Column="0"
+                Name="DecreaseButton" 
+                FontSize="24"
+                Padding="0"
+                Width="40" Height="30"
+                Delay="250" Interval="100"
+                Click="DecreaseButton_Click">
+                <TextBlock Text="-" HorizontalAlignment="Center" VerticalAlignment="Center" Height="36"/>
+            </RepeatButton>
+            <RepeatButton 
+                Grid.Row="1"
+                Grid.Column="2"
+                Name="IncreaseButton" 
+                FontSize="24"
+                Padding="0"
+                Width="40" Height="30"
+                Delay="250" Interval="100"
+                Click="IncreaseButton_Click">
+                <TextBlock Text="+" HorizontalAlignment="Center" VerticalAlignment="Center" Height="36"/>
+            </RepeatButton>
+        </Grid>
+        <local:ModuleFooter />
+    </StackPanel>
 </Window>

@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UKS", "UKS\UKS.csproj", "{7
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonProj", "PythonProj\PythonProj.pyproj", "{CA6D501B-6295-42CF-A444-AAFE9525A0EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainSimMAC", "BrainSimMAC\BrainSimMAC.csproj", "{56FEB147-FC89-4712-939B-A6C08D5B2126}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{9CF47860-2CEA-F379-09D8-9AEF27965D12}"
 EndProject
 Global

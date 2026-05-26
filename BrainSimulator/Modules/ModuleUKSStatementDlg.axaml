@@ -4,52 +4,52 @@
 		xmlns:local="clr-namespace:BrainSimulator"
         Title="UKS Add Statement" 
         ShowInTaskbar="False">
-	<Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" Margin="10">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="40"/>
-			<ColumnDefinition Width="150"/>
-			<ColumnDefinition Width="10"/>
-			<ColumnDefinition Width="80"/>
-			<ColumnDefinition Width="150"/>
-		</Grid.ColumnDefinitions>
-			
-		<Label Grid.Row="0" Grid.Column="0" Name="sourceeLabel" Content="From" />
+    <StackPanel Orientation="Vertical">    
+    	<Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="150"/>
+            </Grid.ColumnDefinitions>
+                
+            <Label Grid.Row="0" Grid.Column="0" Name="sourceeLabel" Content="From" />
 
-		<TextBox Grid.Row="0" Grid.Column="1"  Name="sourceText" TabIndex="1" TextChanged="Text_TextChanged" />
-		<ComboBox Grid.Row="0" Grid.Column="1" Name="sourceCombo" TabIndex="1" IsVisible="False" SelectionChanged="SourceCombo_Selected" />
+            <TextBox Grid.Row="0" Grid.Column="1"  Name="sourceText" TabIndex="1" TextChanged="Text_TextChanged" />
+            <ComboBox Grid.Row="0" Grid.Column="1" Name="sourceCombo" TabIndex="1" IsVisible="False" SelectionChanged="SourceCombo_Selected" />
 
-		<Label Grid.Row="0" Grid.Column="3" Name="conficenceLabel" Content="Confidence" />
-		<Slider Grid.Row="0" Grid.Column="4" Name="confidenceSlider" Minimum="0" Maximum="1" IsSnapToTickEnabled="True" TickFrequency="0.1" TickPlacement="BottomRight" Value=".9" />
+            <Label Grid.Row="0" Grid.Column="3" Name="conficenceLabel" Content="Confidence" />
+            <Slider Grid.Row="0" Grid.Column="4" Name="confidenceSlider" Minimum="0" Maximum="1" IsSnapToTickEnabled="True" TickFrequency="0.1" TickPlacement="BottomRight" Value=".9" />
 
-		<Label Grid.Row="1" Grid.Column="3" Name="durationLabel" Content="Duration" />
-		<ComboBox Grid.Row="1" Grid.Column="4" Name="durationCombo" SelectedIndex="0" >
-			<ComboBoxItem Content="Eternal"/>
-			<ComboBoxItem Content="1 hr" />
-			<ComboBoxItem Content="5 min" />
-			<ComboBoxItem Content="1 min" />
-			<ComboBoxItem Content="30 sec" />
-			<ComboBoxItem Content="10 sec" />
-		</ComboBox>
+            <Label Grid.Row="1" Grid.Column="3" Name="durationLabel" Content="Duration" />
+            <ComboBox Grid.Row="1" Grid.Column="4" Name="durationCombo" SelectedIndex="0" >
+                <ComboBoxItem Content="Eternal"/>
+                <ComboBoxItem Content="1 hr" />
+                <ComboBoxItem Content="5 min" />
+                <ComboBoxItem Content="1 min" />
+                <ComboBoxItem Content="30 sec" />
+                <ComboBoxItem Content="10 sec" />
+            </ComboBox>
 
-		<Label Grid.Row="1" Grid.Column="0" Name="linkTypeLabel" Content="Type" />
-		<TextBox Grid.Row="1" Grid.Column="1" Name="linkText" TabIndex="2" TextChanged="Text_TextChanged"/>
+            <Label Grid.Row="1" Grid.Column="0" Name="linkTypeLabel" Content="Type" />
+            <TextBox Grid.Row="1" Grid.Column="1" Name="linkText" TabIndex="2" TextChanged="Text_TextChanged"/>
 
-		<Label Grid.Row="2" Grid.Column="0" Name="targetLabel" Content="To" />
-		<TextBox Grid.Row="2" Grid.Column="1" Name="targetText" TabIndex="3" TextChanged="Text_TextChanged" />
-		<CheckBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Name="setConfCB" Content="Set Confidence/Duration" IsChecked="True"/>
+            <Label Grid.Row="2" Grid.Column="0" Name="targetLabel" Content="To" />
+            <TextBox Grid.Row="2" Grid.Column="1" Name="targetText" TabIndex="3" TextChanged="Text_TextChanged" />
+            <CheckBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Name="setConfCB" Content="Set Confidence/Duration" IsChecked="True"/>
 
-		<Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="BtnAddLink" IsDefault="True" Content="Add/Update" Click="BtnAddLink_Click" />
-		<CheckBox Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Name="eventCB" Content="This is an Event" IsChecked="False"/>
-
-		<local:ModuleFooter Grid.Row="4" Grid.ColumnSpan="5"/>
-	</Grid>
+            <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="BtnAddLink" IsDefault="True" Content="Add/Update" Click="BtnAddLink_Click" />
+            <CheckBox Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Name="eventCB" Content="This is an Event" IsChecked="False"/>
+    	</Grid>
+        <local:ModuleFooter />
+    </StackPanel>
 </Window>
