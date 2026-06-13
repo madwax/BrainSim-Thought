@@ -13,6 +13,7 @@
 	</Style>
 
 	<Style Selector="Button,ComboBox">
+		<Setter Property="Height" Value="{DynamicResource Control.Height}"/>
 		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
 		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
 		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />
@@ -48,6 +49,7 @@
 	</Style>
 
 	<Style Selector="TextBox">
+		<Setter Property="Height" Value="{DynamicResource Control.Height}"/>
 		<Setter Property="FontFamily" Value="{DynamicResource App.Font.Family}"/>
 		<Setter Property="FontSize" Value="{DynamicResource App.Font.Size}"/>
 		<Setter Property="BorderThickness" Value="{DynamicResource Control.Boarder.Thickness}" />

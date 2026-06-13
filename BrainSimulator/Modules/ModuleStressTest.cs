@@ -25,7 +25,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Pluralize.NET;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
+// using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 namespace BrainSimulator.Modules
 {

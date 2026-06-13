@@ -3,88 +3,66 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:local="clr-namespace:BrainSimulator"
         Title="Universal Knowledge Store (UKS)" 
-        Height="450" 
         Width="800" 
         ShowInTaskbar="False" 
         Loaded="OnLoaded"
         Opened="OnOpened"
-        Closed="OnClosed"
-        >
-    <Window.Styles> 
-        <Style Selector="Grid#Settings">
-            <Setter Property="Background" Value="{DynamicResource Toolbar.Background}" />
-            <Style Selector="^ > Button, ^ > CheckBox" >
-                <Setter Property="Margin" Value="5,5,5,5" />				
-            </Style>
-            <Style Selector="^ > StackPanel" >
-                <Setter Property="Margin" Value="5,5,5,5" />	
-                <Setter Property="HorizontalAlignment" Value="Left" />
-                <Style Selector="^ > Label">
-                    <Setter Property="FontSize" Value="14" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                </Style>
-                <Style Selector="^ > ComboBox">
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                </Style>
-            </Style>
-            <Style Selector="^ > Label" >
-                <Setter Property="Margin" Value="5,5,5,5" />				
-                <Setter Property="FontSize" Value="14" />				
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="FontWeight" Value="Bold" />
-            </Style>
-            <Style Selector="^ > Button#RefreshButton">
-                <Style Selector="^ Image">
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="HorizontalAlignment" Value="Center" />
-    				<Setter Property="Width" Value="18" />
-	    			<Setter Property="Height" Value="18" />
-                </Style>
-             </Style>
-        </Style>
-        <Style Selector="ContextMenu.ContextMenu">
-			<Setter Property="Background" Value="Red" />
-        </Style>
+        Closed="OnClosed" >
+	<Window.Styles>
+	</Window.Styles>
+	<StackPanel Orientation="Vertical" >
+		<Grid Classes="RootGrid">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="100"/>
+				<ColumnDefinition Width="150"/>
+				<ColumnDefinition Width="150"/>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto"/>
+			</Grid.ColumnDefinitions>
 
-        <Style Selector="ContextMenu.ContextMenuLinks">
-			<Setter Property="Background" Value="Green" />
-        </Style>
+			<!-- Colm 0 -->
+			<StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" >
+				<Button Name="InitializeButton" Click="OnInitializeButton" Content="Initialize" VerticalAlignment="Center"/>
+				<Button Grid.ColumnSpan="2" Name="RefreshButton" Click="OnRefreshButton" IsEnabled="False" ToolTip.Tip="Refresh the Tree" >
+					<Image Source="/Resources/Icons/refresh-3104.png" />
+				</Button>
+			</StackPanel>
 
-    </Window.Styles>
-        <Grid ColumnDefinitions="*" RowDefinitions="Auto,*,Auto" >
-			<Grid Name="Settings" ColumnDefinitions="auto,auto,auto,auto,auto" RowDefinitions="35,35" Grid.Row="0">
-                <Button Name="InitializeButton" Click="OnInitializeButton" Content="Initialize" Width="90" Grid.Column="0" Grid.Row="0" />
-                <Button Name="RefreshButton" Click="OnRefreshButton" Grid.Column=" 0" Grid.Row="1" IsEnabled="False" ToolTip.Tip="Refresh the Tree" >
-                    <Image Source="/Resources/Icons/refresh-3104.png" />
-                </Button>
+			<!-- Colm 1 -->
+			<CheckBox Grid.Column="1" Grid.Row="0" Name="detailsCB" Content="Show Details" IsCheckedChanged="OnGeneralSettingChanged" />
+			<CheckBox Grid.Column="1" Grid.Row="1" Name="AutoRefresh" IsChecked="True" Content="Auto-Refresh" IsCheckedChanged="OnAutoRefreshChanged" />
 
-                <CheckBox Name="detailsCB" Content="Show Details" Width="120" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="1" Grid.Row="0"/>
-                <CheckBox Name="AutoRefresh" IsChecked="True" Content="Auto-Refresh" Width="120" IsCheckedChanged="OnAutoRefreshChanged" Grid.Column="1" Grid.Row="1" />
+			<!-- Colm 2 -->
+			<CheckBox Grid.Column="2" Grid.Row="0" Name="reverseCB" IsChecked="False" Content="Reverse Links." IsCheckedChanged="OnGeneralSettingChanged" />
+			<CheckBox Grid.Column="2" Grid.Row="1" Name="showConditionals" IsChecked="False" Content="Show Conditionals" IsCheckedChanged="OnGeneralSettingChanged" />
 
-                <CheckBox Name="reverseCB" IsChecked="False" Content="Reverse Links." Width="161" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="2" Grid.Row="0" />
-                <CheckBox Name="showConditionals" IsChecked="False" Content="Show Conditionals" Width="161" IsCheckedChanged="OnGeneralSettingChanged" Grid.Column="2" Grid.Row="1" />
+			<!-- Colm 3 -->
+			<StackPanel Grid.Column="3" Grid.Row="0" Orientation="Horizontal">
+				<Label Content="Root:" />
+				<AutoCompleteBox Name="CurrentRoot" IsTextCompletionEnabled="True" TextChanged="OnCurrentRootInputChanged" KeyUp="OnCurrentRootKeyUp" Width="180" />
+				<Button Name="RootHistory" Content="History" Click="OnCurrentRootHistory" >
+					<Button.ContextMenu>
+						<ContextMenu Name="CurrentRootHistory" />
+					</Button.ContextMenu>
+				</Button>
+			</StackPanel>
+			<Label Grid.Column="3" Grid.Row="1" Content="" Name="UKSInformation" />
+			
+			<!-- Colm 4 -->
+			<Button Grid.Column="4" Grid.Row="0" Content="Import" Width="70" Click="OnImport" />
+			<Button Grid.Column="4" Grid.Row="1" Content="Export" Width="70" Click="OnExport" />
+		</Grid>
 
-                <StackPanel Orientation="Horizontal" Grid.Column="3" Grid.Row="0">
-                    <Label Content="Root:" />
-                    <AutoCompleteBox Name="CurrentRoot" IsTextCompletionEnabled="True" TextChanged="OnCurrentRootInputChanged" KeyUp="OnCurrentRootKeyUp" Width="180" />
-                    <Button Name="RootHistory" Content="History" Click="OnCurrentRootHistory" >
-						<Button.ContextMenu>
-                            <ContextMenu Name="CurrentRootHistory" />
-                        </Button.ContextMenu>
-                    </Button>
-                </StackPanel>
-                <Label Content="" Name="UKSInformation" Width="220" Grid.Column="3" Grid.Row="1"/>
-                <Button Content="Import" Width="70" Click="OnImport" Grid.Column="4" Grid.Row="0" />
-                <Button Content="Export" Width="70" Click="OnExport" Grid.Column="4" Grid.Row="1" />
-            </Grid>
-            <TreeView Name="TheTreeView" 
-                      Grid.Row="1"
-                      SizeChanged="OnTheTreeViewSized" 
-                      PointerEntered="OnTheTreeViewPointerEnter"
-                      PointerExited="OnTheTreeViewPointerLeave" 
-                      PointerWheelChanged="OnTheTreeViewPointerWheel"
-                      >
-            </TreeView>
-			<local:ModuleFooter Grid.Row="2" />
-        </Grid>
+		<TreeView Name="TheTreeView" Height="400"
+		  SizeChanged="OnTheTreeViewSized"
+		  PointerEntered="OnTheTreeViewPointerEnter"
+		  PointerExited="OnTheTreeViewPointerLeave"
+		  PointerWheelChanged="OnTheTreeViewPointerWheel" >
+		</TreeView>
+		<local:ModuleFooter />
+	</StackPanel>	
 </Window>

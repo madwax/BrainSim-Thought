@@ -122,6 +122,10 @@
     <None Include="..\PythonProj\utils.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Modules\ModuleEmpty.cs" />
+    <None Include="Modules\ModuleEmptyDlg.axaml.cs" />
+    <None Include="Modules\ModuleOnlineInfo.cs" />
+    <None Include="Modules\ModuleOnlineInfoDlg.axaml.cs" />
     <None Include="..\PythonProj\module*.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -131,6 +135,16 @@
     <Compile Remove="Modules\Vision\**" />
     <EmbeddedResource Remove="Modules\Vision\**" />
     <None Remove="Modules\Vision\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaXaml Remove="Modules\ModuleEmptyDlg.axaml" />
+    <AvaloniaXaml Remove="Modules\ModuleOnlineInfoDlg.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Modules\ModuleEmpty.cs" />
+    <Compile Remove="Modules\ModuleEmptyDlg.axaml.cs" />
+    <Compile Remove="Modules\ModuleOnlineInfo.cs" />
+    <Compile Remove="Modules\ModuleOnlineInfoDlg.axaml.cs" />
   </ItemGroup>
   <!--  <ItemGroup>
     <AvaloniaXaml Remove="Modules\ModuleActionDlg.axaml" />

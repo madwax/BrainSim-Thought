@@ -104,9 +104,12 @@ public partial class ModuleUKSDlg : ModuleBaseDlg
     //@{
     private void OnLoaded( object? sender, RoutedEventArgs e )
     {
-        ModuleUKS parent = ( ModuleUKS )ParentModule;
-        LoadRootHistory( parent.GetSavedDlgAttribute( "RootHistory" ) );
-        CurrentRoot.Text = parent.GetSavedDlgAttribute( "Root" );
+        if( ParentModule is not null )
+        {
+            ModuleUKS parent = ( ModuleUKS )ParentModule;
+            LoadRootHistory( parent.GetSavedDlgAttribute( "RootHistory" ) );
+            CurrentRoot.Text = parent.GetSavedDlgAttribute( "Root" );
+        }
     }
 
     private void OnOpened( object? sender, EventArgs e )

@@ -2,41 +2,91 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:local="clr-namespace:BrainSimulator"
-        Title="Add to Mental Model" Width="360" ShowInTaskbar="False" >
-    <Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="Auto"/>
-			<ColumnDefinition Width="*"/>
-			<ColumnDefinition Width="Auto"/>
-		</Grid.ColumnDefinitions>
+        Title="Add to Mental Model" 
+		ShowInTaskbar="False" >
+	<Window.Styles>
+		<Style Selector="TextBlock" >
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="HorizontalAlignment" Value="Center" />
+			<Setter Property="FontSize" Value="16" />
+		</Style>
+		<Style Selector="TextBox" >
+			<Setter Property="FontSize" Value="16" />
+		</Style>
+	</Window.Styles>
+	<StackPanel Orientation="Vertical">
+		<Grid Classes="RootGrid">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+				<ColumnDefinition Width="60"/>
+			</Grid.ColumnDefinitions>			
+		
+			<!-- row 0 -->
+			<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Thought" />
+			<AutoCompleteBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="3" Name="ThoughtBox"
+				IsTextCompletionEnabled="True"
+				Loaded="ThoughtBox_Loaded"
+				KeyDown="ThoughtBox_KeyDown"
+				TextChanged="ThoughtBox_TextChanged"
+				/>
+			<Button Grid.Row="0" Grid.Column="5" Name="ThoughtBoxHistory" Content="History" Click="ThoughtBoxHistory_Clicked">
+				<Button.ContextMenu>
+					<ContextMenu Name="ThoughtBoxHistory_Current" />
+				</Button.ContextMenu>
+			</Button>
 
-		<TextBlock Grid.Row="0" Grid.Column="0" Text="Thought"/>
-        <!-- TODO Port problem No StaysOpenOnEdit, had to remove -->
-        <AutoCompleteBox Grid.Row="0" Grid.Column="1" Name="ThoughtBox" 
-            IsTextCompletionEnabled="True"
-            Loaded="ThoughtBox_Loaded"
-            KeyDown="ThoughtBox_KeyDown"
-            TextChanged="ThoughtBox_TextChanged"
-            />
-        <Button Grid.Row="0" Grid.Column="2" Name="ThoughtBoxHistory" Content="History" Click="ThoughtBoxHistory_Clicked">
-			<Button.ContextMenu>
-                <ContextMenu Name="ThoughtBoxHistory_Current" />
-            </Button.ContextMenu>
-        </Button>
-		<StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" >
-            <TextBlock Text="Az&#186;" />
-            <TextBox Name="AzimuthBox" Width="50" />
-            <TextBlock Text="Elev&#186;" />
-            <TextBox Name="ElevationBox" Width="50" />
-            <TextBlock Text="Dist"/>
-            <TextBox Name="DistanceBox" Width="50" />
-            <Button Content="OK" Width="70" Click="Ok_Click"/>
-		</StackPanel>
-		<local:ModuleFooter Grid.Row="4" Grid.ColumnSpan="3"/>
-	</Grid>
+			<!-- row 1 -->
+			<TextBlock Grid.Row="1" Grid.Column="0" Text="Az&#186;" />
+			<TextBox Grid.Row="1" Grid.Column="1" Name="AzimuthBox" />
+			<TextBlock Grid.Row="1" Grid.Column="2" Text="Elev&#186;" />
+			<TextBox Grid.Row="1" Grid.Column="3" Name="ElevationBox"  />
+			<TextBlock Grid.Row="1" Grid.Column="4" Text="Dist" />
+			<TextBox Grid.Row="1" Grid.Column="5" Name="DistanceBox" />
+			<Button Grid.Row="1" Grid.Column="6" Content="OK" Click="Ok_Click" /> 
+		</Grid>
+
+		<!--
+        <Grid Classes="Form">
+			<Grid.RowDefinitions>
+			    <RowDefinition Height="Auto"/>
+			    <RowDefinition Height="Auto"/>
+		    </Grid.RowDefinitions>
+		    <Grid.ColumnDefinitions>
+			    <ColumnDefinition Width="*"/>
+		    </Grid.ColumnDefinitions>
+		    <TextBlock Grid.Row="0" Grid.Column="0" Text="Thought"/>
+            TODO Port problem No StaysOpenOnEdit, had to remove
+		
+            <AutoCompleteBox Grid.Row="0" Grid.Column="1" Name="ThoughtBox" 
+                IsTextCompletionEnabled="True"
+                Loaded="ThoughtBox_Loaded"
+                KeyDown="ThoughtBox_KeyDown"
+                TextChanged="ThoughtBox_TextChanged"
+                />
+            <Button Grid.Row="0" Grid.Column="2" Name="ThoughtBoxHistory" Content="History" Click="ThoughtBoxHistory_Clicked">
+			    <Button.ContextMenu>
+                    <ContextMenu Name="ThoughtBoxHistory_Current" />
+                </Button.ContextMenu>
+            </Button>
+		    <StackPanel Grid.Row="1" Grid.Column="0"  Orientation="Horizontal" >
+                <TextBlock Text="Az&#186;" />
+                <TextBox Name="AzimuthBox" />
+                <TextBlock Text="Elev&#186;" />
+                <TextBox Name="ElevationBox"  />
+                <TextBlock Text="Dist"/>
+                <TextBox Name="DistanceBox" />
+                <Button Content="OK" Click="Ok_Click"/>
+		    </StackPanel>
+	    </Grid> -->
+	    <local:ModuleFooter/>
+	</StackPanel>
 </Window>

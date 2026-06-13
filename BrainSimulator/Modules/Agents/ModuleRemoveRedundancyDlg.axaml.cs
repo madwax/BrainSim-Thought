@@ -23,7 +23,6 @@ namespace BrainSimulator.Modules
         public ModuleRemoveRedundancyDlg()
         {
             InitializeComponent();
-
             this.Loaded += OnEnableDebugStream;
         }
 

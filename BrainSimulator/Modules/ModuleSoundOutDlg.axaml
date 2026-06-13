@@ -1,33 +1,51 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleSoundOutDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sound Out" Height="170" Width="360" ShowInTaskbar="False">
-    <Grid >
-        <Button Content="Play Sound" Width="120" Height="30" Click="PlaySound_Click" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top"/>
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Sound Out" Width="300" ShowInTaskbar="False">
+	<Window.Styles>
+		<Style Selector="Label.formLabel">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="HorizontalAlignment" Value="Right" />
+		</Style>		
+	</Window.Styles>
+	<StackPanel Orientation="Vertical" >
+		<Grid Classes="RootGrid" >
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="80"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
 
-        <!-- Add these after existing controls -->
-        <StackPanel Orientation="Horizontal" Margin="81,48,0,0" HorizontalAlignment="Left" Width="270" Height="23" VerticalAlignment="Top">
-            <Label Content="Cadence:" VerticalAlignment="Center" Width="100" Height="34"/>
-            <ComboBox Name="cbCadence" Width="150" Margin="5,0" 
-              SelectionChanged="cbCadence_SelectionChanged">
-                <ComboBoxItem Content="50" />
-                <ComboBoxItem Content="75" />
-                <ComboBoxItem Content="100" IsSelected="True"/>
-                <ComboBoxItem Content="125" />
-                <ComboBoxItem Content="150" />
-                <ComboBoxItem Content="200" />
-            </ComboBox>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="81,83,0,0" HorizontalAlignment="Left" Width="263" Height="23" VerticalAlignment="Top">
-            <Label Content="Pitch Offset:" VerticalAlignment="Center" Width="100" Height="37"/>
-            <ComboBox Name="cbPitchOffset" Width="150" Margin="5,0"
-              SelectionChanged="cbPitchOffset_SelectionChanged">
-                <ComboBoxItem Content="-12" />
-                <ComboBoxItem Content="-6" />
-                <ComboBoxItem Content="0" IsSelected="True"/>
-                <ComboBoxItem Content="6" />
-                <ComboBoxItem Content="12" />
-            </ComboBox>
-        </StackPanel>
-    </Grid>
+			<!--Row 0 -->
+			<Label Grid.Row="0" Grid.Column="0" Classes="formLabel" Content="Cadence:" />
+			<ComboBox Grid.Row="0" Grid.Column="1" Name="cbCadence" SelectionChanged="cbCadence_SelectionChanged">
+				<ComboBoxItem Content="50" />
+				<ComboBoxItem Content="75" />
+				<ComboBoxItem Content="100" IsSelected="True"/>
+				<ComboBoxItem Content="125" />
+				<ComboBoxItem Content="150" />
+				<ComboBoxItem Content="200" />
+			</ComboBox>
+
+			<!--Row 1 -->
+			<Label Grid.Row="1" Grid.Column="0" Classes="formLabel" Content="Pitch Offset:" />
+			<ComboBox Grid.Row="1" Grid.Column="1"  Name="cbPitchOffset" SelectionChanged="cbPitchOffset_SelectionChanged">
+				<ComboBoxItem Content="-12" />
+				<ComboBoxItem Content="-6" />
+				<ComboBoxItem Content="0" IsSelected="True"/>
+				<ComboBoxItem Content="6" />
+				<ComboBoxItem Content="12" />
+			</ComboBox>
+
+			<!--Row 2 -->
+			<Button Grid.Row="2" Grid.Column="1" Content="Play Sound" Click="PlaySound_Click" />
+
+		</Grid>
+		<local:ModuleFooter />
+	</StackPanel>
 </Window>

@@ -4,10 +4,12 @@
 		xmlns:local="clr-namespace:BrainSimulator"
         Title="UKS Add Statement" 
         ShowInTaskbar="False">
+	<Window.Styles>
+
+	</Window.Styles>	
     <StackPanel Orientation="Vertical">    
-    	<Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" >
+    	<Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" Classes="RootGrid" >
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>

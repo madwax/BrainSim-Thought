@@ -2,35 +2,35 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:local="clr-namespace:BrainSimulator"
-        Title="Action" Width="360" ShowInTaskbar="False">
-    <Grid x:Name="RootGrid" SizeChanged="Grid_SizeChanged" Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="8"/>
-            <RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        Title="Action" 
+		Width="320" 
+		ShowInTaskbar="False" >
+	<StackPanel Orientation="Vertical">
+        <Grid Classes="RootGrid" SizeChanged="Grid_SizeChanged">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="Auto"/>
+			    <RowDefinition Height="Auto"/>
+		    </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Last Context:"/>
+            <TextBox Name="LastContextTextBox"
+                     Grid.Row="0" Grid.Column="1"
+                     IsReadOnly="True"
+                     TextWrapping="Wrap"
+                     VerticalContentAlignment="Center"/>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Last Context:"/>
-        <TextBox Name="LastContextTextBox"
-                 Grid.Row="0" Grid.Column="1"
-                 Margin="6,0,0,0"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap"
-                 VerticalContentAlignment="Center"/>
-
-        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Last Action:"/>
-        <TextBox Name="LastActionTextBox"
-                 Grid.Row="2" Grid.Column="1"
-                 Margin="6,0,0,0"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap"
-                 VerticalContentAlignment="Center"/>
-		<local:ModuleFooter Grid.Row="3" Grid.ColumnSpan="3" />
-    </Grid>
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Last Action:"/>
+            <TextBox Name="LastActionTextBox"
+                     Grid.Row="2" Grid.Column="1"
+                     IsReadOnly="True"
+                     TextWrapping="Wrap"
+                     VerticalContentAlignment="Center"/>
+    	</Grid>
+	    <local:ModuleFooter />
+    </StackPanel>
 </Window>

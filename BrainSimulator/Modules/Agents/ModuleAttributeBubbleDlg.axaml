@@ -4,7 +4,7 @@
         Title="Attribute Bubble Agent" 
         ShowInTaskbar="False"
     >
-    <Grid Name="theGrid" SizeChanged="TheGrid_SizeChanged" >
+    <Grid Name="theGrid" Classes="RootGrid" SizeChanged="TheGrid_SizeChanged" >
         <Button Content="Run Once" HorizontalAlignment="Left" Margin="100,0,0,29" Width="105" Click="Button_Click" Height="30" VerticalAlignment="Bottom"/>
         <ScrollViewer Name="DebugMessageView" Margin="25,24,20,86" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     	    <ListBox Name="DebugMessages" ></ListBox>	

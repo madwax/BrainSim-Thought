@@ -46,7 +46,6 @@ namespace BrainSimulator.Modules
 
         private void DrawTheGraph()
         {
-
             string root = "Object";
             ModuleShowGraph parent = ( ModuleShowGraph )base.ParentModule;
             Thought uksDlg = parent.theUKS.Labeled( "ModuleUKS0" );

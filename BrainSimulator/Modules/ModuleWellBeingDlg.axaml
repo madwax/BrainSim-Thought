@@ -6,7 +6,7 @@
         Width="300" 
         ShowInTaskbar="False">
     <StackPanel Orientation="Vertical">
-        <Grid Margin="5">
+        <Grid Classes="RootGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>

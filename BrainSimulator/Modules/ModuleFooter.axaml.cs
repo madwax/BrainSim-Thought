@@ -6,6 +6,11 @@ namespace BrainSimulator;
 
 public partial class ModuleFooter : UserControl
 {
+
+
+
+
+
     public ModuleFooter()
     {
         InitializeComponent();

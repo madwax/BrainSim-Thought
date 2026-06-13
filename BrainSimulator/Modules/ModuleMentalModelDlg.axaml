@@ -2,53 +2,56 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:local="clr-namespace:BrainSimulator"
-        Title="MentelModel Dialog Template" Height="220" Width="620" ShowInTaskbar="False" >
-    <Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="*"/>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="*"/>
-		</Grid.ColumnDefinitions>		
-		
-        <Border Grid.Row="0" Grid.Column="0" Background="DarkGray" ClipToBounds="True" >
-            <Canvas Name="theCanvas"
-                    Background="DarkGray"
-                    ClipToBounds="True"
-                    PointerWheelChanged="TheCanvas_MouseWheel"
-                    PointerPressed="TheCanvas_PointerPressed"
-                    PointerReleased="TheCanvas_PointerReleased"
-                    PointerMoved="TheCanvas_MouseMove"
-                    PointerExited="TheCanvas_MouseLeave"
-                    PointerEntered="TheCanvas_MouseEnter"
-                    >
-                <Canvas.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform ScaleX="1" ScaleY="1" />
-                        <TranslateTransform X="0" Y="0" />
-                    </TransformGroup>
-                </Canvas.RenderTransform>
-            </Canvas>
-        </Border>
-        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
-            <TextBlock Text="Zoom" Margin="0,0,6,0" VerticalAlignment="Center"/>
-            <Slider Name="ZoomSlider"
-                    Width="180"
-                    Minimum="0.25"
-                    Maximum="4"
-                    Value="1"
-                    TickFrequency="0.25"
-                    IsSnapToTickEnabled="True"
-                    ValueChanged="ZoomSlider_ValueChanged" />
-            <Button Content="Reset" Width="70" Margin="10,0,0,0" Click="ResetView_Click"/>
-            <Button Content="←" Width="32" Margin="10,0,0,0" Click="RotateLeft_Click"/>
-            <Button Content="↑" Width="32" Margin="6,0,0,0" Click="RotateUp_Click"/>
-            <Button Content="↓" Width="32" Margin="6,0,0,0" Click="RotateDown_Click"/>
-            <Button Content="→" Width="32" Margin="6,0,0,0" Click="RotateRight_Click"/>
-            <TextBlock Text="Pan: drag   Zoom: wheel/slider" Margin="14,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
-		<local:ModuleFooter Grid.Row="2" Grid.Column="0"/>
-    </Grid>
+        Title="MentelModel Dialog Template" 
+		Width="620" 
+		ShowInTaskbar="False" >
+	<StackPanel Orientation="Vertical" >
+        <Grid Classes="RootGrid">
+		    <Grid.RowDefinitions>
+			    <RowDefinition Height="400"/>
+			    <RowDefinition Height="Auto"/>
+		    </Grid.RowDefinitions>
+		    <Grid.ColumnDefinitions>
+			    <ColumnDefinition Width="*"/>
+		    </Grid.ColumnDefinitions>		
+            <Border Grid.Row="0" Grid.Column="0" Background="DarkGray" ClipToBounds="True" >
+                <Canvas Name="theCanvas"
+                        Background="DarkGray"
+                        ClipToBounds="True"
+                        PointerWheelChanged="TheCanvas_MouseWheel"
+                        PointerPressed="TheCanvas_PointerPressed"
+                        PointerReleased="TheCanvas_PointerReleased"
+                        PointerMoved="TheCanvas_MouseMove"
+                        PointerExited="TheCanvas_MouseLeave"
+                        PointerEntered="TheCanvas_MouseEnter"
+                        >
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                            <TranslateTransform X="0" Y="0" />
+                        </TransformGroup>
+                    </Canvas.RenderTransform>
+                </Canvas>
+            </Border>
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="Zoom" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                <Slider Name="ZoomSlider"
+                        Width="180"
+                        Minimum="0.25"
+                        Maximum="4"
+                        Value="1"
+                        TickFrequency="0.25"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="ZoomSlider_ValueChanged" />
+                <Button Content="Reset" Width="70" Margin="10,0,0,0" Click="ResetView_Click"/>
+                <Button Content="←" Width="32" Margin="10,0,0,0" Click="RotateLeft_Click"/>
+                <Button Content="↑" Width="32" Margin="6,0,0,0" Click="RotateUp_Click"/>
+                <Button Content="↓" Width="32" Margin="6,0,0,0" Click="RotateDown_Click"/>
+                <Button Content="→" Width="32" Margin="6,0,0,0" Click="RotateRight_Click"/>
+                <TextBlock Text="Pan: drag   Zoom: wheel/slider" Margin="14,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+
+	    </Grid>
+	    <local:ModuleFooter />
+	</StackPanel>
 </Window>

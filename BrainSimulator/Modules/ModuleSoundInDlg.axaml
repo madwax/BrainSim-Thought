@@ -1,24 +1,28 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleSoundInDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sound In" Height="170" Width="360" ShowInTaskbar="False" KeyDown="Dlg_PreviewKeyDown" KeyUp="Dlg_PreviewKeyUp" >
-    <Grid >
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="61*"/>
-            <ColumnDefinition Width="499*"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock HorizontalAlignment="Left" Margin="18,10,0,0" FontSize="14" VerticalAlignment="Top" Grid.ColumnSpan="2">
-            <Run FontWeight ="Bold"> Click on Dialog to Activate</Run>
-            <LineBreak/>
-            Keyboard Layout (bottom row(s):
-            <LineBreak/>
-            &#160;&#160;s&#160;&#160;d&#160;&#160;&#160;&#160;&#160;g&#160;&#160;h&#160;&#160;j&#160;&#160;&#160;&#160;&#160;l&#160;&#160;;
-            <LineBreak/>
-            z&#160;&#160;x&#160;&#160;c&#160;&#160;v&#160;&#160;b&#160;&#160;n&#160;&#160;m&#160; ,&#160;&#160;&#160;. &#160;&#160;/
-            <LineBreak/>
-            Notes:
-            <LineBreak/>
-            c&#160;&#160;d&#160;&#160;e&#160;&#160;f&#160;&#160;g&#160;&#160;a&#160;&#160;b&#160;&#160;c&#160;&#160;d&#160;&#160;e
-        </TextBlock>
-    </Grid>
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Sound In" 
+		Width="280" 
+		ShowInTaskbar="False" 
+		KeyDown="Dlg_PreviewKeyDown" 
+		KeyUp="Dlg_PreviewKeyUp" >
+	<StackPanel Orientation="Vertical">
+        <Grid Classes="RootGrid">
+            <TextBlock FontSize="14">
+                <Run FontWeight ="Bold"> Click on Dialog to Activate</Run>
+                <LineBreak/>
+                Keyboard Layout (bottom row(s):
+                <LineBreak/>
+                &#160;&#160;s&#160;&#160;d&#160;&#160;&#160;&#160;&#160;g&#160;&#160;h&#160;&#160;j&#160;&#160;&#160;&#160;&#160;l&#160;&#160;;
+                <LineBreak/>
+                z&#160;&#160;x&#160;&#160;c&#160;&#160;v&#160;&#160;b&#160;&#160;n&#160;&#160;m&#160; ,&#160;&#160;&#160;. &#160;&#160;/
+                <LineBreak/>
+                Notes:
+                <LineBreak/>
+                c&#160;&#160;d&#160;&#160;e&#160;&#160;f&#160;&#160;g&#160;&#160;a&#160;&#160;b&#160;&#160;c&#160;&#160;d&#160;&#160;e
+            </TextBlock>
+        </Grid>
+		<local:ModuleFooter />
+	</StackPanel>
 </Window>

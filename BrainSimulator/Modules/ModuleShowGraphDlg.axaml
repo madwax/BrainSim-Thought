@@ -2,12 +2,24 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:agc="clr-namespace:AvaloniaGraphControl;assembly=AvaloniaGraphControl"
-        Title="Show Graph" Height="170" Width="560" ShowInTaskbar="False" >
-    <Grid SizeChanged="TheGrid_SizeChanged">
-        <!--<wfi:WindowsFormsHost x:Name="wfHost" Margin="0,60,0,0"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>-->
-        <agc:GraphPanel Name="theGraph" LayoutMethod="SugiyamaScheme">
-			
-        </agc:GraphPanel>
-        <Button Name="buttonRefresh" Content="Refresh" Width="90" IsDefault="True" Click="ButtonRefresh_Click" Height="29" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
-    </Grid>
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Show Graph" 
+		Width="560" 
+		ShowInTaskbar="False" >
+	<Window.Styles>
+	</Window.Styles>
+	<StackPanel Orientation="Vertical">
+		<Grid Classes="RootGrid" SizeChanged="TheGrid_SizeChanged">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="30" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Button Grid.Row="0" Name="buttonRefresh" Content="Refresh" IsDefault="True" Click="ButtonRefresh_Click" />
+			<agc:GraphPanel Grid.Row="1" Name="theGraph" LayoutMethod="SugiyamaScheme" Height="450"/>
+		</Grid>
+		<local:ModuleFooter />
+	</StackPanel>
 </Window>

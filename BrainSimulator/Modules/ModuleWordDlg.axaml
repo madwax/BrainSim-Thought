@@ -6,7 +6,7 @@
     Width="550" 
     ShowInTaskbar="False"  >
     <StackPanel Orientation="Vertical">
-        <Grid Margin="5">
+        <Grid Classes="RootGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -36,6 +36,6 @@
             <Button Grid.Row="3" Grid.Column="2" Name="btnBrowse" Content="Browse..." Click="btnBrowse_Click" />
             <Button Grid.Row="3" Grid.Column="3" Name="btnLoad" Content="Load" Click="btnLoad_Click" />
         </Grid>
-        <local:ModuleFooter/>
+        <local:ModuleFooter />
     </StackPanel>
 </Window>

@@ -24,6 +24,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using System.Collections.Generic;
 using System.Threading;
+using Avalonia.VisualTree;
 
 namespace BrainSimulator.Modules;
 
@@ -37,8 +38,10 @@ public class ModuleBaseDlg : Window
     public int UpdateMS = 100;
 #endif
 
-    public Label statusLabel;
+    private Label statusLabel = null;
     private bool initializedLayout = false;
+
+    private ModuleFooter footerRef = null;
 
     public ModuleBaseDlg()
     {
@@ -49,6 +52,18 @@ public class ModuleBaseDlg : Window
     {
         if (initializedLayout) return;
         initializedLayout = true;
+
+        try
+        {
+            var vis = this.VisualChildren.First().FindDescendantOfType<ModuleFooter>();
+            if( vis is not null )
+            {
+                footerRef = vis;
+            }
+        }
+        catch( Exception )
+        {
+        }
 
 #if false
 
@@ -222,6 +237,7 @@ public class ModuleBaseDlg : Window
         }
         statusLabel.Content = message;
     }
+
     public string GetStatus()
     {
         if( statusLabel is null ) return "";

@@ -32,6 +32,9 @@
 			<SolidColorBrush x:Key="Control.Selected.Background" Color="#c0c0c0" />
 			<SolidColorBrush x:Key="Control.Selected.Foreground" Color="#000000" />
 			<SolidColorBrush x:Key="Control.Selected.Boarder.Color" Color="#505050" />
+
+			<x:Double x:Key="Control.Height">30</x:Double>
+
 		</ResourceDictionary>
 	</Application.Resources>
 	

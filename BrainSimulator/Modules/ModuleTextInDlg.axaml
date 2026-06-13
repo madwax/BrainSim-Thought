@@ -1,35 +1,54 @@
 <Window x:Class="BrainSimulator.Modules.ModuleTextInDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:BrainSimulator"
         Title="Text Input" 
-        Height="300" 
         Width="420" 
         ShowInTaskbar="False" >
-    <Grid Margin="8" >
-        <TextBox Name="InputBox"
-                 Height="28"
-                 VerticalAlignment="Top"
-                 VerticalContentAlignment="Center"
-                  Foreground="White" Background="Black"
-                 TextWrapping="NoWrap"
-                 AcceptsReturn="False"
-                 KeyDown="InputBox_KeyDown" Margin="0,17,123,0" />
-        <TextBox Name="AttributesOfBoxInputBox"
-            Height="28"
-            VerticalAlignment="Top"
-            VerticalContentAlignment="Center"
-                  Foreground="White" Background="Black"
-            TextWrapping="NoWrap"
-            AcceptsReturn="False"
-            KeyDown="InputBox_KeyDown" Margin="0,17,0,0" HorizontalAlignment="Right" Width="118" />
-        <ListBox Name="AttributesOutputBox" Margin="0,70,0,27" Foreground="White" Background="Black" HorizontalAlignment="Right" Width="168" />
-        <ListBox Name="ParsedInputBox"
-                 Margin="0,70,190,27"
-                 Foreground="White" Background="Black" 
-                 SelectionChanged="ParsedInputBox_SelectionChanged" />
-        <Label Content="Text Input:" HorizontalAlignment="Left" Margin="0,-14,0,0" VerticalAlignment="Top"/>
-        <Label Content="Select:" HorizontalAlignment="Right" Margin="0,-14,68,0" VerticalAlignment="Top"/>
-        <Label Content="Attributes:" HorizontalAlignment="Right" Margin="0,39,85,0" VerticalAlignment="Top"/>
-        <Label Content="Thoughts:" HorizontalAlignment="Left" Margin="1,39,0,0" VerticalAlignment="Top"/>
-    </Grid>
+	<Window.Styles>
+		<Style Selector="TextBox">
+			<Setter Property="Height" Value="30" />
+			<Setter Property="Background" Value="Black" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="ListBox">
+			<Setter Property="Height" Value="200" />
+			<Setter Property="Background" Value="Black" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+	</Window.Styles>
+	<StackPanel Orientation="Vertical" >
+		<Grid Classes="RootGrid">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="220"/>
+				<ColumnDefinition Width="20"/>
+				<ColumnDefinition Width="30"/>
+				<ColumnDefinition Width="10"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+
+			<!--Row 0 -->
+			<Label Grid.Row="0" Grid.Column="0" Content="Text Input:" />
+			<Label Grid.Row="0" Grid.Column="4" Content="Select:" />
+						
+			<!-- Row 1 -->
+			<TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Name="InputBox" TextWrapping="NoWrap" AcceptsReturn="False" KeyDown="InputBox_KeyDown" />
+			<TextBox Grid.Row="1" Grid.Column="4" Name="AttributesOfBoxInputBox" TextWrapping="NoWrap" AcceptsReturn="False" KeyDown="InputBox_KeyDown" />
+
+			<!--Row 2 -->
+			<Label Grid.Row="2" Grid.Column="0" Content="Text Input:" />
+			<Label Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Content="Attributes:" />
+
+			<!--Row 3 -->
+			<ListBox Grid.Row="3" Grid.Column="0" Name="ParsedInputBox" SelectionChanged="ParsedInputBox_SelectionChanged" />
+			<ListBox Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3" Name="AttributesOutputBox" />
+		</Grid>
+		<local:ModuleFooter />
+    </StackPanel>
 </Window>

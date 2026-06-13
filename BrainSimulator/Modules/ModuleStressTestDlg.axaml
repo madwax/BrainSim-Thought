@@ -1,12 +1,34 @@
 ﻿<Window x:Class="BrainSimulator.Modules.ModuleStressTestDlg"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Stress test the system" Height="450" Width="800" ShowInTaskbar="False">
-    <Grid Name="theGrid" >
-        <TextBox Name="txtOutput" FontSize="14" TextWrapping="Wrap" Text="" Margin="58,137,79,54"/>
-        <TextBox Name="textInput" Height="37" Margin="58,73,458,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top"/>
-        <Button Content="Add Items" HorizontalAlignment="Right" Margin="0,78,300,0" Height="28" Width="148" Click="Button_Click" VerticalAlignment="Top" />
-        <Label Name="StatusLabel" Content="" Margin="58,0,300,10" Grid.Row="1" Height="29" VerticalAlignment="Bottom"/>
-        <Label Content="Used to stress test by adding toy examples. &#10;Enter the amount of examples you want to add." HorizontalAlignment="Left" Height="44" Margin="58,20,0,0" VerticalAlignment="Top" Width="309"/>
-    </Grid>
+		xmlns:local="clr-namespace:BrainSimulator"
+        Title="Stress test the system" Width="700" ShowInTaskbar="False">
+	<StackPanel Orientation="Vertical">
+	    <Grid Name="theGrid" Classes="RootGrid" >
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="100"/>
+				<ColumnDefinition Width="100"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+			<!-- Row 0 -->
+			<Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Content="Used to stress test by adding toy examples. &#10;Enter the amount of examples you want to add." />
+
+			<!-- Row 1 -->
+			<TextBox Grid.Row="1" Grid.Column="0" Name="textInput" TextWrapping="Wrap" Text="1000" />
+			<Button Grid.Row="1" Grid.Column="1" Content="Add Items" Click="Button_Click" />
+
+			<!-- Row 2 -->
+			<TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Name="txtOutput" TextWrapping="Wrap" Text=""/>
+			
+			<!-- Row 3 -->
+			<Label Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Name="StatusLabel" Content="" />
+        </Grid>
+		<local:ModuleFooter />
+	</StackPanel>		
 </Window>

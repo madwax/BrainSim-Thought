@@ -23,7 +23,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UKS;
-using static BrainSimulator.Modules.ModuleOnlineInfo;
+
+//using static BrainSimulator.Modules.ModuleOnlineInfo;
 
 namespace BrainSimulator.Modules;
 
