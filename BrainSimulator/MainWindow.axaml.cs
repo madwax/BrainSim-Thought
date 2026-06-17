@@ -547,22 +547,39 @@ namespace BrainSimulator
             theUKS.GetOrAddThought( "ActiveModule", "BrainSim" );
             var availableListInUKS = theUKS.Labeled( "AvailableModule" ).Children;
 
+            Debug.WriteLine( "UpdateModuleListsInUKS()  Start" );
+
+            List<string> availableModules = new List<string>();
+
             //add any missing modules
             var CSharpModules = Utils.GetListOfExistingCSharpModuleTypes();
             foreach( var module in CSharpModules )
             {
                 string name = module.Name;
+
+                availableModules.Add( name );
+
                 Thought availableModule = availableListInUKS.FindFirst( x => x.Label == name );
                 if( availableModule is null )
+                {
                     theUKS.GetOrAddThought( name, "AvailableModule" );
+                    Debug.WriteLine( "UpdateModuleListsInUKS()  Adding " + name + " to AvailableModule" );
+                }
+                else
+                {
+                    Debug.WriteLine( "UpdateModuleListsInUKS()  " + name + " already in AvailableModule" );
+                }
             }
             var PythonModules = moduleHandler.GetListOfExistingPythonModuleTypes();
             foreach( var name in PythonModules )
             {
+                availableModules.Add( name );
+
                 Thought availableModule = availableListInUKS.FindFirst( x => x.Label == name );
                 if( availableModule is null )
                     theUKS.GetOrAddThought( name, "AvailableModule" );
             }
+
             //delete any non-existant modules
             availableListInUKS = theUKS.Labeled( "AvailableModule" ).Children;
             foreach( Thought t in availableListInUKS )
@@ -570,32 +587,32 @@ namespace BrainSimulator
                 string name = t.Label;
                 if( CSharpModules.FindFirst( x => x.Name == name ) is not null ) continue;
                 if( PythonModules.FindFirst( x => x == name ) is not null ) continue;
+
+                Debug.WriteLine( "UpdateModuleListsInUKS()  Having to delete module: " + name );
+
                 theUKS.DeleteAllChildren( t );
                 t.Delete();
             }
 
-            List<string> availableModules = new List<string>();
-
             //reconnect/delete any active modules
             var activeListInUKS = theUKS.Labeled( "ActiveModule" ).Children;
+
             foreach( Thought t in activeListInUKS )
             {
                 var cleanName = t.Label.Substring( 0, t.Label.Length - 1 );
                 Thought parent = availableListInUKS.FindFirst( x => x.Label == cleanName );
                 if( parent is not null )
                 {
-
-                    Debug.WriteLine( "UpdateModuleListsInUKS() ActiveList: " + cleanName );
-                    availableModules.Add( cleanName );
                     t.AddParent( parent );
                 }
                 else
+                {
                     t.Delete();
+                }
             }
 
+            // Sort and update the control.
             availableModules.Sort();
-            
-            // update the control
             AvailableModules.ItemsSource = availableModules;
         }
 
