@@ -45,6 +45,6 @@
                 <TextBlock Text="+" HorizontalAlignment="Center" VerticalAlignment="Center" Height="36"/>
             </RepeatButton>
         </Grid>
-        <local:ModuleFooter />
+		<local:FooterControl />
     </StackPanel>
 </Window>

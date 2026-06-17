@@ -11,6 +11,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 using Avalonia.Controls.Shapes;
+using Avalonia.Utilities;
 using System;
 using System.Diagnostics;
 using System.Formats.Tar;
@@ -107,23 +108,36 @@ namespace BrainSimulator
 
         private string ExpectedSourceFilename( string moduleName, FileTypes mode )
         {
+            string filename = "";
+
             if( mode == FileTypes.ModuleSource )
             {
-                return System.IO.Path.Combine( sourceCodePath, "Modules", moduleName + ".cs" );
+                filename = moduleName + ".cs";
             }
             else if( mode == FileTypes.DialogLayout )
             {
-                return System.IO.Path.Combine( sourceCodePath, "Modules", moduleName + "Dlg.axaml" );
+                filename = moduleName + "Dlg.axaml";
+
             }
             else if( mode == FileTypes.DialogSource )
             {
-                return System.IO.Path.Combine( sourceCodePath, "Modules", moduleName + "Dlg.axaml.cs" );
+                filename = moduleName + "Dlg.axaml.cs";
+            }
+            else
+            {
+                throw new ArgumentException( "Calling SourceEditing.ExpectedSourceFilename with unknown mode: " + mode.ToString() );
             }
 
-            // should never but...
-            throw new ArgumentException( "Calling SourceEditing.ExpectedSourceFilename with unknown mode: " + mode.ToString() );
-        }
+            var modulesPath = System.IO.Path.Combine( sourceCodePath, "Modules" );
 
+            var sourceFilepath = Utils.FindFile( filename, modulesPath, true );
+            if( sourceFilepath == null )
+            {
+                // should never but...
+                throw new ArgumentException( "Calling SourceEditing.ExpectedSourceFilename Unable to find file: " + filename + " for module:" + moduleName );
+            }
+            return sourceFilepath;
+        }
 
         /// <summary>
         /// Opens the modules sources or layout in your dev env.

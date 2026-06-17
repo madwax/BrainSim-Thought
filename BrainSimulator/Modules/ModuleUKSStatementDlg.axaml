@@ -52,6 +52,6 @@
             <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="BtnAddLink" IsDefault="True" Content="Add/Update" Click="BtnAddLink_Click" />
             <CheckBox Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Name="eventCB" Content="This is an Event" IsChecked="False"/>
     	</Grid>
-        <local:ModuleFooter />
+		<local:FooterControl />
     </StackPanel>
 </Window>

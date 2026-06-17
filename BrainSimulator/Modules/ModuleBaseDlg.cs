@@ -30,6 +30,8 @@ namespace BrainSimulator.Modules;
 
 public class ModuleBaseDlg : Window
 {
+    private FooterControl? footerControl = null;
+
     public ModuleBase ParentModule;
 
 #if TO_REMOVE
@@ -38,27 +40,43 @@ public class ModuleBaseDlg : Window
     public int UpdateMS = 100;
 #endif
 
-    private Label statusLabel = null;
     private bool initializedLayout = false;
-
-    private ModuleFooter footerRef = null;
 
     public ModuleBaseDlg()
     {
-        this.Loaded += ModuleBaseDlg_Loaded;
+        this.Loaded += OnBaseLoaded;
     }
 
-    private void ModuleBaseDlg_Loaded(object? sender, RoutedEventArgs e)
+    public void SetStatus(string msg, StatusModes status = StatusModes.Normal )
+    {
+        if( footerControl is not null )
+        {
+            footerControl.SetStatus( msg, status );
+        }
+    }
+
+    public string GetStatus()
+    {
+        if( footerControl is not null )
+        {
+            return footerControl.GetStatus();
+        }
+        return "";
+    }
+
+    private void OnBaseLoaded(object? sender, RoutedEventArgs e)
     {
         if (initializedLayout) return;
         initializedLayout = true;
 
+        // If we have a footer control then set it up.
         try
         {
-            var vis = this.VisualChildren.First().FindDescendantOfType<ModuleFooter>();
+            var vis = this.VisualChildren.First().FindDescendantOfType<FooterControl>();
             if( vis is not null )
             {
-                footerRef = vis;
+                footerControl = vis;
+                footerControl.SetModuleName( this.GetType().Name.ToString() );
             }
         }
         catch( Exception )
@@ -168,19 +186,7 @@ public class ModuleBaseDlg : Window
     }
 #endif 
 
-    private void SourceButton_Click(object sender, RoutedEventArgs e)
-    {
-        string theModuleType = this.GetType().Name.ToString();
-        MainWindow.theWindow.theCodeEditer.OpenAllSourcesInEditor( theModuleType );
-    }
 
-    private void HelpButton_Click(object sender, RoutedEventArgs e)
-    {
-        string theModuleType = this.GetType().Name.ToString();
-        theModuleType = theModuleType.Replace("Dlg", "");
-        ModuleDescriptionDlg md = new ModuleDescriptionDlg(theModuleType);
-        md.Show();
-    }
 
     virtual public bool Draw(bool checkDrawTimer)
     {
@@ -194,7 +200,6 @@ public class ModuleBaseDlg : Window
         if (Application.Current is null) return;
         if (this is not null)
             Draw(false);
-
     }
 
     //this picks up a final draw after 1/4 second 
@@ -207,6 +212,8 @@ public class ModuleBaseDlg : Window
     }
 #endif
 
+
+#if false
     /// <summary>
     /// Defines the background/foreground color of a message being displayed in the status area of the footer
     /// </summary>
@@ -244,6 +251,7 @@ public class ModuleBaseDlg : Window
 
         return statusLabel.Content.ToString();
     }
+#endif
 
     /// General debugging stream used by most of the agents.
     private List<string> debugStreamMessages = new List<string>();

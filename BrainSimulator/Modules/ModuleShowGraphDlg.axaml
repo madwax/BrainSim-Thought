@@ -20,6 +20,6 @@
 			<Button Grid.Row="0" Name="buttonRefresh" Content="Refresh" IsDefault="True" Click="ButtonRefresh_Click" />
 			<agc:GraphPanel Grid.Row="1" Name="theGraph" LayoutMethod="SugiyamaScheme" Height="450"/>
 		</Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>
 </Window>

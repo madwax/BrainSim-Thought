@@ -63,6 +63,6 @@
 		  PointerExited="OnTheTreeViewPointerLeave"
 		  PointerWheelChanged="OnTheTreeViewPointerWheel" >
 		</TreeView>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>	
 </Window>

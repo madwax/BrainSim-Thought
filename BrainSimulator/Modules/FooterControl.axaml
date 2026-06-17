@@ -4,31 +4,37 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" 
 			 d:DesignWidth="300"
-             x:Class="BrainSimulator.ModuleFooter"
->
+             x:Class="BrainSimulator.FooterControl" >
 	<UserControl.Styles>
-		<Style Selector="Grid#Footer">
-			<Setter Property="Background" Value="Red" />
+		<Style Selector="Grid#footer">
+			<Setter Property="RowSpacing" Value="4" />
+			<Setter Property="ColumnSpacing" Value="2" />
+			<Setter Property="Margin" Value="4" />
 			<Style Selector="^ Label#statusLabel">
-				<Setter Property="Background" Value="Green" />
 				<Setter Property="Height" Value="28" />
 				<Setter Property="FontSize" Value="26" />
 			</Style>
 			<Style Selector="^ Button#sourceButton">
-				<Setter Property="Background" Value="Yellow" />
-				<Setter Property="Width" Value="24" />
+				<Setter Property="Width" Value="34" />
 				<Setter Property="Height" Value="24" />
 			</Style>
 			<Style Selector="^ Button#helpButton">
-				<Setter Property="Background" Value="Blue" />
 				<Setter Property="Width" Value="24" />
 				<Setter Property="Height" Value="24" />
 			</Style>
 		</Style>
 	</UserControl.Styles>
-	<Grid ColumnDefinitions="*,Auto,Auto" Name="footer" Margin="0">
+	<Grid Name="footer" >
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+		</Grid.ColumnDefinitions>		
 		<Label Grid.Column="0" Name="statusLabel" />
-		<Button Grid.Column="1" Name="sourceButton" ></Button>
-		<Button Grid.Column="2" Name="helpButton" ></Button>
+		<Button Grid.Column="1" Name="sourceButton" Click="OnSourceButton" Content="Src" ToolTip.Tip="Open Source Code" ></Button>
+		<Button Grid.Column="2" Name="helpButton" Click="OnHelpButton" Content="?" ToolTip.Tip="Show Module help" ></Button>
 	</Grid>
 </UserControl>

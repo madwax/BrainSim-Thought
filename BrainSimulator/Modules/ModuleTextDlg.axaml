@@ -54,7 +54,7 @@
 			<Button Grid.Row="4" Grid.Column="5" Name="btnLoad" Content="Load" Click="btnLoad_Click" />
 			
 		</Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>	
 	
 </Window>

@@ -87,6 +87,6 @@
                 <Button Content="OK" Click="Ok_Click"/>
 		    </StackPanel>
 	    </Grid> -->
-	    <local:ModuleFooter/>
+		<local:FooterControl/>
 	</StackPanel>
 </Window>

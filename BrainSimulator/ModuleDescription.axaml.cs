@@ -31,7 +31,6 @@ namespace BrainSimulator
         public ModuleDescriptionDlg(string theModuleType)
         {
             InitializeComponent();
-
             moduleType = theModuleType;
             string fileName = Path.GetFullPath(".").ToLower();
             var modules = Utils.GetListOfExistingCSharpModuleTypes();
@@ -122,7 +121,7 @@ namespace BrainSimulator
             Stream file;
             string fileName = Path.GetFullPath(".").ToLower();
             //we're running with source...save to the source version
-            int index = fileName.IndexOf("bin\\");
+            int index = fileName.IndexOf("bin/");
             if (index != -1)
             {
                 fileName = fileName.Substring(0, index);
@@ -145,7 +144,5 @@ namespace BrainSimulator
 
             return true;
         }
-
-
     }
 }

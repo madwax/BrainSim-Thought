@@ -31,6 +31,6 @@
                      TextWrapping="Wrap"
                      VerticalContentAlignment="Center"/>
     	</Grid>
-	    <local:ModuleFooter />
+	    <local:FooterControl />
     </StackPanel>
 </Window>

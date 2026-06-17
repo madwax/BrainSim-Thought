@@ -251,31 +251,31 @@ namespace BrainSimulator
         }
 #endif
 
-        public static float RoundToSignificantDigits(this float d, int digits)
+        public static float RoundToSignificantDigits( this float d, int digits )
         {
-            if (d == 0)
+            if( d == 0 )
                 return 0;
 
-            double scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(d))) + 1);
-            return (float)(scale * Math.Round(d / scale, digits));
+            double scale = Math.Pow( 10, Math.Floor( Math.Log10( Math.Abs( d ) ) ) + 1 );
+            return ( float )( scale * Math.Round( d / scale, digits ) );
         }
 
         //this searches a control tree to find a control by name so you can retrieve its value
-        public static Control FindByName(Visual v, string name)
+        public static Control FindByName( Visual v, string name )
         {
             foreach( Object o in Avalonia.LogicalTree.LogicalExtensions.GetLogicalChildren( v ) )
             {
-                if (o is Visual v3)
+                if( o is Visual v3 )
                 {
-                    if (v3 is Control c1)
+                    if( v3 is Control c1 )
                     {
-                        if (c1.Name == name)
+                        if( c1.Name == name )
                             return c1;
                     }
                     try
                     {
-                        Control c2 = FindByName(v3, name);
-                        if (c2 is not null)
+                        Control c2 = FindByName( v3, name );
+                        if( c2 is not null )
                             return c2;
                     }
                     catch { }
@@ -309,7 +309,7 @@ namespace BrainSimulator
         }
 #endif
 
-        public static int ColorToInt(Color theColor)
+        public static int ColorToInt( Color theColor )
         {
             int retVal = 0;
             //retVal += theColor.A << 24; do we need "a" value?
@@ -319,237 +319,40 @@ namespace BrainSimulator
             return retVal;
         }
 
-#if NOT_USED
-        public static int ColorToInt(System.Drawing.Color theColor)
+        public static bool Close( int a, int b )
         {
-            int retVal = 0;
-            //retVal += theColor.A << 24; ??
-            retVal += theColor.R << 16;
-            retVal += theColor.G << 8;
-            retVal += theColor.B;
-            return retVal;
+            if( Math.Abs( a - b ) < 4 ) return true;
+            return false;
         }
-
-        public static Color ColorFromName(string colorName)
+        public static bool ColorClose( Color c1, Color c2 )
         {
-            Color color = new Color();
-            color.R = 111;
-            color.G = 111;
-            color.B = 111;
-            color.A = 255;
-            if (colorName?.ToLower() is null) return color;
-            if (colorName.ToLower() == "black") { color.R = 0; color.G = 0; color.B = 0; }
-            if (colorName.ToLower() == "white") { color.R = 255; color.G = 255; color.B = 255; }
-            if (colorName.ToLower() == "red") { color.R = 255; color.G = 0; color.B = 0; }
-            if (colorName.ToLower() == "lime") { color.R = 0; color.G = 255; color.B = 0; }
-            if (colorName.ToLower() == "blue") { color.R = 0; color.G = 0; color.B = 255; }
-            if (colorName.ToLower() == "yellow") { color.R = 255; color.G = 255; color.B = 0; }
-            if (colorName.ToLower() == "cyan") { color.R = 0; color.G = 255; color.B = 255; }
-            if (colorName.ToLower() == "magenta") { color.R = 255; color.G = 0; color.B = 255; }
-            if (colorName.ToLower() == "orange") { color.R = 255; color.G = 158; color.B = 0; }
-            if (colorName.ToLower() == "silver") { color.R = 192; color.G = 192; color.B = 192; }
-            if (colorName.ToLower() == "gray") { color.R = 128; color.G = 128; color.B = 128; }
-            if (colorName.ToLower() == "maroon") { color.R = 128; color.G = 0; color.B = 0; }
-            if (colorName.ToLower() == "olive") { color.R = 128; color.G = 128; color.B = 0; }
-            if (colorName.ToLower() == "green") { color.R = 0; color.G = 128; color.B = 0; }
-            if (colorName.ToLower() == "purple") { color.R = 128; color.G = 0; color.B = 128; }
-            if (colorName.ToLower() == "teal") { color.R = 0; color.G = 128; color.B = 128; }
-            if (colorName.ToLower() == "navy") { color.R = 0; color.G = 0; color.B = 128; }
-            if (colorName.ToLower() == "azure") { color.R = 0; color.G = 127; color.B = 255; }
-            // unmatched returns greyish... (as define above)
-            return color;
-        }
-
-        public static Brush GetBrush(string colorName)
-        {
-            if (colorName is null) return Brushes.Black;
-
-            // These color names match the HSL main scores
-            if (colorName == "Red") return Brushes.Red;
-            if (colorName == "Orange") return Brushes.Orange;
-            if (colorName == "Yellow") return Brushes.Yellow;
-            if (colorName == "Chartreuse") return Brushes.LightGreen;
-            if (colorName == "Green") return Brushes.Green;
-            if (colorName == "Spring Green") return Brushes.SpringGreen;
-            if (colorName == "Cyan") return Brushes.Cyan;
-            if (colorName == "Azure") return Brushes.CornflowerBlue;
-            if (colorName == "Blue") return Brushes.Blue;
-            if (colorName == "Magenta") return Brushes.Magenta;
-            if (colorName == "Rose") return Brushes.MistyRose;
-
-            // These colors are extras
-            if (colorName == "Lime") return Brushes.Lime;
-            if (colorName == "Black") return Brushes.Black;
-            if (colorName == "White") return Brushes.White;
-            if (colorName == "Silver") return Brushes.Silver;
-            if (colorName == "Gray") return Brushes.Gray;
-            if (colorName == "Maroon") return Brushes.Maroon;
-            if (colorName == "Olive") return Brushes.Olive;
-            if (colorName == "Purple") return Brushes.Purple;
-
-            return Brushes.Gray;
-        }
-
-        // Hue values for Green, Blue, Cyan, Magenta, Yellow, Orange, Lime and Purple
-        // public static List<int> HuesToDetect = new() { 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 0 };
-
-        public static string GetColorNameFromHSL(HSLColor hsl)
-        {
-            if (hsl.luminance < .10) return "Black";
-            if (hsl.luminance > .9) return "White";
-            if (hsl.saturation < .12) return "Gray";
-            if (hsl.hue < 15 || hsl.hue >= 345) return "Red";
-            if (hsl.hue >= 15 && hsl.hue < 45) return "Orange";
-            if (hsl.hue >= 45 && hsl.hue < 75) return "Yellow";
-            if (hsl.hue >= 75 && hsl.hue < 105) return "Chartreuse";
-            if (hsl.hue >= 105 && hsl.hue < 135)
-            {
-                if (hsl.luminance < .40) return "Green";
-                else return "Lime";
-            }
-            if (hsl.hue >= 135 && hsl.hue < 165) return "Spring Green";
-            if (hsl.hue >= 165 && hsl.hue < 195) return "Cyan";
-            if (hsl.hue >= 195 && hsl.hue < 225) return "Azure";
-            if (hsl.hue >= 225 && hsl.hue < 255) return "Blue";
-            if (hsl.hue >= 255 && hsl.hue < 315)
-            {
-                if (hsl.luminance < .40) return "Purple";
-                else return "Magenta";
-            }
-            if (hsl.hue >= 315 && hsl.hue < 345) return "Rose";
-
-            return "Gray";
-        }
-
-        public static HSLColor getBestColor(List<HSLColor> HSLColors)
-        {
-            if (HSLColors is null || HSLColors.Count == 0) return null;
-            HSLColor ret = HSLColors[0];
-            for (int i = 1; i < HSLColors.Count; i++)
-            {
-                if (HSLColors[i] is not null && Abs(HSLColors[i].luminance - 50) < Abs(ret.luminance - 50))
-                {
-                    ret = HSLColors[i];
-                }
-            }
-            return ret;
-        }
-        public static bool isValidColorName(string colorName)
-        {
-            if (colorName is null || colorName == "")
-                return false;
-            List<string> validColors = new List<string>
-            {
-                "Red", "Orange", "Yellow", "Chartreuse", "Green", "Spring Green", "Cyan",
-                "Azure", "Blue", "Magenta", "Rose", "Black", "White", "Silver", "Gray", "Maroon", "Olive", "Purple"
-            };
-            if (validColors.Contains(colorName))
-                return true;
+            if( Close( c1.R, c2.R ) && Close( c1.G, c2.G ) && Close( c1.B, c2.B ) ) return true;
             return false;
         }
 
-        //helper to make rainbow colors
-        // Map a value to a rainbow color.
-        public static Color RainbowColorFromValue(float value) //value has a range -1,1
+        public static string GetColorName( Color col )
         {
-            // Convert into a value between 0 and 1023.
-            int int_value = (int)(1023 * value);
-
-            if (int_value < -1022) //fully negative
+            PropertyInfo[] p1 = typeof( Colors ).GetProperties();
+            foreach( PropertyInfo p in p1 )
             {
-                return Colors.Black;
-            }
-            else if (int_value >= 1023) //fully positive
-            {
-                return Colors.White;
-            }
-            else if (int_value == 0) //0 (blue)
-            {
-                return Colors.Blue;
-            }
-            else if (int_value < 0) // -1,0 graysacle
-            {
-                int_value = (1024 - (Math.Abs(int_value) / 2) + 512) / 4;
-                return Color.FromRgb((byte)int_value, (byte)int_value, (byte)int_value);
-            }
-
-            int_value = 1023 - int_value;
-            // Map different color bands.
-            if (int_value < 256)
-            {
-                // Red to yellow. (255, 0, 0) to (255, 255, 0).
-                return Color.FromRgb(255, (byte)int_value, 0);
-            }
-            else if (int_value < 512)
-            {
-                // Yellow to green. (255, 255, 0) to (0, 255, 0).
-                int_value -= 256;
-                return Color.FromRgb((byte)(255 - int_value), 255, 0);
-            }
-            else if (int_value < 768)
-            {
-                // Green to aqua. (0, 255, 0) to (0, 255, 255).
-                int_value -= 512;
-                return Color.FromRgb(0, 255, (byte)int_value);
-            }
-            else
-            {
-                // Aqua to blue. (0, 255, 255) to (0, 0, 255).
-                int_value -= 768;
-                return Color.FromRgb(0, (byte)(255 - int_value), 255);
-            }
-        }
-        public static int rangedValue(int input, int min, int max)
-        {
-            int result = input;
-            if (input < min) result = min;
-            if (input > max) result = max;
-            return result;
-        }
-
-        public static bool Close(float f1, float f2, float toler = 0.2f)
-        {
-            float dif = f2 - f1;
-            dif = Math.Abs(dif);
-            if (dif > toler) return false;
-            return true;
-        }
-#endif
-
-        public static bool Close(int a, int b)
-        {
-            if (Math.Abs(a - b) < 4) return true;
-            return false;
-        }
-        public static bool ColorClose(Color c1, Color c2)
-        {
-            if (Close(c1.R, c2.R) && Close(c1.G, c2.G) && Close(c1.B, c2.B)) return true;
-            return false;
-        }
-
-        public static string GetColorName(Color col)
-        {
-            PropertyInfo[] p1 = typeof(Colors).GetProperties();
-            foreach (PropertyInfo p in p1)
-            {
-                Color c = (Color)p.GetValue(null);
-                if (ColorClose(c, col))
+                Color c = ( Color )p.GetValue( null );
+                if( ColorClose( c, col ) )
                     return p.Name;
             }
-            return "0x" + col.R.ToString("X2") + col.G.ToString("X2") + col.B.ToString("X2");
+            return "0x" + col.R.ToString( "X2" ) + col.G.ToString( "X2" ) + col.B.ToString( "X2" );
         }
-        public static double FindDistanceToSegment(Segment s)
+        public static double FindDistanceToSegment( Segment s )
         {
-            if (s is null) return 0;
-            return FindDistanceToSegment(new Point(0, 0), s.P1.P, s.P2.P, out Point closest);
+            if( s is null ) return 0;
+            return FindDistanceToSegment( new Point( 0, 0 ), s.P1.P, s.P2.P, out Point closest );
         }
 
-        public static double FindDistanceToSegment(Segment s, out Point closest)
+        public static double FindDistanceToSegment( Segment s, out Point closest )
         {
-            return FindDistanceToSegment(new Point(0, 0), s.P1.P, s.P2.P, out closest);
+            return FindDistanceToSegment( new Point( 0, 0 ), s.P1.P, s.P2.P, out closest );
         }
 
-        public static float DistancePointToSegment(Segment s, PointPlus PIn)
+        public static float DistancePointToSegment( Segment s, PointPlus PIn )
         {
             Point A = s.P1;
             Point B = s.P2;
@@ -557,106 +360,106 @@ namespace BrainSimulator
             Vector AP = P - A;       //Vector from A to P   
             Vector AB = B - A;    //Vector from A to B  
 
-            float magnitudeAB = (float)(AB.Length * AB.Length);     //Magnitude of AB vector (it's length squared)     
-            float ABAPproduct = (float)Vector.Multiply(AP, AB).Length;    //The DOT product of a_to_p and a_to_b--projection of P onto AB     
+            float magnitudeAB = ( float )( AB.Length * AB.Length );     //Magnitude of AB vector (it's length squared)     
+            float ABAPproduct = ( float )Vector.Multiply( AP, AB ).Length;    //The DOT product of a_to_p and a_to_b--projection of P onto AB     
             float distance = ABAPproduct / magnitudeAB; //The normalized "distance" from a to your closest point  
 
-            if (distance < 0)     //Check if P projection is over vectorAB     
+            if( distance < 0 )     //Check if P projection is over vectorAB     
             {
-                return (float)AP.Length;
+                return ( float )AP.Length;
             }
-            else if (distance > 1)
+            else if( distance > 1 )
             {
                 var t = ( P - B );
-                return (float)(t.X * t.Y);
+                return ( float )( t.X * t.Y );
             }
             else
             {
                 PointPlus closest = A + AB * distance;
-                return (closest-PIn).R;
+                return ( closest - PIn ).R;
             }
         }
 
-        public static float DistanceBetweenTwoSegments(Segment s1, Segment s2)
+        public static float DistanceBetweenTwoSegments( Segment s1, Segment s2 )
         {
             float retVal = float.MaxValue;
-            double d1 = DistancePointToSegment(s1,s2.P1);
-            if (d1 < retVal)
-                retVal = (float)d1;
-            d1 = DistancePointToSegment(s1, s2.P2);
-            if (d1 < retVal)
-                retVal = (float)d1;
-            d1 = DistancePointToSegment(s2, s1.P1);
-            if (d1 < retVal)
-                retVal = (float)d1;
-            d1 = DistancePointToSegment(s2, s1.P1);
-            if (d1 < retVal)
-                retVal = (float)d1;
+            double d1 = DistancePointToSegment( s1, s2.P1 );
+            if( d1 < retVal )
+                retVal = ( float )d1;
+            d1 = DistancePointToSegment( s1, s2.P2 );
+            if( d1 < retVal )
+                retVal = ( float )d1;
+            d1 = DistancePointToSegment( s2, s1.P1 );
+            if( d1 < retVal )
+                retVal = ( float )d1;
+            d1 = DistancePointToSegment( s2, s1.P1 );
+            if( d1 < retVal )
+                retVal = ( float )d1;
             return retVal;
         }
 
-        public static float FindDistanceToSegment(Point pt, Segment s)
+        public static float FindDistanceToSegment( Point pt, Segment s )
         {
-            return (float)FindDistanceToSegment(pt, s.P1, s.P2, out Point closest);
+            return ( float )FindDistanceToSegment( pt, s.P1, s.P2, out Point closest );
         }
         // Calculate the distance between
         // point pt and the segment p1 --> p2.
         public static double FindDistanceToSegment(
-            Point pt, Point p1, Point p2, out Point closest)
+            Point pt, Point p1, Point p2, out Point closest )
         {
             double dx = p2.X - p1.X;
             double dy = p2.Y - p1.Y;
-            if ((dx == 0) && (dy == 0))
+            if( ( dx == 0 ) && ( dy == 0 ) )
             {
                 // It's a point not a line segment.
                 closest = p1;
                 dx = pt.X - p1.X;
                 dy = pt.Y - p1.Y;
-                return Math.Sqrt(dx * dx + dy * dy);
+                return Math.Sqrt( dx * dx + dy * dy );
             }
 
             // Calculate the t that minimizes the distance.
-            double t = ((pt.X - p1.X) * dx + (pt.Y - p1.Y) * dy) /
-                (dx * dx + dy * dy);
+            double t = ( ( pt.X - p1.X ) * dx + ( pt.Y - p1.Y ) * dy ) /
+                ( dx * dx + dy * dy );
 
             // See if this represents one of the segment's
             // end points or a point in the middle.
-            if (t < 0)
+            if( t < 0 )
             {
-                closest = new Point(p1.X, p1.Y);
+                closest = new Point( p1.X, p1.Y );
                 dx = pt.X - p1.X;
                 dy = pt.Y - p1.Y;
             }
-            else if (t > 1)
+            else if( t > 1 )
             {
-                closest = new Point(p2.X, p2.Y);
+                closest = new Point( p2.X, p2.Y );
                 dx = pt.X - p2.X;
                 dy = pt.Y - p2.Y;
             }
             else
             {
-                closest = new Point(p1.X + t * dx, p1.Y + t * dy);
+                closest = new Point( p1.X + t * dx, p1.Y + t * dy );
                 dx = pt.X - closest.X;
                 dy = pt.Y - closest.Y;
             }
 
-            return Sqrt(dx * dx + dy * dy);
+            return Sqrt( dx * dx + dy * dy );
         }
-        public static bool SegmentsIntersect(Point p1, Point p2, Point p3, Point p4)
+        public static bool SegmentsIntersect( Point p1, Point p2, Point p3, Point p4 )
         {
-            FindIntersection(p1, p2, p3, p4,
+            FindIntersection( p1, p2, p3, p4,
             out bool lines_intersect, out bool segments_intersect,
             out Point intersection,
             out Point close_p1, out Point close_p2,
-            out Angle collisionAngle);
+            out Angle collisionAngle );
             return segments_intersect;
         }
 
         // Find the point of intersection between
         // the lines p1 --> p2 and p3 --> p4.
-        public static bool FindIntersection(Segment s1, Segment s2, out PointPlus intersection, out Angle angle)
+        public static bool FindIntersection( Segment s1, Segment s2, out PointPlus intersection, out Angle angle )
         {
-            bool retVal = FindIntersection(s1.P1, s1.P2, s2.P1, s2.P2, out Point intersectionPt, out angle);
+            bool retVal = FindIntersection( s1.P1, s1.P2, s2.P1, s2.P2, out Point intersectionPt, out angle );
             intersection = intersectionPt;
             return retVal;
         }
@@ -665,32 +468,32 @@ namespace BrainSimulator
             out Point intersection, out Angle angle
             )
         {
-            FindIntersection(p1, p2, p3, p4,
+            FindIntersection( p1, p2, p3, p4,
             out bool lines_intersect, out bool segments_intersect,
             out intersection,
             out Point close_p1, out Point close_p2,
-            out angle);
+            out angle );
             return segments_intersect;
         }
-        public static bool LinesIntersect(Segment s1, Segment s2, out PointPlus intersection)
+        public static bool LinesIntersect( Segment s1, Segment s2, out PointPlus intersection )
         {
-            FindIntersection(s1.P1, s1.P2, s2.P1, s2.P2,
+            FindIntersection( s1.P1, s1.P2, s2.P1, s2.P2,
             out bool lines_intersect, out bool segments_intersect,
             out Point intersection1,
             out Point close_p1, out Point close_p2,
-            out Angle angle);
+            out Angle angle );
             intersection = intersection1;
             return lines_intersect;
         }
 
-        public static void FindIntersection(Point p1, Point p2,
+        public static void FindIntersection( Point p1, Point p2,
                                             Point p3, Point p4,
                                             out bool lines_intersect,
                                             out bool segments_intersect,
                                             out Point intersection,
                                             out Point close_p1,
                                             out Point close_p2,
-                                            out Angle collisionAngle)
+                                            out Angle collisionAngle )
         {
             // Get the segments' parameters.
             double dx12 = p2.X - p1.X;
@@ -698,99 +501,99 @@ namespace BrainSimulator
             double dx34 = p4.X - p3.X;
             double dy34 = p4.Y - p3.Y;
 
-            double theta1 = Math.Atan2(dy12, dx12); //obstacle
-            double theta2 = Math.Atan2(dy34, dx34); //motion attempt
+            double theta1 = Math.Atan2( dy12, dx12 ); //obstacle
+            double theta2 = Math.Atan2( dy34, dx34 ); //motion attempt
             collisionAngle = theta2 - theta1; //angle between the two
 
             // Solve for t1 and t2
-            double denominator = (dy12 * dx34 - dx12 * dy34);
+            double denominator = ( dy12 * dx34 - dx12 * dy34 );
 
-            double t1 = ((p1.X - p3.X) * dy34 + (p3.Y - p1.Y) * dx34) / denominator;
+            double t1 = ( ( p1.X - p3.X ) * dy34 + ( p3.Y - p1.Y ) * dx34 ) / denominator;
 
-            if (double.IsNaN(t1))
+            if( double.IsNaN( t1 ) )
             {
                 // The lines are parallel (or close enough to it).
                 lines_intersect = false;
                 segments_intersect = false;
-                intersection = new Point(float.NaN, float.NaN);
-                close_p1 = new Point(float.NaN, float.NaN);
-                close_p2 = new Point(float.NaN, float.NaN);
+                intersection = new Point( float.NaN, float.NaN );
+                close_p1 = new Point( float.NaN, float.NaN );
+                close_p2 = new Point( float.NaN, float.NaN );
                 return;
             }
             lines_intersect = true;
 
-            double t2 = ((p3.X - p1.X) * dy12 + (p1.Y - p3.Y) * dx12) / -denominator;
+            double t2 = ( ( p3.X - p1.X ) * dy12 + ( p1.Y - p3.Y ) * dx12 ) / -denominator;
 
             // Find the point of intersection.
-            intersection = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
+            intersection = new Point( p1.X + dx12 * t1, p1.Y + dy12 * t1 );
 
             // The segments intersect if t1 and t2 are between 0 and 1.
             segments_intersect =
-                ((t1 >= 0) && (t1 <= 1) &&
-                 (t2 >= 0) && (t2 <= 1));
+                ( ( t1 >= 0 ) && ( t1 <= 1 ) &&
+                 ( t2 >= 0 ) && ( t2 <= 1 ) );
             //segments_intersect =
             //    ((t1 >= -.09) && (t1 <= 1.09) &&
             //     (t2 >= -.09) && (t2 <= 1.09));
 
             // Find the closest points on the segments.
-            if (t1 < 0)
+            if( t1 < 0 )
             {
                 t1 = 0;
             }
-            else if (t1 > 1)
+            else if( t1 > 1 )
             {
                 t1 = 1;
             }
 
-            if (t2 < 0)
+            if( t2 < 0 )
             {
                 t2 = 0;
             }
-            else if (t2 > 1)
+            else if( t2 > 1 )
             {
                 t2 = 1;
             }
 
-            close_p1 = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
-            close_p2 = new Point(p3.X + dx34 * t2, p3.Y + dy34 * t2);
+            close_p1 = new Point( p1.X + dx12 * t1, p1.Y + dy12 * t1 );
+            close_p2 = new Point( p3.X + dx34 * t2, p3.Y + dy34 * t2 );
         }
-        public static float DistancePointToLine(Point P, Point P1, Point P2)
+        public static float DistancePointToLine( Point P, Point P1, Point P2 )
         {
-            double distance = Abs((P2.X - P1.X) * (P1.Y - P.Y) - (P1.X - P.X) * (P2.Y - P1.Y)) /
-                    Sqrt(Pow(P2.X - P1.X, 2) + Math.Pow(P2.Y - P1.Y, 2));
-            return (float)distance;
+            double distance = Abs( ( P2.X - P1.X ) * ( P1.Y - P.Y ) - ( P1.X - P.X ) * ( P2.Y - P1.Y ) ) /
+                    Sqrt( Pow( P2.X - P1.X, 2 ) + Math.Pow( P2.Y - P1.Y, 2 ) );
+            return ( float )distance;
         }
-        public static float DistancePointToLine2(Point P, Point P1, Point P2)
+        public static float DistancePointToLine2( Point P, Point P1, Point P2 )
         {
-            double distance = ((P2.X - P1.X) * (P1.Y - P.Y) - (P1.X - P.X) * (P2.Y - P1.Y)) /
-                    Sqrt(Pow(P2.X - P1.X, 2) + Math.Pow(P2.Y - P1.Y, 2));
-            return (float)distance;
+            double distance = ( ( P2.X - P1.X ) * ( P1.Y - P.Y ) - ( P1.X - P.X ) * ( P2.Y - P1.Y ) ) /
+                    Sqrt( Pow( P2.X - P1.X, 2 ) + Math.Pow( P2.Y - P1.Y, 2 ) );
+            return ( float )distance;
         }
-        public static Segment ExtendSegment(Segment s, float dist)
+        public static Segment ExtendSegment( Segment s, float dist )
         {
             Segment retVal = new Segment();
-            retVal.P1 = ExtendSegment(s.P1, s.P2, dist, true);
-            retVal.P2 = ExtendSegment(s.P1, s.P2, dist, false);
+            retVal.P1 = ExtendSegment( s.P1, s.P2, dist, true );
+            retVal.P2 = ExtendSegment( s.P1, s.P2, dist, false );
             return retVal;
         }
 
 
         //find a point which is dist off the end of a line segment
-        public static PointPlus ExtendSegment(Point P1, Point P2, float dist, bool firstPt)
+        public static PointPlus ExtendSegment( Point P1, Point P2, float dist, bool firstPt )
         {
-            if (firstPt)
+            if( firstPt )
             {
                 Vector v = P2 - P1;
-                double changeLength = (v.Length + dist) / v.Length;
-                v = Vector.Multiply(v, changeLength);
+                double changeLength = ( v.Length + dist ) / v.Length;
+                v = Vector.Multiply( v, changeLength );
                 PointPlus newPoint = new PointPlus { P = P2 - v };
                 return newPoint;
             }
             else
             {
                 Vector v = P1 - P2;
-                double changeLength = (v.Length + dist) / v.Length;
-                v = Vector.Multiply(v, changeLength);
+                double changeLength = ( v.Length + dist ) / v.Length;
+                v = Vector.Multiply( v, changeLength );
 
                 PointPlus newPoint = new PointPlus { P = P1 - v };
                 return newPoint;
@@ -803,23 +606,23 @@ namespace BrainSimulator
         /// <param name="polygon">the vertices of polygon</param>
         /// <param name="testPoint">the given point</param>
         /// <returns>true if the point is inside the polygon; otherwise, false</returns>
-        public static bool IsPointInPolygon(Point[] polygon, Point testPoint)
+        public static bool IsPointInPolygon( Point[] polygon, Point testPoint )
         {
             bool result = false;
-            if (polygon is null) return false;
-            if (polygon.Count() == 2)
+            if( polygon is null ) return false;
+            if( polygon.Count() == 2 )
             {
-                float dist = DistancePointToLine(testPoint, polygon[0], polygon[1]);
-                if (dist < 0.1f) return true;
+                float dist = DistancePointToLine( testPoint, polygon[ 0 ], polygon[ 1 ] );
+                if( dist < 0.1f ) return true;
                 return false;
             }
             int j = polygon.Count() - 1;
-            if (polygon.Contains(testPoint)) return true;
-            for (int i = 0; i < polygon.Count(); i++)
+            if( polygon.Contains( testPoint ) ) return true;
+            for( int i = 0; i < polygon.Count(); i++ )
             {
-                if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y || polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+                if( polygon[ i ].Y < testPoint.Y && polygon[ j ].Y >= testPoint.Y || polygon[ j ].Y < testPoint.Y && polygon[ i ].Y >= testPoint.Y )
                 {
-                    if (polygon[i].X + (testPoint.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) * (polygon[j].X - polygon[i].X) < testPoint.X)
+                    if( polygon[ i ].X + ( testPoint.Y - polygon[ i ].Y ) / ( polygon[ j ].Y - polygon[ i ].Y ) * ( polygon[ j ].X - polygon[ i ].X ) < testPoint.X )
                     {
                         result = !result;
                     }
@@ -836,253 +639,61 @@ namespace BrainSimulator
         /// </summary>
         /// <param name="poly">points that define the polygon</param>
         /// <returns>centroid point, or PointF.Empty if somethought wrong</returns>
-        public static Point GetCentroid(List<Point> poly)
+        public static Point GetCentroid( List<Point> poly )
         {
             double accumulatedArea = 0.0f;
             double centerX = 0.0f;
             double centerY = 0.0f;
 
-            if (poly.Count == 2)
+            if( poly.Count == 2 )
             {
-                return new Point((poly[0].X + poly[1].X) / 2f, (poly[0].Y + poly[1].Y) / 2f);
+                return new Point( ( poly[ 0 ].X + poly[ 1 ].X ) / 2f, ( poly[ 0 ].Y + poly[ 1 ].Y ) / 2f );
             }
 
 
-            for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
+            for( int i = 0, j = poly.Count - 1; i < poly.Count; j = i++ )
             {
-                double temp = poly[i].X * poly[j].Y - poly[j].X * poly[i].Y;
+                double temp = poly[ i ].X * poly[ j ].Y - poly[ j ].X * poly[ i ].Y;
                 accumulatedArea += temp;
-                centerX += (poly[i].X + poly[j].X) * temp;
-                centerY += (poly[i].Y + poly[j].Y) * temp;
+                centerX += ( poly[ i ].X + poly[ j ].X ) * temp;
+                centerY += ( poly[ i ].Y + poly[ j ].Y ) * temp;
             }
 
-            if (Math.Abs(accumulatedArea) < 1E-7f)
-                return new Point(0, 0);  // Avoid division by zero
+            if( Math.Abs( accumulatedArea ) < 1E-7f )
+                return new Point( 0, 0 );  // Avoid division by zero
 
             accumulatedArea *= 3f;
-            return new Point(centerX / accumulatedArea, centerY / accumulatedArea);
+            return new Point( centerX / accumulatedArea, centerY / accumulatedArea );
         }
-
-#if NOT_USED
-        //This textbox has a special action to cope with peculiar focus issues when a textbox is placed on a context menu
-        public static TextBox ContextMenuTextBox(string content, string name, float width)
-        {
-            TextBox tb = new TextBox()
-            {
-                Text = content,
-                Name = name,
-                Width = width,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            tb.PreviewLostKeyboardFocus += Tb_PreviewLostKeyboardFocus;
-            return tb;
-        }
-
-        private static void Tb_PreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
-        {
-            if (!(e.NewFocus is TextBox) && !(e.NewFocus is ComboBox))
-                e.Handled = true;
-        }
-
-        public static void AddToValues(float value, List<float> values)
-        {
-            if (!values.Contains(value))
-            {
-                values.Add(value);
-                values.Sort();
-                values.Reverse();
-            }
-        }
-
-        //there is a label followed by a combobox with provided values
-        public static MenuItem CreateComboBoxMenuItem(string cbName, float value, List<float> values, string format, string label,
-            int textWidth, RoutedEventHandler theEventHandler)
-        {
-            StackPanel sp = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 3, 3, 3) };
-            sp.Children.Add(new Label { Content = label, Padding = new Thickness(0) });
-            ComboBox theCombo = CreateComboBox(cbName, value, values, format, textWidth, theEventHandler);
-            sp.Children.Add(theCombo);
-            return new MenuItem { StaysOpenOnClick = true, Header = sp };
-        }
-       
-        public static ComboBox CreateComboBox(string cbName, float value, List<float> values, string format, int textWidth, RoutedEventHandler theEventHandler)
-        {
-            ComboBox theCombo = new ComboBox { IsEditable = true, Width = textWidth, Name = cbName };
-            theCombo.Text = format.IndexOf("X") == -1 ? value.ToString(format) : ((int)value).ToString(format);
-            for (int i = 0; i < values.Count; i++)
-                theCombo.Items.Add(format.IndexOf("X") == -1 ? values[i].ToString(format) : ((int)values[i]).ToString(format));
-            theCombo.AddHandler(TextBox.TextChangedEvent, theEventHandler);
-            theCombo.AddHandler(ComboBox.SelectionChangedEvent, theEventHandler);
-            return theCombo;
-        }
-
-        public static void ValidateInput(ComboBox cb, float min, float max, string validation = "")
-        {
-            //this hack finds the textbox within a combobox
-            var textbox = (TextBox)cb.Template.FindName("PART_EditableTextBox", cb);
-            if (textbox is not null)
-            {
-                Border parent = (Border)textbox.Parent;
-                if (validation == "")
-                {
-                    if (!float.TryParse(textbox.Text, out float x))
-                        parent.Background = new SolidColorBrush(Colors.Pink);
-                    else if (x > max || x < min)
-                        parent.Background = new SolidColorBrush(Colors.Yellow);
-                    else
-                        parent.Background = new SolidColorBrush(Colors.LightGreen);
-                }
-                else if (validation == "Int")
-                {
-                    if (!int.TryParse(textbox.Text, out int x))
-                        parent.Background = new SolidColorBrush(Colors.Pink);
-                    else if (x > max || x < min)
-                        parent.Background = new SolidColorBrush(Colors.Yellow);
-                    else
-                        parent.Background = new SolidColorBrush(Colors.LightGreen);
-                }
-                else if (validation == "Hex")
-                {
-                    try
-                    {
-                        uint newCharge = Convert.ToUInt32(textbox.Text, 16);
-                        parent.Background = new SolidColorBrush(Colors.LightGreen);
-                    }
-                    catch
-                    {
-                        parent.Background = new SolidColorBrush(Colors.Pink);
-                    }
-                }
-            }
-        }
-#endif
 
         public static List<Type> GetListOfExistingCSharpModuleTypes()
         {
-            var listOfBs = (from domainAssembly in AppDomain.CurrentDomain.GetAssemblies()
-                            from assemblyType in domainAssembly.GetTypes()
-                            where typeof(ModuleBase).IsAssignableFrom(assemblyType)
-                            orderby assemblyType.Name
-                            select assemblyType
+            var listOfBs = ( from domainAssembly in AppDomain.CurrentDomain.GetAssemblies()
+                             from assemblyType in domainAssembly.GetTypes()
+                             where typeof( ModuleBase ).IsAssignableFrom( assemblyType )
+                             orderby assemblyType.Name
+                             select assemblyType
                 ).ToArray();
             List<Type> retVal = new List<Type>();
-            foreach (var t in listOfBs)
+            foreach( var t in listOfBs )
             {
-                if (t.Name != "ModuleBase")
-                    retVal.Add(t);
+                if( t.Name != "ModuleBase" )
+                    retVal.Add( t );
             }
             return retVal;
         }
 
-#if NOT_USED
-        /// <summary>
-        /// TrimPunctuation from start and end of string.
-        /// </summary>
-        public static string TrimPunctuation(string value)
-        {
-            // Count start punctuation.
-            int removeFromStart = 0;
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (char.IsPunctuation(value[i]))
-                {
-                    removeFromStart++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // Count end punctuation.
-            int removeFromEnd = 0;
-            for (int i = value.Length - 1; i >= 0; i--)
-            {
-                if (char.IsPunctuation(value[i]))
-                {
-                    removeFromEnd++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            // No characters were punctuation.
-            if (removeFromStart == 0 &&
-                removeFromEnd == 0)
-            {
-                return value;
-            }
-            // All characters were punctuation.
-            if (removeFromStart == value.Length &&
-                removeFromEnd == value.Length)
-            {
-                return "";
-            }
-            // Substring.
-            return value.Substring(removeFromStart,
-                value.Length - removeFromEnd - removeFromStart);
-        }
-
-        public static Vector3D RotateVector(Vector3D i, Vector3D j)
-        {
-            i = new Vector3D(1, 1, 0);
-            i.Normalize();
-
-            Matrix3D m = Matrix3D.Identity;
-            Quaternion rot = GetShortestRotationBetweenVectors(i, j);
-            m.Rotate(rot);
-
-            Vector3D jRotated = m.Transform(j);
-            // j should be equal to i
-            return jRotated;
-        }
-
-        public static Quaternion GetShortestRotationBetweenVectors(Vector3D vector1, Vector3D vector2)
-        {
-            vector1.Normalize();
-            vector2.Normalize();
-            float angle = (float)(Math.Acos(Vector3D.DotProduct(vector1, vector2)) * (180 / Math.PI));
-            Vector3D axis = Vector3D.CrossProduct(vector2, vector1);
-
-            // Check to see if the angle is very small, in which case, the cross product becomes unstable,
-            // so set the axis to a default.  It doesn't matter much what this axis is, as the rotation angle 
-            // will be near zero anyway.
-            if (angle < 0.001f)
-            {
-                axis = new Vector3D(0.0f, 0.0f, 1.0f);
-            }
-
-            if (axis.Length < .001f)
-            {
-                return Quaternion.Identity;
-            }
-
-            axis.Normalize();
-            Quaternion rot = new Quaternion(axis, angle);
-
-            return rot;
-        }
-#endif
         static Random randomGenerator = new Random();
 
-        public static string Random(int min, int max)
+        public static string Random( int min, int max )
         {
-            int newRandom = randomGenerator.Next(min, max);
+            int newRandom = randomGenerator.Next( min, max );
             string result = newRandom.ToString();
             return result;
         }
 
         // Constant strings related to file dialogs. 
-        //public const string FolderModelObjects = "Networks\\3DSimModelObjects";
-        //public const string FolderAudioFiles = "Networks\\AudioFiles";
-        //public const string FolderUIAudioFiles = "Resources\\UserInterface\\AudioClips";
-        //public const string FolderCommandFiles = "Networks\\CommandFiles";
-        //public const string FolderPodBin = "Resources\\Pod_Bin";
-        //public const string FolderCameraBin = "Resources\\Camera_Bin";
-        //public const string FolderImageRecognitionParameters = "Networks\\ImageRecognitionParameters";
         public const string UKSContentFolder = "UKSContent";
-        //public const string FolderUISavedImages = "SavedPictures";
 
         public static FilePickerFileType FilterXMLs { get; } = new( "XML Files" )
         {
@@ -1105,22 +716,11 @@ namespace BrainSimulator
             MimeTypes = new[] { "text/plain", "application/octet-stream" }
         };
 
-        //public const string FilterImages = "Image Files|*.png;*.jpg;*.bmp";
-        //public const string FilterWavs = "wav Files|*.wav";
-
         public const string TitleBrainSimLoadWordList = "Select a Brain Simulator Word List File";
         public const string TitleBrainSimImport = "Select a Brain Simulator file to Import";
         public const string TitleBrainSimExport = "Select a Brain Simulator file to Export";
         public const string TitleUKSFileLoad = "Select a Brain UKS Content File to Load";
         public const string TitleUKSFileSave = "Select a Brain UKS Content File to Save";
-
-        //public const string TitleImagesLoad = "Select an image file for input";
-        //public const string TitleImagesSave = "Select a name to save the image";
-        //public const string TitleModelLoad = "Select an XML file to load a model";
-        //public const string TitleModelSave = "Select an XML file to save a model";
-        //public const string TitleParamLoad = "Select an XML file to load parameters";
-        //public const string TitleParamSave = "Select an XML file to save parameters";
-        //public const string TitleSoundLoad = "Select a wav file to load";
 
         public async static Task<string?> OpenFileDialog( Visual? owner, string title, FilePickerFileType filter, string pathToStartIn = "" )
         {
@@ -1182,52 +782,51 @@ namespace BrainSimulator
             return r;
         }
 
-
-        public static string GetOrAddDocumentsSubFolder(string subfolder)
+        public static string GetOrAddDocumentsSubFolder( string subfolder )
         {
-            string basepath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string fiafolder = System.IO.Path.Combine(basepath, "FutureAI");
-            System.IO.Directory.CreateDirectory(fiafolder);
-            string progfolder = System.IO.Path.Combine(fiafolder, "BrainSimulatorIII");
-            System.IO.Directory.CreateDirectory(progfolder);
-            string returnfolder = System.IO.Path.Combine(progfolder, subfolder);
-            System.IO.Directory.CreateDirectory(returnfolder);
+            string basepath = Environment.GetFolderPath( Environment.SpecialFolder.MyDocuments );
+            string fiafolder = System.IO.Path.Combine( basepath, "FutureAI" );
+            System.IO.Directory.CreateDirectory( fiafolder );
+            string progfolder = System.IO.Path.Combine( fiafolder, "BrainSimulatorIII" );
+            System.IO.Directory.CreateDirectory( progfolder );
+            string returnfolder = System.IO.Path.Combine( progfolder, subfolder );
+            System.IO.Directory.CreateDirectory( returnfolder );
             return returnfolder;
         }
 
-        public static string RebaseFolderToCurrentDevEnvironment(string fullPath)
+        public static string RebaseFolderToCurrentDevEnvironment( string fullPath )
         {
-            int index = fullPath.ToLower().IndexOf("\\networks\\");
-            if (index != -1)
+            int index = fullPath.ToLower().IndexOf( "\\networks\\" );
+            if( index != -1 )
             {
-                fullPath = fullPath.Substring(index);
-                string Path1 = Path.GetFullPath(".");
-                string Path2 = Path1.Replace("\\bin\\Debug\\net6.0-windows", "");
+                fullPath = fullPath.Substring( index );
+                string Path1 = Path.GetFullPath( "." );
+                string Path2 = Path1.Replace( "\\bin\\Debug\\net6.0-windows", "" );
                 fullPath = Path2 + fullPath;
             }
             return fullPath;
         }
 
-        public static string CleanAndRecreateDocumentsSubFolder(string subFolder)
+        public static string CleanAndRecreateDocumentsSubFolder( string subFolder )
         {
-            string Folder = Utils.GetOrAddDocumentsSubFolder(subFolder);
-            Directory.Delete(Folder, true);
-            return Utils.GetOrAddDocumentsSubFolder(subFolder);
+            string Folder = Utils.GetOrAddDocumentsSubFolder( subFolder );
+            Directory.Delete( Folder, true );
+            return Utils.GetOrAddDocumentsSubFolder( subFolder );
         }
 
-        public static string GetOrAddLocalSubFolder(string subfolder)
+        public static string GetOrAddLocalSubFolder( string subfolder )
         {
-            string Path1 = Path.GetFullPath(".");
-            string Path2 = Path1.Replace("\\bin\\Debug\\net6.0-windows", "");
-            string Path3 = Path.Combine(Path2, "..\\BrainSimulator");
-            string Path4 = Path3.Replace("\\BrainSimulator\\..\\BrainSimulator", "\\BrainSimulator");
-            string Path5 = Path4.Replace("\\ModuleTester\\..\\BrainSimulator", "\\BrainSimulator");
-            string defaultPath = Path.Combine(Path5, subfolder);
+            string Path1 = Path.GetFullPath( "." );
+            string Path2 = Path1.Replace( "\\bin\\Debug\\net6.0-windows", "" );
+            string Path3 = Path.Combine( Path2, "..\\BrainSimulator" );
+            string Path4 = Path3.Replace( "\\BrainSimulator\\..\\BrainSimulator", "\\BrainSimulator" );
+            string Path5 = Path4.Replace( "\\ModuleTester\\..\\BrainSimulator", "\\BrainSimulator" );
+            string defaultPath = Path.Combine( Path5, subfolder );
             try
             {
-                if (!Directory.Exists(defaultPath))
+                if( !Directory.Exists( defaultPath ) )
                 {
-                    Directory.CreateDirectory(defaultPath);
+                    Directory.CreateDirectory( defaultPath );
                 }
             }
             catch
@@ -1238,83 +837,109 @@ namespace BrainSimulator
             return defaultPath;
         }
 
-        public static string GetOrAddFilenameInLocalSubFolder(string subfolder, string filename)
+        public static string GetOrAddFilenameInLocalSubFolder( string subfolder, string filename )
         {
-            string filePath = GetOrAddLocalSubFolder(subfolder);
-            return Path.Combine(filePath, filename);
+            string filePath = GetOrAddLocalSubFolder( subfolder );
+            return Path.Combine( filePath, filename );
         }
 
         // Builds a filename of the form 20220313_100357_197_0_0.0_0_0_.jpg from time, turn, move, pan, tilt and extension
-        public static string BuildAnnotatedImageFileName(string folder, Angle deltaTurn, double deltaMove, Angle cameraPan, Angle cameraTilt, string extension)
+        public static string BuildAnnotatedImageFileName( string folder, Angle deltaTurn, double deltaMove, Angle cameraPan, Angle cameraTilt, string extension )
         {
-            if (cameraPan is null) cameraPan = Angle.FromDegrees(0);
-            if (cameraTilt is null) cameraTilt = Angle.FromDegrees(0);
+            if( cameraPan is null ) cameraPan = Angle.FromDegrees( 0 );
+            if( cameraTilt is null ) cameraTilt = Angle.FromDegrees( 0 );
             DateTime now = DateTime.Now;
-            string filename = now.ToString("yyyyMMdd_HHmmss_fff") + "_" +
-                              (int)deltaTurn.Degrees + "_" + deltaMove.ToString("F1") + "_" +
-                              (int)cameraPan.Degrees + "_" + (int)cameraTilt.Degrees + "_." + extension;
-            return System.IO.Path.Combine(folder, filename);
+            string filename = now.ToString( "yyyyMMdd_HHmmss_fff" ) + "_" +
+                              ( int )deltaTurn.Degrees + "_" + deltaMove.ToString( "F1" ) + "_" +
+                              ( int )cameraPan.Degrees + "_" + ( int )cameraTilt.Degrees + "_." + extension;
+            return System.IO.Path.Combine( folder, filename );
         }
 
         // Rather than checking them all separately, check if there is no movement by
         // looking for the string "_0_0.0_0_0_" in the filename...
-        public static bool ImageHasMovement(string filename)
+        public static bool ImageHasMovement( string filename )
         {
             // check first if it has enough parts
             // If not, return false since we cannot determine movement
-            filename = Path.GetFileNameWithoutExtension(filename);
-            if (filename.Split("_").Length != 8) return false;
+            filename = Path.GetFileNameWithoutExtension( filename );
+            if( filename.Split( "_" ).Length != 8 ) return false;
             // Else, check if it contains the "no movement" string
             // CAUTTION: don't check for pan and tilt,
             // since they are no deltas
-            return filename.Contains("_0_0.0_") == false;
+            return filename.Contains( "_0_0.0_" ) == false;
         }
 
         // Extracts Turn delta from a filename of the form 20220313_100357_197_0_0.0_0_0_.jpg
-        public static Angle GetTurnDeltaFromAnnotatedImageFileName(string filename)
+        public static Angle GetTurnDeltaFromAnnotatedImageFileName( string filename )
         {
-            filename = Path.GetFileName(filename);
-            string[] parts = filename.Split('_');
-            if (parts.Count() <= 3) return Angle.FromDegrees(0);
-            if (!int.TryParse(parts[3], out int a)) return Angle.FromDegrees(0);
-            return Angle.FromDegrees(a);
+            filename = Path.GetFileName( filename );
+            string[] parts = filename.Split( '_' );
+            if( parts.Count() <= 3 ) return Angle.FromDegrees( 0 );
+            if( !int.TryParse( parts[ 3 ], out int a ) ) return Angle.FromDegrees( 0 );
+            return Angle.FromDegrees( a );
         }
 
         // Extracts Move delta from a filename of the form 20220313_100357_197_0_0.0_0_0_.jpg
-        public static double GetMoveDeltaFromAnnotatedImageFileName(string filename)
+        public static double GetMoveDeltaFromAnnotatedImageFileName( string filename )
         {
-            filename = Path.GetFileName(filename);
-            string[] parts = filename.Split('_');
-            if (parts.Count() <= 4) return 0.0;
-            if (!Double.TryParse(parts[4], out double a)) return 0.0;
+            filename = Path.GetFileName( filename );
+            string[] parts = filename.Split( '_' );
+            if( parts.Count() <= 4 ) return 0.0;
+            if( !Double.TryParse( parts[ 4 ], out double a ) ) return 0.0;
             return a;
         }
 
         // Extracts Camera Pan delta from a filename of the form 20220313_100357_197_0_0.0_0_0_.jpg
-        public static Angle GetCameraPanFromAnnotatedImageFileName(string filename)
+        public static Angle GetCameraPanFromAnnotatedImageFileName( string filename )
         {
-            filename = Path.GetFileName(filename);
-            string[] parts = filename.Split('_');
-            if (parts.Count() <= 5) return Angle.FromDegrees(0);
-            if (!int.TryParse(parts[5], out int a)) return Angle.FromDegrees(0);
-            return Angle.FromDegrees(a);
+            filename = Path.GetFileName( filename );
+            string[] parts = filename.Split( '_' );
+            if( parts.Count() <= 5 ) return Angle.FromDegrees( 0 );
+            if( !int.TryParse( parts[ 5 ], out int a ) ) return Angle.FromDegrees( 0 );
+            return Angle.FromDegrees( a );
         }
 
         // Extracts Camera Tilt delta from a filename of the form 20220313_100357_197_0_0.0_0_0_.jpg
-        public static Angle GetCameraTiltFromAnnotatedImageFileName(string filename)
+        public static Angle GetCameraTiltFromAnnotatedImageFileName( string filename )
         {
-            filename = Path.GetFileName(filename);
-            string[] parts = filename.Split('_');
-            if (parts.Count() <= 6) return Angle.FromDegrees(0);
-            if (!int.TryParse(parts[6], out int a)) return Angle.FromDegrees(0);
-            return Angle.FromDegrees(a);
+            filename = Path.GetFileName( filename );
+            string[] parts = filename.Split( '_' );
+            if( parts.Count() <= 6 ) return Angle.FromDegrees( 0 );
+            if( !int.TryParse( parts[ 6 ], out int a ) ) return Angle.FromDegrees( 0 );
+            return Angle.FromDegrees( a );
         }
 
         static int trackid = 1000;
 
         public static string NewTrackID()
         {
-            return (++trackid).ToString("####");
+            return ( ++trackid ).ToString( "####" );
         }
+
+        public static string? FindFile( string filename, string path, bool recursive = false )
+        {
+            foreach( var file in Directory.EnumerateFiles( path ) )
+            {
+                if( file.EndsWith( filename ) )
+                {
+                    return file;
+                }
+            }
+
+            if( recursive == true )
+            {
+                foreach( var subDir in Directory.EnumerateDirectories( path ) )
+                {
+                    var r = FindFile( filename, subDir, true );
+                    if( r != null )
+                    {
+                        return r;
+                    }
+                }
+            }
+            return null;
+        }
+
+
     }
 }

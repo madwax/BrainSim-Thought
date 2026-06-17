@@ -23,6 +23,6 @@
                 c&#160;&#160;d&#160;&#160;e&#160;&#160;f&#160;&#160;g&#160;&#160;a&#160;&#160;b&#160;&#160;c&#160;&#160;d&#160;&#160;e
             </TextBlock>
         </Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>
 </Window>

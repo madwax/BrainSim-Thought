@@ -10,8 +10,6 @@
  *
  * See the LICENSE file in the project root for full license information.
  */
- 
-
 using System;
 using System.IO;
 using Avalonia;
@@ -60,7 +58,7 @@ public partial class ModuleTextDlg : ModuleBaseDlg
 
         if( string.IsNullOrEmpty( filepathToWordFile ) )
         {
-            SetStatus( "User failed to select Word List File.", StatusMode.Error );
+            SetStatus( "User failed to select Word List File.", StatusModes.Error );
             return;
         }
 
@@ -77,13 +75,13 @@ public partial class ModuleTextDlg : ModuleBaseDlg
 
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            SetStatus("Please select a file first.", StatusMode.Warning);
+            SetStatus("Please select a file first.", StatusModes.Warning);
             return;
         }
 
         if (!File.Exists(filePath))
         {
-            SetStatus("File not found.", StatusMode.Error );
+            SetStatus("File not found.", StatusModes.Error );
             return;
         }
 
@@ -98,12 +96,12 @@ public partial class ModuleTextDlg : ModuleBaseDlg
             }
             catch (Exception ex)
             {
-                SetStatus($"Error loading file: {ex.Message}", StatusMode.Error );
+                SetStatus($"Error loading file: {ex.Message}", StatusModes.Error );
             }
         }
         else
         {
-            SetStatus("Error: Module not found.", StatusMode.Error);
+            SetStatus("Error: Module not found.", StatusModes.Error);
         }
     }
 
@@ -118,7 +116,7 @@ public partial class ModuleTextDlg : ModuleBaseDlg
         }
         else
         {
-            SetStatus("Error: Module not found.", StatusMode.Error );
+            SetStatus("Error: Module not found.", StatusModes.Error );
         }
     }
 

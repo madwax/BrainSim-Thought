@@ -29,6 +29,6 @@
 			<!-- Row 3 -->
 			<Label Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Name="StatusLabel" Content="" />
         </Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>		
 </Window>

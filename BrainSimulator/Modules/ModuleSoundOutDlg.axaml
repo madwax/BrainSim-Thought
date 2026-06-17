@@ -46,6 +46,6 @@
 			<Button Grid.Row="2" Grid.Column="1" Content="Play Sound" Click="PlaySound_Click" />
 
 		</Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>
 </Window>

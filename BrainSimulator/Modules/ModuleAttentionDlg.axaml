@@ -35,6 +35,6 @@
 		    <Label Grid.Row="3" Grid.Column="0" Content="Current Focus:" />
             <TextBlock Grid.Row="3" Grid.Column="1" Name="FocusValue" TextTrimming="CharacterEllipsis"/>
 		</Grid>
-		<local:ModuleFooter/>
+		<local:FooterControl/>
 	</StackPanel>
 </Window>

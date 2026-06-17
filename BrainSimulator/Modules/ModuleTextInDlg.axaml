@@ -49,6 +49,6 @@
 			<ListBox Grid.Row="3" Grid.Column="0" Name="ParsedInputBox" SelectionChanged="ParsedInputBox_SelectionChanged" />
 			<ListBox Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3" Name="AttributesOutputBox" />
 		</Grid>
-		<local:ModuleFooter />
+		<local:FooterControl />
     </StackPanel>
 </Window>

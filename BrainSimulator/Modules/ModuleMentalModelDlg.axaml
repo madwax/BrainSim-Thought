@@ -52,6 +52,6 @@
             </StackPanel>
 
 	    </Grid>
-	    <local:ModuleFooter />
+		<local:FooterControl />
 	</StackPanel>
 </Window>

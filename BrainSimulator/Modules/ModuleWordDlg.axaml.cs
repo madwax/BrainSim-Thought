@@ -129,7 +129,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         }
         else
         {
-            SetStatus("Error: Module not found.", StatusMode.Error );
+            SetStatus("Error: Module not found.", StatusModes.Error );
         }
     }
 
@@ -140,7 +140,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
 
         if( string.IsNullOrEmpty( filepathToWordFile ) )
         {
-            SetStatus( "User failed to select Word List File.", StatusMode.Error );
+            SetStatus( "User failed to select Word List File.", StatusModes.Error );
             return;
         }
 
@@ -175,7 +175,7 @@ public partial class ModuleWordDlg : ModuleBaseDlg
         }
         else
         {
-            SetStatus("Error: Module not found.", StatusMode.Error );
+            SetStatus("Error: Module not found.", StatusModes.Error );
         }
     }
 }
